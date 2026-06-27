@@ -71,7 +71,16 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
   // A fixed item extent lets us jump to any index even when it isn't built yet.
   final ScrollController _platformScroll = ScrollController();
   final ScrollController _collectionScroll = ScrollController();
+  final ScrollController _romScroll = ScrollController();
   double get _platformExtent => 84.r;
+
+  // Grid geometry, recomputed in the ROM grid's LayoutBuilder. Used to scroll
+  // the focused cell into view arithmetically — the lazy GridView doesn't build
+  // off-screen cells, so a GlobalKey-based ensureVisible silently no-ops when
+  // the selection jumps past the viewport (the focus box "disappears").
+  double _romRowStride = 1;
+  double _romCellHeight = 1;
+  double _romTopPadding = 12;
 
   /// True while a platform or collection is open (i.e. the ROM grid is showing).
   bool get _inRomGrid =>
@@ -111,6 +120,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     _gamepadNav.dispose();
     _platformScroll.dispose();
     _collectionScroll.dispose();
+    _romScroll.dispose();
     _searchController.dispose();
     // After downloads: run the same full re-detect + scan the manual "Rescan
     // all folders" action uses (a per-system scan misses brand-new system
@@ -193,7 +203,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         maxItems: n,
       ),
     );
-    _scrollIntoView(_romKeys[_romIndex]);
+    _scrollRomTo(_romIndex);
   }
 
   void _navigateDown() {
@@ -218,7 +228,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         ),
       );
     }
-    _scrollIntoView(_romKeys[_romIndex]);
+    _scrollRomTo(_romIndex);
     _maybeLoadMore();
   }
 
@@ -233,7 +243,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         maxItems: n,
       ),
     );
-    _scrollIntoView(_romKeys[_romIndex]);
+    _scrollRomTo(_romIndex);
   }
 
   void _navigateRight() {
@@ -247,7 +257,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         maxItems: n,
       ),
     );
-    _scrollIntoView(_romKeys[_romIndex]);
+    _scrollRomTo(_romIndex);
     _maybeLoadMore();
   }
 
@@ -364,17 +374,23 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     }
   }
 
-  void _scrollIntoView(GlobalKey? key) {
+  /// Scrolls the ROM grid so the focused cell's row is centred. Computed from
+  /// grid geometry (not a GlobalKey) so it works even when the selection jumps
+  /// to a not-yet-built off-screen cell during fast navigation.
+  void _scrollRomTo(int index) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = key?.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          alignment: 0.5,
-        );
-      }
+      if (!_romScroll.hasClients) return;
+      final pos = _romScroll.position;
+      final row = index ~/ _romColumns;
+      final target =
+          _romTopPadding +
+          row * _romRowStride -
+          (pos.viewportDimension - _romCellHeight) / 2;
+      pos.animateTo(
+        target.clamp(pos.minScrollExtent, pos.maxScrollExtent),
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -777,6 +793,13 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
             .floor()
             .clamp(1, 99);
 
+        // Cache geometry for arithmetic scroll-into-view (see _scrollRomTo).
+        final cellWidth =
+            (usableWidth - (_romColumns - 1) * spacing) / _romColumns;
+        _romCellHeight = cellWidth / 0.62; // childAspectRatio
+        _romRowStride = _romCellHeight + spacing; // mainAxisSpacing
+        _romTopPadding = 12.r;
+
         return NotificationListener<ScrollNotification>(
           onNotification: (scroll) {
             if (scroll.metrics.pixels >=
@@ -788,6 +811,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
             return false;
           },
           child: GridView.builder(
+            controller: _romScroll,
             padding: EdgeInsets.all(12.r),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: _romColumns,
