@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 92;
+  static const int _databaseVersion = 93;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -1185,6 +1185,9 @@ class SqliteService {
     // FIX: Ensure user_screenscraper_config columns are up to date (v29).
     await _ensureScreenScraperConfigColumns(db);
 
+    // FIX: Ensure user_romm_config exists even if migrations were skipped (v91).
+    await _ensureRommConfigTable(db);
+
     // FIX: Resolve inconsistencies in default emulator assignments.
     if (tableNames.contains('app_systems') &&
         tableNames.contains('app_emulators')) {
@@ -1237,6 +1240,28 @@ class SqliteService {
       CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path 
       ON app_neo_sync_state(file_path);
     ''');
+  }
+
+  /// Ensures the singleton user_romm_config table exists (RomM library
+  /// browse/download credentials). Safe on fresh installs via IF NOT EXISTS.
+  Future<void> _ensureRommConfigTable(DatabaseAdapter db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_romm_config (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          server_url TEXT,
+          username TEXT,
+          password TEXT,
+          access_token TEXT,
+          refresh_token TEXT,
+          token_expires INTEGER,
+          last_verified TEXT,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      ''');
+    } catch (e) {
+      _log.e('Minor fix ensuring user_romm_config table failed: $e');
+    }
   }
 
   /// Ensures the unique_identifier column exists in app_emulators.
@@ -1678,6 +1703,19 @@ class SqliteService {
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (app_system_id) REFERENCES app_systems(id) ON DELETE CASCADE,
         UNIQUE(app_system_id)
+      );
+      ''',
+      '''
+      CREATE TABLE IF NOT EXISTS user_romm_config (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        server_url TEXT,
+        username TEXT,
+        password TEXT,
+        access_token TEXT,
+        refresh_token TEXT,
+        token_expires INTEGER,
+        last_verified TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
       ''',
       '''

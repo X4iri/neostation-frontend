@@ -282,6 +282,9 @@ class SqliteMigrations {
       case 92:
         await _migrateToVersion92(db);
         break;
+      case 93:
+        await _migrateToVersion93(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4611,6 +4614,32 @@ class SqliteMigrations {
       }
     } catch (e, stackTrace) {
       _log.e('Error in migration v92: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v93: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  static Future<void> _migrateToVersion93(Database db) async {
+    _log.i('Migration v93: Creating user_romm_config table');
+    try {
+      db.execute('''
+        CREATE TABLE IF NOT EXISTS user_romm_config (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          server_url TEXT,
+          username TEXT,
+          password TEXT,
+          access_token TEXT,
+          refresh_token TEXT,
+          token_expires INTEGER,
+          last_verified TEXT,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      ''');
+      _log.i('Table user_romm_config created via v93');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v93: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
