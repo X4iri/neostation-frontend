@@ -5,6 +5,7 @@ import 'package:neostation/providers/file_provider.dart';
 import 'package:neostation/providers/palette_provider.dart';
 import 'package:neostation/providers/scraping_provider.dart';
 import 'package:neostation/providers/retro_achievements_provider.dart';
+import 'package:neostation/providers/romm_provider.dart';
 import 'package:neostation/providers/neo_sync_provider.dart';
 import 'package:neostation/screens/main_screen.dart';
 import 'package:neostation/services/neosync/auth_service.dart';
@@ -456,6 +457,9 @@ class _MyAppState extends State<MyApp> {
           // provider) would find RA disconnected and skip the secondary panel.
           lazy: false,
           create: (context) => RetroAchievementsProvider()..initialize(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => RommProvider()..initialize(),
         ),
         ChangeNotifierProvider(create: (context) => SystemBackgroundProvider()),
         ChangeNotifierProvider(
