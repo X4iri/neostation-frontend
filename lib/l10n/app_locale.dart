@@ -819,6 +819,8 @@ mixin AppLocale {
   static const String rommTestConnection = 'romm_test_connection';
   static const String rommSaveConnect = 'romm_save_connect';
   static const String rommDisconnect = 'romm_disconnect';
+  static const String rommUseForSaveSync = 'romm_use_for_save_sync';
+  static const String rommSaveSyncActive = 'romm_save_sync_active';
   static const String rommBrowseLibrary = 'romm_browse_library';
   static const String rommStatusConnected = 'romm_status_connected';
   static const String rommStatusDisconnected = 'romm_status_disconnected';

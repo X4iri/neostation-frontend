@@ -48,8 +48,19 @@ Future<void> launchGameWithDialog({
     ),
   );
 
-  // Artificial delay for UX consistency and asset loading.
-  await Future.delayed(const Duration(seconds: 2));
+  // Pull newer cloud saves before the emulator starts, alongside the UX settle
+  // delay so the two waits don't stack. The download is best-effort: a sync
+  // failure, timeout, or unsupported provider must never block the launch.
+  await Future.wait([
+    Future.delayed(const Duration(seconds: 2)),
+    syncProvider
+        .syncGameSavesBeforeLaunch(game)
+        .timeout(
+          const Duration(seconds: 20),
+          onTimeout: () => SyncResult.fail(SyncError.networkError),
+        )
+        .catchError((_) => SyncResult.fail(SyncError.unknown)),
+  ]);
   if (!context.mounted) return;
 
   final result = await GameService.launchGame(context, system, game);

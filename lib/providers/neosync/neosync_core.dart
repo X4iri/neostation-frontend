@@ -934,6 +934,33 @@ extension NeoSyncCore on NeoSyncProvider {
     return allFiles.isNotEmpty ? allFiles.first : null;
   }
 
+  // ── Public reuse hooks for other sync providers (e.g. RomM) ───────────────
+
+  /// Locates local save/state files for [game], reusing NeoSync's path
+  /// resolution and filename matching. Each [LocalSaveFile.relativePath] is
+  /// prefixed with `saves/` or `states/` so callers can tell them apart.
+  Future<List<LocalSaveFile>> locateGameSaveFiles(GameModel game) =>
+      _findGameSaveFiles(game);
+
+  /// Resolves candidate local destination paths for a cloud file named
+  /// [relativeName] (e.g. `saves/Game.srm` or `states/Game.state`) belonging to
+  /// [game]. Returns an empty list if no destination can be resolved.
+  Future<List<String>> resolveLocalTargetPaths(
+    GameModel game,
+    String relativeName,
+  ) {
+    final synthetic = NeoSyncFile(
+      id: '',
+      fileName: relativeName,
+      filePath: relativeName,
+      fileSize: 0,
+      gameName: game.name,
+      uploadedAt: DateTime.now(),
+      userId: '',
+    );
+    return resolveCloudFileToLocalPath(game, synthetic);
+  }
+
   /// Obtiene TODOS los archivos de guardado de la nube para un juego específico
   Future<List<NeoSyncFile>> _getCloudSaveFilesForGame(GameModel game) async {
     try {

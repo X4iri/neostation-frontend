@@ -13,6 +13,7 @@ import 'package:neostation/services/neosync/neo_sync_service.dart';
 import 'package:neostation/services/neosync/billing_service.dart';
 import 'package:neostation/sync/sync_manager.dart';
 import 'package:neostation/sync/providers/neo_sync_adapter.dart';
+import 'package:neostation/sync/providers/romm_provider.dart';
 import 'package:neostation/services/notification_service.dart';
 import 'package:neostation/services/game_service.dart';
 import 'package:neostation/repositories/config_repository.dart';
@@ -348,6 +349,15 @@ void main() async {
 
   final neoSyncAdapter = NeoSyncAdapter(neoSyncProvider);
   SyncManager.instance.register(neoSyncAdapter);
+
+  // Build the RomM browse provider before runApp so the RomM save-sync provider
+  // can share its authenticated connection, and so SyncManager can register it.
+  final rommProvider = RommProvider()..initialize();
+  SyncManager.instance.register(
+    RomMSyncProvider(rommProvider, neoSyncProvider),
+  );
+
+  // Restore the user's chosen provider only after both are registered.
   SyncManager.instance.restoreActive(
     sqliteConfigProvider.config.activeSyncProvider,
   );
@@ -360,6 +370,7 @@ void main() async {
       sqliteDatabaseProvider: sqliteDatabaseProvider,
       neoSyncService: neoSyncService,
       neoSyncProvider: neoSyncProvider,
+      rommProvider: rommProvider,
     ),
   );
 
@@ -407,6 +418,7 @@ class MyApp extends StatefulWidget {
   final SqliteDatabaseProvider sqliteDatabaseProvider;
   final NeoSyncService neoSyncService;
   final NeoSyncProvider neoSyncProvider;
+  final RommProvider rommProvider;
 
   const MyApp({
     super.key,
@@ -416,6 +428,7 @@ class MyApp extends StatefulWidget {
     required this.sqliteDatabaseProvider,
     required this.neoSyncService,
     required this.neoSyncProvider,
+    required this.rommProvider,
   });
 
   @override
@@ -458,9 +471,7 @@ class _MyAppState extends State<MyApp> {
           lazy: false,
           create: (context) => RetroAchievementsProvider()..initialize(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => RommProvider()..initialize(),
-        ),
+        ChangeNotifierProvider.value(value: widget.rommProvider),
         ChangeNotifierProvider(create: (context) => SystemBackgroundProvider()),
         ChangeNotifierProvider(
           create: (context) => NeoAssetsProvider()..init(),

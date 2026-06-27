@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:path/path.dart' as path;
 
+import '../models/romm_asset.dart';
 import '../models/romm_collection.dart';
 import '../models/romm_platform.dart';
 import '../models/romm_rom.dart';
@@ -31,10 +32,11 @@ class RommException implements Exception {
 class RommService {
   static final _log = LoggerService.instance;
 
-  /// Read scopes requested in the password grant. RomM grants the intersection
-  /// of these and the user's allowed scopes; covers library browse + download.
+  /// Scopes requested in the password grant. RomM grants the intersection of
+  /// these and the user's allowed scopes; covers library browse + download plus
+  /// save/state sync (`assets.write`).
   static const String _readScopes =
-      'me.read roms.read platforms.read assets.read collections.read firmware.read';
+      'me.read roms.read platforms.read assets.read assets.write collections.read firmware.read';
 
   /// Shared client that tolerates self-signed certificates (homelab servers).
   static final http.Client _httpClient = () {
@@ -614,5 +616,231 @@ class RommService {
     }
     await tmpFile.rename(destFilePath);
     _log.i('RomM download complete: $destFilePath ($received bytes)');
+  }
+
+  // ── Saves & states (asset sync) ──────────────────────────────────────────
+
+  /// Lists the save files RomM holds for [romId] (`GET /api/saves?rom_id=`).
+  Future<List<RommAsset>> listSaves({required int romId}) =>
+      _listAssets('/api/saves', romId: romId, isState: false);
+
+  /// Lists the save states RomM holds for [romId] (`GET /api/states?rom_id=`).
+  Future<List<RommAsset>> listStates({required int romId}) =>
+      _listAssets('/api/states', romId: romId, isState: true);
+
+  Future<List<RommAsset>> _listAssets(
+    String basePath, {
+    required int romId,
+    required bool isState,
+  }) async {
+    final resp = await _authedGetWithScopeRetry('$basePath?rom_id=$romId');
+    final decoded = jsonDecode(resp.body);
+    final List items;
+    if (decoded is List) {
+      items = decoded;
+    } else if (decoded is Map && decoded['items'] is List) {
+      items = decoded['items'] as List;
+    } else {
+      items = const [];
+    }
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map((j) => RommAsset.fromJson(j, isState: isState))
+        .toList();
+  }
+
+  /// Downloads a save's bytes via the saves-only convenience route
+  /// (`GET /api/saves/{id}/content`). Used by the generic [ISyncProvider] API
+  /// which only has the asset id. For per-game sync prefer [downloadAssetByPath]
+  /// (works for states too).
+  Future<Uint8List> downloadSaveContent(int assetId) async {
+    final resp = await _authedGetWithScopeRetry('/api/saves/$assetId/content');
+    return resp.bodyBytes;
+  }
+
+  /// Downloads an asset's bytes from its server-relative [downloadPath]
+  /// (`/api/raw/assets/{file_path}/{file_name}?timestamp=...`). This is the
+  /// canonical route for BOTH saves and states — states have no `/content`
+  /// endpoint. [downloadPath] may contain spaces (file names, the timestamp),
+  /// so it is run through [Uri.encodeFull] before parsing.
+  Future<Uint8List> downloadAssetByPath(String downloadPath) async {
+    await _ensureToken();
+    final full = downloadPath.startsWith('http')
+        ? downloadPath
+        : '$_baseUrl${downloadPath.startsWith('/') ? '' : '/'}$downloadPath';
+    final uri = Uri.parse(Uri.encodeFull(full));
+
+    Future<http.Response> get() => _httpClient
+        .get(uri, headers: _authHeaders)
+        .timeout(const Duration(seconds: 60));
+
+    http.Response resp;
+    try {
+      resp = await get();
+    } on TimeoutException {
+      throw RommException('Request timed out');
+    } on SocketException catch (e) {
+      throw RommException('Cannot reach server: ${e.message}');
+    }
+    if (resp.statusCode == 401) {
+      await _refreshAccessToken();
+      resp = await get();
+    } else if (resp.statusCode == 403) {
+      await authenticate();
+      resp = await get();
+    }
+    if (resp.statusCode != 200) {
+      throw RommException(
+        'Request failed (${resp.statusCode})',
+        statusCode: resp.statusCode,
+      );
+    }
+    return resp.bodyBytes;
+  }
+
+  /// Uploads [file] as a save for [romId] (`POST /api/saves`, field `saveFile`).
+  Future<RommAsset> uploadSave(
+    int romId,
+    File file, {
+    String? emulator,
+    int? slot,
+    String? deviceId,
+    bool overwrite = true,
+  }) => _uploadAsset(
+    '/api/saves',
+    fileField: 'saveFile',
+    romId: romId,
+    file: file,
+    emulator: emulator,
+    slot: slot,
+    deviceId: deviceId,
+    overwrite: overwrite,
+    isState: false,
+  );
+
+  /// Uploads [file] as a save state for [romId] (`POST /api/states`, field
+  /// `stateFile`).
+  Future<RommAsset> uploadState(
+    int romId,
+    File file, {
+    String? emulator,
+    int? slot,
+    String? deviceId,
+    bool overwrite = true,
+  }) => _uploadAsset(
+    '/api/states',
+    fileField: 'stateFile',
+    romId: romId,
+    file: file,
+    emulator: emulator,
+    slot: slot,
+    deviceId: deviceId,
+    overwrite: overwrite,
+    isState: true,
+  );
+
+  Future<RommAsset> _uploadAsset(
+    String basePath, {
+    required String fileField,
+    required int romId,
+    required File file,
+    String? emulator,
+    int? slot,
+    String? deviceId,
+    required bool overwrite,
+    required bool isState,
+  }) async {
+    await _ensureToken();
+
+    final params = <String, String>{
+      'rom_id': '$romId',
+      'overwrite': '$overwrite',
+    };
+    if (emulator != null && emulator.isNotEmpty) params['emulator'] = emulator;
+    if (slot != null) params['slot'] = '$slot';
+    if (deviceId != null && deviceId.isNotEmpty) params['device_id'] = deviceId;
+    final query = params.entries
+        .map(
+          (e) =>
+              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
+        )
+        .join('&');
+    final endpoint = '$basePath?$query';
+
+    Future<http.StreamedResponse> send() async {
+      final req = http.MultipartRequest('POST', _uri(endpoint))
+        ..headers.addAll(_authHeaders)
+        ..files.add(
+          await http.MultipartFile.fromPath(
+            fileField,
+            file.path,
+            filename: path.basename(file.path),
+          ),
+        );
+      return _httpClient.send(req);
+    }
+
+    http.StreamedResponse resp;
+    try {
+      resp = await send();
+    } on SocketException catch (e) {
+      throw RommException('Cannot reach server: ${e.message}');
+    }
+    if (resp.statusCode == 401) {
+      await _refreshAccessToken();
+      resp = await send();
+    } else if (resp.statusCode == 403) {
+      // Cached token may predate the assets.write scope: re-auth and retry once.
+      await authenticate();
+      resp = await send();
+    }
+
+    final body = await resp.stream.bytesToString();
+    if (resp.statusCode != 200 && resp.statusCode != 201) {
+      throw RommException(
+        'Upload failed (${resp.statusCode})',
+        statusCode: resp.statusCode,
+      );
+    }
+    final decoded = jsonDecode(body);
+    return RommAsset.fromJson(
+      decoded as Map<String, dynamic>,
+      isState: isState,
+    );
+  }
+
+  /// Like [_authedGet] but also retries once on a 403 by re-authenticating —
+  /// existing users may hold a cached token minted before the `assets.write`
+  /// scope was requested.
+  Future<http.Response> _authedGetWithScopeRetry(String pathAndQuery) async {
+    await _ensureToken();
+    Future<http.Response> get() => _httpClient
+        .get(_uri(pathAndQuery), headers: _authHeaders)
+        .timeout(const Duration(seconds: 30));
+
+    http.Response resp;
+    try {
+      resp = await get();
+    } on TimeoutException {
+      throw RommException('Request timed out');
+    } on SocketException catch (e) {
+      throw RommException('Cannot reach server: ${e.message}');
+    }
+
+    if (resp.statusCode == 401) {
+      await _refreshAccessToken();
+      resp = await get();
+    } else if (resp.statusCode == 403) {
+      await authenticate();
+      resp = await get();
+    }
+
+    if (resp.statusCode != 200) {
+      throw RommException(
+        'Request failed (${resp.statusCode})',
+        statusCode: resp.statusCode,
+      );
+    }
+    return resp;
   }
 }

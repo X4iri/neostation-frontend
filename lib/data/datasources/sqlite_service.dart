@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 93;
+  static const int _databaseVersion = 94;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -1237,8 +1237,24 @@ class SqliteService {
       );
     ''');
     await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path 
+      CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path
       ON app_neo_sync_state(file_path);
+    ''');
+
+    // FIX: Ensure app_romm_rom_map exists (RomM save-sync mapping, v92).
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_romm_rom_map (
+        romname TEXT NOT NULL,
+        system_folder TEXT NOT NULL,
+        romm_rom_id INTEGER NOT NULL,
+        romm_fs_name TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (romname, system_folder)
+      );
+    ''');
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
+      ON app_romm_rom_map(romm_rom_id);
     ''');
   }
 
@@ -1775,6 +1791,16 @@ class SqliteService {
         file_hash TEXT
       );
       ''',
+      '''
+      CREATE TABLE IF NOT EXISTS app_romm_rom_map (
+        romname TEXT NOT NULL,
+        system_folder TEXT NOT NULL,
+        romm_rom_id INTEGER NOT NULL,
+        romm_fs_name TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (romname, system_folder)
+      );
+      ''',
     ];
 
     for (final sql in tables) {
@@ -1845,6 +1871,8 @@ class SqliteService {
 
       // 6. Index for app_neo_sync_state
       'CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path ON app_neo_sync_state(file_path);',
+      // 7. Index for app_romm_rom_map (RomM save-sync mapping)
+      'CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id ON app_romm_rom_map(romm_rom_id);',
     ];
 
     for (final sql in indexes) {

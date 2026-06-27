@@ -8,6 +8,7 @@ import '../models/romm_platform.dart';
 import '../models/romm_rom.dart';
 import '../models/system_model.dart';
 import '../repositories/romm_repository.dart';
+import '../repositories/romm_save_map_repository.dart';
 import '../repositories/scraper_repository.dart';
 import '../repositories/system_repository.dart';
 import '../services/logger_service.dart';
@@ -579,6 +580,15 @@ class RommProvider extends ChangeNotifier {
 
     tracker.status = RommDownloadStatus.completed;
     _downloadedSystems[system.folderName] = system;
+    // Record the rom_id ↔ local game mapping so save sync can target this ROM.
+    // rom.fsName is the on-disk filename the library scan later indexes as
+    // GameModel.romname, so the key matches at sync time.
+    await RommSaveMapRepository.putMapping(
+      romname: rom.fsName,
+      systemFolder: system.folderName,
+      rommRomId: rom.id,
+      fsName: rom.fsName,
+    );
     notifyListeners();
     return tracker;
   }

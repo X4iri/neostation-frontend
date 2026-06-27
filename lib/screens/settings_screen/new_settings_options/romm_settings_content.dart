@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 
 import '../../../l10n/app_locale.dart';
 import '../../../providers/romm_provider.dart';
+import '../../../providers/sqlite_config_provider.dart';
+import '../../../sync/providers/neo_sync_adapter.dart';
+import '../../../sync/providers/romm_provider.dart';
+import '../../../sync/sync_manager.dart';
 import '../../../widgets/custom_notification.dart';
 import '../../romm_screen/romm_browse_screen.dart';
 import 'settings_title.dart';
@@ -68,7 +72,7 @@ class RommSettingsContentState extends State<RommSettingsContent> {
 
   int getItemCount() {
     final connected = context.read<RommProvider>().isConnected;
-    return connected ? 2 : 4;
+    return connected ? 3 : 4;
   }
 
   void selectItem(int index) {
@@ -79,6 +83,9 @@ class RommSettingsContentState extends State<RommSettingsContent> {
           _openBrowser();
           break;
         case 1:
+          _toggleSaveSync();
+          break;
+        case 2:
           _disconnect();
           break;
       }
@@ -169,6 +176,22 @@ class RommSettingsContentState extends State<RommSettingsContent> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const RommBrowseScreen()));
+  }
+
+  bool get _isSaveSyncActive =>
+      SyncManager.instance.activeProviderId == RomMSyncProvider.kProviderId;
+
+  /// Toggles whether RomM is the active save-sync provider (vs NeoSync).
+  Future<void> _toggleSaveSync() async {
+    final persist = context
+        .read<SqliteConfigProvider>()
+        .updateActiveSyncProvider;
+    final target = _isSaveSyncActive
+        ? NeoSyncAdapter.kProviderId
+        : RomMSyncProvider.kProviderId;
+    await SyncManager.instance.setActive(target, persist: persist);
+    if (!mounted) return;
+    setState(() {});
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -296,6 +319,19 @@ class RommSettingsContentState extends State<RommSettingsContent> {
       _buildActionRow(
         theme,
         index: 1,
+        icon: _isSaveSyncActive
+            ? Symbols.cloud_done_rounded
+            : Symbols.cloud_sync_rounded,
+        label: _isSaveSyncActive
+            ? AppLocale.rommSaveSyncActive.getString(context)
+            : AppLocale.rommUseForSaveSync.getString(context),
+        primary: _isSaveSyncActive,
+        onTap: _toggleSaveSync,
+      ),
+      SizedBox(height: 10.r),
+      _buildActionRow(
+        theme,
+        index: 2,
         icon: Symbols.logout_rounded,
         label: AppLocale.rommDisconnect.getString(context),
         onTap: _disconnect,

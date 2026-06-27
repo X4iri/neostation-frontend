@@ -807,6 +807,8 @@ const Map<String, dynamic> appLocaleEs = {
   AppLocale.rommTestConnection: 'Test Connection',
   AppLocale.rommSaveConnect: 'Save & Connect',
   AppLocale.rommDisconnect: 'Disconnect',
+  AppLocale.rommUseForSaveSync: 'Use RomM for save sync',
+  AppLocale.rommSaveSyncActive: 'RomM is your save-sync provider',
   AppLocale.rommBrowseLibrary: 'Browse Library',
   AppLocale.rommStatusConnected: 'Connected',
   AppLocale.rommStatusDisconnected: 'Not connected',

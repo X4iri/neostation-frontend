@@ -285,6 +285,9 @@ class SqliteMigrations {
       case 93:
         await _migrateToVersion93(db);
         break;
+      case 94:
+        await _migrateToVersion94(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4640,6 +4643,34 @@ class SqliteMigrations {
       _log.i('Table user_romm_config created via v93');
     } catch (e, stackTrace) {
       _log.e('Error in migration v93: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v94: Adds the [app_romm_rom_map] table, which links a local game
+  /// (romname + system folder) to its RomM ROM id so save/state sync can target
+  /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
+  static Future<void> _migrateToVersion94(Database db) async {
+    _log.i('Migration v94: Creating app_romm_rom_map table');
+    try {
+      db.execute('''
+        CREATE TABLE IF NOT EXISTS app_romm_rom_map (
+          romname TEXT NOT NULL,
+          system_folder TEXT NOT NULL,
+          romm_rom_id INTEGER NOT NULL,
+          romm_fs_name TEXT,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (romname, system_folder)
+        );
+      ''');
+      db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
+        ON app_romm_rom_map(romm_rom_id);
+      ''');
+      _log.i('Table app_romm_rom_map created via v94');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v94: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
