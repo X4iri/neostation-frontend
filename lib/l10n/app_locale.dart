@@ -809,6 +809,39 @@ mixin AppLocale {
   static const String addRomFolder = 'add_rom_folder';
   static const String removeRomFolder = 'remove_rom_folder';
 
+  // ---------------------------------------------------------------------------
+  // RomM (remote library browse + download)
+  // ---------------------------------------------------------------------------
+  static const String romm = 'romm';
+  static const String rommLibrary = 'romm_library';
+  static const String rommServerUrl = 'romm_server_url';
+  static const String rommServerUrlHint = 'romm_server_url_hint';
+  static const String rommTestConnection = 'romm_test_connection';
+  static const String rommSaveConnect = 'romm_save_connect';
+  static const String rommDisconnect = 'romm_disconnect';
+  static const String rommBrowseLibrary = 'romm_browse_library';
+  static const String rommStatusConnected = 'romm_status_connected';
+  static const String rommStatusDisconnected = 'romm_status_disconnected';
+  static const String rommConnecting = 'romm_connecting';
+  static const String rommTesting = 'romm_testing';
+  static const String rommConnectionSuccess = 'romm_connection_success';
+  static const String rommConnectionFailed = 'romm_connection_failed';
+  static const String rommConnectedAs = 'romm_connected_as';
+  static const String rommCredentialsRequired = 'romm_credentials_required';
+  static const String rommPlatforms = 'romm_platforms';
+  static const String rommNoPlatforms = 'romm_no_platforms';
+  static const String rommNoRoms = 'romm_no_roms';
+  static const String rommSearch = 'romm_search';
+  static const String rommDownloading = 'romm_downloading';
+  static const String rommDownloaded = 'romm_downloaded';
+  static const String rommDownloadComplete = 'romm_download_complete';
+  static const String rommDownloadFailed = 'romm_download_failed';
+  static const String rommDownloadCancelled = 'romm_download_cancelled';
+  static const String rommLoadMore = 'romm_load_more';
+  static const String rommNoSystemMatch = 'romm_no_system_match';
+  static const String rommNoWritableFolder = 'romm_no_writable_folder';
+  static const String rommNotConnected = 'romm_not_connected';
+
   // ==========================================================================
   // Localization Maps
   // ==========================================================================
