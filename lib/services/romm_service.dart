@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:path/path.dart' as path;
 
+import '../models/romm_collection.dart';
 import '../models/romm_platform.dart';
 import '../models/romm_rom.dart';
 import 'logger_service.dart';
@@ -280,21 +281,71 @@ class RommService {
         .toList();
   }
 
-  /// Returns one page of ROMs for [platformId]. RomM paginates via
-  /// `limit`/`offset`; [search] filters by name server-side.
-  Future<List<RommRom>> getRoms(
-    int platformId, {
+  /// Returns the user's collections (`GET /api/collections`). Tolerates both a
+  /// bare list and a `{items: [...]}` envelope; an empty/`{}` body yields [].
+  Future<List<RommCollection>> getCollections() async {
+    final resp = await _authedGet('/api/collections');
+    return _parseCollections(resp.body, isVirtual: false);
+  }
+
+  /// Returns RomM virtual collections of [type] (default `collection`, i.e. the
+  /// auto-generated game-series groupings shown as "Collections" in RomM's UI).
+  /// The endpoint requires the `type` query parameter.
+  Future<List<RommCollection>> getVirtualCollections({
+    String type = 'collection',
+  }) async {
+    final resp = await _authedGet(
+      '/api/collections/virtual?type=${Uri.encodeQueryComponent(type)}',
+    );
+    return _parseCollections(resp.body, isVirtual: true);
+  }
+
+  static List<RommCollection> _parseCollections(
+    String body, {
+    required bool isVirtual,
+  }) {
+    final decoded = jsonDecode(body);
+    final List items;
+    if (decoded is List) {
+      items = decoded;
+    } else if (decoded is Map && decoded['items'] is List) {
+      items = decoded['items'] as List;
+    } else {
+      items = const [];
+    }
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map((j) => RommCollection.fromJson(j, isVirtual: isVirtual))
+        .toList();
+  }
+
+  /// Returns one page of ROMs filtered by exactly one of [platformId],
+  /// [collectionId] (user collection) or [virtualCollectionId] (RomM virtual
+  /// collection). RomM paginates via `limit`/`offset`; [search] filters by name
+  /// server-side.
+  Future<List<RommRom>> getRoms({
+    int? platformId,
+    int? collectionId,
+    String? virtualCollectionId,
     String? search,
     int limit = 50,
     int offset = 0,
   }) async {
     final params = <String, String>{
-      // RomM filters by the plural `platform_ids`; `platform_id` is ignored.
-      'platform_ids': '$platformId',
       'limit': '$limit',
       'offset': '$offset',
       'order_by': 'name',
     };
+    if (platformId != null) {
+      // RomM filters by the plural `platform_ids`; `platform_id` is ignored.
+      params['platform_ids'] = '$platformId';
+    }
+    if (collectionId != null) {
+      params['collection_id'] = '$collectionId';
+    }
+    if (virtualCollectionId != null) {
+      params['virtual_collection_id'] = virtualCollectionId;
+    }
     if (search != null && search.trim().isNotEmpty) {
       params['search_term'] = search.trim();
     }
