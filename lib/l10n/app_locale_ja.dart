@@ -730,6 +730,8 @@ const Map<String, dynamic> appLocaleJa = {
       'Enter the server URL, username and password',
   AppLocale.rommPlatforms: 'Platforms',
   AppLocale.rommNoPlatforms: 'No platforms found',
+  AppLocale.rommCollections: 'Collections',
+  AppLocale.rommNoCollections: 'No collections found',
   AppLocale.rommNoRoms: 'No ROMs found',
   AppLocale.rommSearch: 'Search',
   AppLocale.rommDownloading: 'Downloading...',

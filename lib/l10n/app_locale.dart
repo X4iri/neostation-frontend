@@ -830,6 +830,8 @@ mixin AppLocale {
   static const String rommCredentialsRequired = 'romm_credentials_required';
   static const String rommPlatforms = 'romm_platforms';
   static const String rommNoPlatforms = 'romm_no_platforms';
+  static const String rommCollections = 'romm_collections';
+  static const String rommNoCollections = 'romm_no_collections';
   static const String rommNoRoms = 'romm_no_roms';
   static const String rommSearch = 'romm_search';
   static const String rommDownloading = 'romm_downloading';
