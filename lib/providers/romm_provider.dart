@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../models/romm_collection.dart';
 import '../models/romm_platform.dart';
 import '../models/romm_rom.dart';
 import '../models/system_model.dart';
@@ -65,7 +66,11 @@ class RommProvider extends ChangeNotifier {
   List<RommPlatform> _platforms = [];
   bool _loadingPlatforms = false;
 
+  List<RommCollection> _collections = [];
+  bool _loadingCollections = false;
+
   RommPlatform? _currentPlatform;
+  RommCollection? _currentCollection;
   List<RommRom> _roms = [];
   bool _loadingRoms = false;
   bool _romsHasMore = false;
@@ -89,7 +94,11 @@ class RommProvider extends ChangeNotifier {
   List<RommPlatform> get platforms => List.unmodifiable(_platforms);
   bool get loadingPlatforms => _loadingPlatforms;
 
+  List<RommCollection> get collections => List.unmodifiable(_collections);
+  bool get loadingCollections => _loadingCollections;
+
   RommPlatform? get currentPlatform => _currentPlatform;
+  RommCollection? get currentCollection => _currentCollection;
   List<RommRom> get roms => List.unmodifiable(_roms);
   bool get loadingRoms => _loadingRoms;
   bool get romsHasMore => _romsHasMore;
@@ -245,7 +254,9 @@ class RommProvider extends ChangeNotifier {
     _serverUrl = '';
     _username = '';
     _platforms = [];
+    _collections = [];
     _currentPlatform = null;
+    _currentCollection = null;
     _roms = [];
     _romsOffset = 0;
     _romsHasMore = false;
@@ -278,11 +289,43 @@ class RommProvider extends ChangeNotifier {
     }
   }
 
+  /// Loads (and caches) the collection list (user + virtual). Pass [force] to
+  /// refetch. Virtual collections are best-effort: if that endpoint fails the
+  /// user collections are still returned.
+  Future<void> loadCollections({bool force = false}) async {
+    if (_loadingCollections) return;
+    if (_collections.isNotEmpty && !force) return;
+    _loadingCollections = true;
+    _lastError = null;
+    notifyListeners();
+    try {
+      final user = await _service.getCollections();
+      var virtual = const <RommCollection>[];
+      try {
+        virtual = await _service.getVirtualCollections();
+      } catch (e) {
+        // Virtual collections are optional; a server-side failure here must not
+        // hide the user's own collections.
+        _log.w('RomM virtual collections unavailable: $e');
+      }
+      _collections = [...user, ...virtual];
+      await _persistRefreshedTokens();
+    } on RommException catch (e) {
+      _lastError = e.message;
+    } catch (e) {
+      _lastError = 'Failed to load collections: $e';
+    } finally {
+      _loadingCollections = false;
+      notifyListeners();
+    }
+  }
+
   /// Selects a platform and loads its first page of ROMs.
   Future<void> selectPlatform(
     RommPlatform platform, {
     String search = '',
   }) async {
+    _currentCollection = null;
     _currentPlatform = platform;
     _searchTerm = search;
     _roms = [];
@@ -292,15 +335,35 @@ class RommProvider extends ChangeNotifier {
     await loadMoreRoms();
   }
 
-  /// Re-runs the current platform query with a new search term.
-  Future<void> searchRoms(String term) async {
-    if (_currentPlatform == null) return;
-    await selectPlatform(_currentPlatform!, search: term);
+  /// Selects a collection and loads its first page of ROMs.
+  Future<void> selectCollection(
+    RommCollection collection, {
+    String search = '',
+  }) async {
+    _currentPlatform = null;
+    _currentCollection = collection;
+    _searchTerm = search;
+    _roms = [];
+    _romsOffset = 0;
+    _romsHasMore = false;
+    notifyListeners();
+    await loadMoreRoms();
   }
 
-  /// Returns to the platform list (the in-screen / system back action).
+  /// Re-runs the current platform/collection query with a new search term.
+  Future<void> searchRoms(String term) async {
+    if (_currentCollection != null) {
+      await selectCollection(_currentCollection!, search: term);
+    } else if (_currentPlatform != null) {
+      await selectPlatform(_currentPlatform!, search: term);
+    }
+  }
+
+  /// Returns to the platform/collection list (the in-screen / system back
+  /// action), clearing whichever browse target is active.
   void backToPlatforms() {
     _currentPlatform = null;
+    _currentCollection = null;
     _roms = [];
     _romsOffset = 0;
     _romsHasMore = false;
@@ -308,16 +371,23 @@ class RommProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads the next page of ROMs for the current platform.
+  /// Loads the next page of ROMs for the current platform or collection.
   Future<void> loadMoreRoms() async {
     final platform = _currentPlatform;
-    if (platform == null || _loadingRoms) return;
+    final collection = _currentCollection;
+    if ((platform == null && collection == null) || _loadingRoms) return;
     _loadingRoms = true;
     _lastError = null;
     notifyListeners();
     try {
       final page = await _service.getRoms(
-        platform.id,
+        platformId: platform?.id,
+        collectionId: (collection != null && !collection.isVirtual)
+            ? int.tryParse(collection.id)
+            : null,
+        virtualCollectionId: (collection != null && collection.isVirtual)
+            ? collection.id
+            : null,
         search: _searchTerm,
         limit: _pageSize,
         offset: _romsOffset,
