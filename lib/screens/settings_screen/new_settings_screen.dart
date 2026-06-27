@@ -14,6 +14,7 @@ import 'new_settings_options/about_settings_content.dart';
 import 'new_settings_options/exit_settings_content.dart';
 import 'new_settings_options/palette_settings_content.dart';
 import 'new_settings_options/themes_settings_content.dart';
+import 'new_settings_options/romm_settings_content.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:neostation/services/logger_service.dart';
@@ -65,6 +66,8 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       GlobalKey<SystemsSettingsContentState>();
   final GlobalKey<AboutSettingsContentState> _aboutSettingsKey =
       GlobalKey<AboutSettingsContentState>();
+  final GlobalKey<RommSettingsContentState> _rommSettingsKey =
+      GlobalKey<RommSettingsContentState>();
   final GlobalKey<ExitSettingsContentState> _exitSettingsKey =
       GlobalKey<ExitSettingsContentState>();
 
@@ -130,6 +133,15 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
         title: '',
         localeKey: AppLocale.systemsSettings,
         icon: Symbols.sports_esports_rounded,
+        isVisible: true,
+      ),
+    );
+
+    _menuItems.add(
+      SettingsMenuItem(
+        title: '',
+        localeKey: AppLocale.romm,
+        icon: Symbols.cloud_download_rounded,
         isVisible: true,
       ),
     );
@@ -232,6 +244,8 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       _systemsSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
     } else if (selectedKey == AppLocale.about) {
       _aboutSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
+    } else if (selectedKey == AppLocale.romm) {
+      _rommSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
     }
   }
 
@@ -339,6 +353,8 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       return _systemsSettingsKey.currentState?.getItemCount(provider) ?? 0;
     } else if (selectedKey == AppLocale.about) {
       return _aboutSettingsKey.currentState?.getItemCount() ?? 0;
+    } else if (selectedKey == AppLocale.romm) {
+      return _rommSettingsKey.currentState?.getItemCount() ?? 0;
     } else if (selectedKey == AppLocale.exit) {
       return 1;
     } else {
@@ -367,6 +383,8 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       );
     } else if (selectedKey == AppLocale.about) {
       _aboutSettingsKey.currentState?.selectItem(_selectedContentIndex);
+    } else if (selectedKey == AppLocale.romm) {
+      _rommSettingsKey.currentState?.selectItem(_selectedContentIndex);
     } else if (selectedKey == AppLocale.exit) {
       _executeExit();
     }
@@ -576,6 +594,12 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
     } else if (selectedKey == AppLocale.about) {
       return AboutSettingsContent(
         key: _aboutSettingsKey,
+        isContentFocused: !_focusOnMenu,
+        selectedContentIndex: _selectedContentIndex,
+      );
+    } else if (selectedKey == AppLocale.romm) {
+      return RommSettingsContent(
+        key: _rommSettingsKey,
         isContentFocused: !_focusOnMenu,
         selectedContentIndex: _selectedContentIndex,
       );
