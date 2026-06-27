@@ -12,14 +12,17 @@ import '../../providers/file_provider.dart';
 import '../../providers/romm_provider.dart';
 import '../../providers/sqlite_config_provider.dart';
 import '../../providers/sqlite_database_provider.dart';
+import '../../services/game_service.dart';
 import '../../services/romm_service.dart';
+import '../../utils/gamepad_nav.dart';
 import '../../widgets/custom_notification.dart';
 
 /// Gamepad/touch-navigable browser for a connected RomM server.
 ///
-/// Flow: platform list → ROM grid → per-ROM download. Downloads land in a
-/// configured ROM folder under the mapped system subfolder, after which the
-/// normal scan indexes them so they become launchable.
+/// Flow: source menu (Collections / Platforms) → platform/collection list →
+/// ROM grid → per-ROM download. Downloads land in a configured ROM folder under
+/// the mapped system subfolder, after which the normal scan indexes them so they
+/// become launchable.
 class RommBrowseScreen extends StatefulWidget {
   const RommBrowseScreen({super.key});
 
@@ -27,8 +30,21 @@ class RommBrowseScreen extends StatefulWidget {
   State<RommBrowseScreen> createState() => _RommBrowseScreenState();
 }
 
+/// Which top-level list is showing when not drilled into a ROM grid.
+enum _BrowseView { source, platforms, collections }
+
 class _RommBrowseScreenState extends State<RommBrowseScreen> {
   final TextEditingController _searchController = TextEditingController();
+
+  // The intermediate source menu sits ahead of the platform/collection lists.
+  _BrowseView _view = _BrowseView.source;
+  // Source-menu rows, in display order. Selecting one opens that list.
+  static const List<_BrowseView> _sourceItems = [
+    _BrowseView.collections,
+    _BrowseView.platforms,
+  ];
+  int _sourceIndex = 0;
+  int _collectionIndex = 0;
 
   // Captured in initState so they're usable from dispose() (context is defunct
   // by then). Both are app-level providers that outlive this screen.
@@ -36,13 +52,53 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
   late final SqliteConfigProvider _configProvider;
   late final SqliteDatabaseProvider _dbProvider;
 
+  // ── Gamepad navigation ──────────────────────────────────────────────────────
+  late final GamepadNavigation _gamepadNav;
+  // Selection index per phase (platform list vs. ROM grid). Highlight + the
+  // confirm/back actions key off whichever phase is active.
+  int _platformIndex = 0;
+  int _romIndex = 0;
+  // Column count of the ROM grid, recomputed each layout so GridNavUtils math
+  // matches what's actually on screen.
+  int _romColumns = 1;
+  // Per-item keys so the selected tile can be scrolled into view.
+  final Map<int, GlobalKey> _platformKeys = {};
+  final Map<int, GlobalKey> _collectionKeys = {};
+  final Map<int, GlobalKey> _romKeys = {};
+
+  // The platform list is rebuilt from scratch each time we drill out of a
+  // platform, so its scroll offset is restored explicitly via this controller.
+  // A fixed item extent lets us jump to any index even when it isn't built yet.
+  final ScrollController _platformScroll = ScrollController();
+  final ScrollController _collectionScroll = ScrollController();
+  double get _platformExtent => 84.r;
+
+  /// True while a platform or collection is open (i.e. the ROM grid is showing).
+  bool get _inRomGrid =>
+      _rommProvider.currentPlatform != null ||
+      _rommProvider.currentCollection != null;
+
   @override
   void initState() {
     super.initState();
     _rommProvider = context.read<RommProvider>();
     _configProvider = context.read<SqliteConfigProvider>();
     _dbProvider = context.read<SqliteDatabaseProvider>();
+    _gamepadNav = GamepadNavigation(
+      onNavigateUp: _navigateUp,
+      onNavigateDown: _navigateDown,
+      onNavigateLeft: _navigateLeft,
+      onNavigateRight: _navigateRight,
+      onSelectItem: _confirmSelection,
+      onBack: _handleBack,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _gamepadNav.initialize();
+      GamepadNavigationManager.pushLayer(
+        'romm_browse_screen',
+        onActivate: () => _gamepadNav.activate(),
+        onDeactivate: () => _gamepadNav.deactivate(),
+      );
       if (_rommProvider.isConnected) {
         _rommProvider.loadPlatforms();
       }
@@ -51,6 +107,10 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
 
   @override
   void dispose() {
+    GamepadNavigationManager.popLayer('romm_browse_screen');
+    _gamepadNav.dispose();
+    _platformScroll.dispose();
+    _collectionScroll.dispose();
     _searchController.dispose();
     // After downloads: run the same full re-detect + scan the manual "Rescan
     // all folders" action uses (a per-system scan misses brand-new system
@@ -117,18 +177,218 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     }
   }
 
+  // ── Gamepad navigation handlers ─────────────────────────────────────────────
+
+  void _navigateUp() {
+    if (!_inRomGrid) {
+      _moveListSelection(-1);
+      return;
+    }
+    final n = _rommProvider.roms.length;
+    if (n == 0) return;
+    setState(
+      () => _romIndex = GridNavUtils.navigateUp(
+        currentIndex: _romIndex,
+        crossAxisCount: _romColumns,
+        maxItems: n,
+      ),
+    );
+    _scrollIntoView(_romKeys[_romIndex]);
+  }
+
+  void _navigateDown() {
+    if (!_inRomGrid) {
+      _moveListSelection(1);
+      return;
+    }
+    final n = _rommProvider.roms.length;
+    if (n == 0) return;
+    final next = _romIndex + _romColumns;
+    if (next < n) {
+      setState(() => _romIndex = next);
+    } else if (_rommProvider.romsHasMore && !_rommProvider.loadingRoms) {
+      // At the last loaded row with more available: page in instead of wrapping.
+      _rommProvider.loadMoreRoms();
+    } else {
+      setState(
+        () => _romIndex = GridNavUtils.navigateDown(
+          currentIndex: _romIndex,
+          crossAxisCount: _romColumns,
+          maxItems: n,
+        ),
+      );
+    }
+    _scrollIntoView(_romKeys[_romIndex]);
+    _maybeLoadMore();
+  }
+
+  void _navigateLeft() {
+    if (!_inRomGrid) return;
+    final n = _rommProvider.roms.length;
+    if (n == 0) return;
+    setState(
+      () => _romIndex = GridNavUtils.navigateLeft(
+        currentIndex: _romIndex,
+        crossAxisCount: _romColumns,
+        maxItems: n,
+      ),
+    );
+    _scrollIntoView(_romKeys[_romIndex]);
+  }
+
+  void _navigateRight() {
+    if (!_inRomGrid) return;
+    final n = _rommProvider.roms.length;
+    if (n == 0) return;
+    setState(
+      () => _romIndex = GridNavUtils.navigateRight(
+        currentIndex: _romIndex,
+        crossAxisCount: _romColumns,
+        maxItems: n,
+      ),
+    );
+    _scrollIntoView(_romKeys[_romIndex]);
+    _maybeLoadMore();
+  }
+
+  /// Moves the selection by [delta] (wrapping) within whichever top-level list
+  /// is showing, and scrolls it into view.
+  void _moveListSelection(int delta) {
+    switch (_view) {
+      case _BrowseView.source:
+        final n = _sourceItems.length;
+        setState(() => _sourceIndex = (_sourceIndex + delta + n) % n);
+        break;
+      case _BrowseView.platforms:
+        final n = _rommProvider.platforms.length;
+        if (n == 0) return;
+        setState(() => _platformIndex = (_platformIndex + delta + n) % n);
+        _scrollListTo(_platformScroll, _platformIndex);
+        break;
+      case _BrowseView.collections:
+        final n = _rommProvider.collections.length;
+        if (n == 0) return;
+        setState(() => _collectionIndex = (_collectionIndex + delta + n) % n);
+        _scrollListTo(_collectionScroll, _collectionIndex);
+        break;
+    }
+  }
+
+  void _confirmSelection() {
+    if (_inRomGrid) {
+      final roms = _rommProvider.roms;
+      if (roms.isEmpty || _romIndex >= roms.length) return;
+      _startDownload(roms[_romIndex]);
+      return;
+    }
+    switch (_view) {
+      case _BrowseView.source:
+        _openSource(_sourceItems[_sourceIndex]);
+        break;
+      case _BrowseView.platforms:
+        final platforms = _rommProvider.platforms;
+        if (platforms.isEmpty || _platformIndex >= platforms.length) return;
+        _searchController.clear();
+        setState(() => _romIndex = 0);
+        _rommProvider.selectPlatform(platforms[_platformIndex]);
+        break;
+      case _BrowseView.collections:
+        final collections = _rommProvider.collections;
+        if (collections.isEmpty || _collectionIndex >= collections.length) {
+          return;
+        }
+        _searchController.clear();
+        setState(() => _romIndex = 0);
+        _rommProvider.selectCollection(collections[_collectionIndex]);
+        break;
+    }
+  }
+
+  /// Opens one of the source-menu destinations, loading its data on demand.
+  void _openSource(_BrowseView target) {
+    setState(() => _view = target);
+    if (target == _BrowseView.platforms) {
+      _rommProvider.loadPlatforms();
+    } else if (target == _BrowseView.collections) {
+      _rommProvider.loadCollections();
+    }
+  }
+
+  void _handleBack() {
+    if (_inRomGrid) {
+      _returnToList();
+    } else if (_view != _BrowseView.source) {
+      // From a platform/collection list, step back to the source menu.
+      setState(() => _view = _BrowseView.source);
+    } else {
+      Navigator.of(context).maybePop();
+    }
+  }
+
+  /// Drops back from the ROM grid to the list it was opened from, restoring that
+  /// list's scroll to the drilled-into row (the list is rebuilt fresh, so the
+  /// offset is set explicitly).
+  void _returnToList() {
+    final wasCollection = _rommProvider.currentCollection != null;
+    _searchController.clear();
+    setState(() {
+      _romIndex = 0;
+      _view = wasCollection ? _BrowseView.collections : _BrowseView.platforms;
+    });
+    _rommProvider.backToPlatforms();
+    if (wasCollection) {
+      _scrollListTo(_collectionScroll, _collectionIndex);
+    } else {
+      _scrollListTo(_platformScroll, _platformIndex);
+    }
+  }
+
+  void _scrollListTo(ScrollController controller, int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.hasClients) return;
+      final pos = controller.position;
+      final target =
+          (index * _platformExtent) -
+          (pos.viewportDimension - _platformExtent) / 2;
+      pos.jumpTo(target.clamp(pos.minScrollExtent, pos.maxScrollExtent));
+    });
+  }
+
+  /// Pages in more ROMs when the selection nears the end of the loaded set.
+  void _maybeLoadMore() {
+    final n = _rommProvider.roms.length;
+    if (_rommProvider.romsHasMore &&
+        !_rommProvider.loadingRoms &&
+        _romIndex >= n - _romColumns * 2) {
+      _rommProvider.loadMoreRoms();
+    }
+  }
+
+  void _scrollIntoView(GlobalKey? key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = key?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: 0.5,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = context.watch<RommProvider>();
-    // While a platform is open, "back" drills out to the platform list rather
-    // than popping the whole screen; only the platform list exits to settings.
-    final atPlatformList = provider.currentPlatform == null;
+    // Only the source menu exits the screen; deeper views step back one level.
+    final atRoot = !_inRomGrid && _view == _BrowseView.source;
 
     return PopScope(
-      canPop: atPlatformList,
+      canPop: atRoot,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) provider.backToPlatforms();
+        if (!didPop) _handleBack();
       },
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -137,17 +397,10 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Symbols.arrow_back_rounded),
-            onPressed: () {
-              if (provider.currentPlatform != null) {
-                provider.backToPlatforms();
-              } else {
-                Navigator.of(context).maybePop();
-              }
-            },
+            onPressed: _handleBack,
           ),
           title: Text(
-            provider.currentPlatform?.name ??
-                AppLocale.rommLibrary.getString(context),
+            _appBarTitle(provider),
             style: TextStyle(fontSize: 16.r, fontWeight: FontWeight.bold),
           ),
         ),
@@ -160,13 +413,191 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
                 AppLocale.rommNotConnected.getString(context),
               );
             }
-            if (provider.currentPlatform == null) {
-              return _buildPlatformList(theme, provider);
+            if (_inRomGrid) {
+              return _buildRomGrid(theme, provider);
             }
-            return _buildRomGrid(theme, provider);
+            switch (_view) {
+              case _BrowseView.source:
+                return _buildSourceMenu(theme);
+              case _BrowseView.platforms:
+                return _buildPlatformList(theme, provider);
+              case _BrowseView.collections:
+                return _buildCollectionList(theme, provider);
+            }
           },
         ),
       ),
+    );
+  }
+
+  String _appBarTitle(RommProvider provider) {
+    if (_inRomGrid) {
+      return provider.currentPlatform?.name ??
+          provider.currentCollection?.name ??
+          AppLocale.rommLibrary.getString(context);
+    }
+    switch (_view) {
+      case _BrowseView.platforms:
+        return AppLocale.rommPlatforms.getString(context);
+      case _BrowseView.collections:
+        return AppLocale.rommCollections.getString(context);
+      case _BrowseView.source:
+        return AppLocale.rommLibrary.getString(context);
+    }
+  }
+
+  // ── Source menu ─────────────────────────────────────────────────────────────
+
+  Widget _buildSourceMenu(ThemeData theme) {
+    return ListView(
+      padding: EdgeInsets.all(12.r),
+      children: [
+        for (var i = 0; i < _sourceItems.length; i++)
+          _sourceTile(theme, i, _sourceItems[i]),
+      ],
+    );
+  }
+
+  Widget _sourceTile(ThemeData theme, int index, _BrowseView target) {
+    final scheme = theme.colorScheme;
+    final isFocused = _sourceIndex == index;
+    final isCollections = target == _BrowseView.collections;
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4.r),
+      decoration: BoxDecoration(
+        color: isFocused
+            ? scheme.primary.withValues(alpha: 0.18)
+            : scheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isFocused ? scheme.primary : Colors.transparent,
+          width: 2.r,
+        ),
+        boxShadow: isFocused
+            ? [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8.r,
+                  spreadRadius: 1.r,
+                ),
+              ]
+            : null,
+      ),
+      child: ListTile(
+        leading: Icon(
+          isCollections
+              ? Symbols.collections_bookmark_rounded
+              : Symbols.dashboard_rounded,
+          color: scheme.primary,
+          size: 28.r,
+        ),
+        title: Text(
+          isCollections
+              ? AppLocale.rommCollections.getString(context)
+              : AppLocale.rommPlatforms.getString(context),
+          style: TextStyle(fontSize: 14.r, fontWeight: FontWeight.w600),
+        ),
+        trailing: Icon(
+          Symbols.chevron_right_rounded,
+          color: isFocused ? scheme.primary : null,
+        ),
+        onTap: () {
+          setState(() => _sourceIndex = index);
+          _openSource(target);
+        },
+      ),
+    );
+  }
+
+  // ── Collection list ─────────────────────────────────────────────────────────
+
+  Widget _buildCollectionList(ThemeData theme, RommProvider provider) {
+    if (provider.loadingCollections && provider.collections.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (provider.collections.isEmpty) {
+      return _centeredMessage(
+        theme,
+        Symbols.collections_bookmark_rounded,
+        AppLocale.rommNoCollections.getString(context),
+      );
+    }
+    _collectionIndex = _collectionIndex.clamp(
+      0,
+      provider.collections.length - 1,
+    );
+    final scheme = theme.colorScheme;
+    return ListView.builder(
+      controller: _collectionScroll,
+      itemExtent: _platformExtent,
+      padding: EdgeInsets.all(12.r),
+      itemCount: provider.collections.length,
+      itemBuilder: (context, index) {
+        final collection = provider.collections[index];
+        final isFocused = _collectionIndex == index;
+        return Container(
+          key: _collectionKeys.putIfAbsent(index, GlobalKey.new),
+          margin: EdgeInsets.symmetric(vertical: 4.r),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? scheme.primary.withValues(alpha: 0.18)
+                : scheme.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: isFocused ? scheme.primary : Colors.transparent,
+              width: 2.r,
+            ),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8.r,
+                      spreadRadius: 1.r,
+                    ),
+                  ]
+                : null,
+          ),
+          child: ListTile(
+            leading: Container(
+              width: 40.r,
+              height: 40.r,
+              decoration: BoxDecoration(
+                color: scheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                collection.isVirtual
+                    ? Symbols.auto_awesome_motion_rounded
+                    : Symbols.collections_bookmark_rounded,
+                color: scheme.primary,
+                size: 22.r,
+              ),
+            ),
+            title: Text(
+              collection.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13.r, fontWeight: FontWeight.w500),
+            ),
+            subtitle: Text(
+              '${collection.romCount}',
+              style: TextStyle(fontSize: 10.r),
+            ),
+            trailing: Icon(
+              Symbols.chevron_right_rounded,
+              color: isFocused ? scheme.primary : null,
+            ),
+            onTap: () {
+              _searchController.clear();
+              setState(() {
+                _collectionIndex = index;
+                _romIndex = 0;
+              });
+              provider.selectCollection(collection);
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -210,14 +641,38 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         AppLocale.rommNoPlatforms.getString(context),
       );
     }
+    _platformIndex = _platformIndex.clamp(0, provider.platforms.length - 1);
+    final scheme = theme.colorScheme;
     return ListView.builder(
+      controller: _platformScroll,
+      itemExtent: _platformExtent,
       padding: EdgeInsets.all(12.r),
       itemCount: provider.platforms.length,
       itemBuilder: (context, index) {
         final platform = provider.platforms[index];
-        return Card(
-          color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        final isFocused = _platformIndex == index;
+        return Container(
+          key: _platformKeys.putIfAbsent(index, GlobalKey.new),
           margin: EdgeInsets.symmetric(vertical: 4.r),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? scheme.primary.withValues(alpha: 0.18)
+                : scheme.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: isFocused ? scheme.primary : Colors.transparent,
+              width: 2.r,
+            ),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8.r,
+                      spreadRadius: 1.r,
+                    ),
+                  ]
+                : null,
+          ),
           child: ListTile(
             leading: _PlatformIcon(
               platform: platform,
@@ -231,9 +686,16 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
               '${platform.romCount}',
               style: TextStyle(fontSize: 10.r),
             ),
-            trailing: const Icon(Symbols.chevron_right_rounded),
+            trailing: Icon(
+              Symbols.chevron_right_rounded,
+              color: isFocused ? scheme.primary : null,
+            ),
             onTap: () {
               _searchController.clear();
+              setState(() {
+                _platformIndex = index;
+                _romIndex = 0;
+              });
               provider.selectPlatform(platform);
             },
           ),
@@ -301,36 +763,55 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     }
 
     final romFolders = context.watch<SqliteConfigProvider>().config.romFolders;
+    _romIndex = _romIndex.clamp(0, provider.roms.length - 1);
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (scroll) {
-        if (scroll.metrics.pixels >= scroll.metrics.maxScrollExtent - 200.r &&
-            provider.romsHasMore &&
-            !provider.loadingRoms) {
-          provider.loadMoreRoms();
-        }
-        return false;
+    const cellExtent = 140.0;
+    final spacing = 10.r;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Derive the real column count so GridNavUtils moves the selection by
+        // exactly one visual row/column.
+        final usableWidth =
+            constraints.maxWidth - 24.r; // 12.r padding each side
+        _romColumns = ((usableWidth + spacing) / (cellExtent.r + spacing))
+            .floor()
+            .clamp(1, 99);
+
+        return NotificationListener<ScrollNotification>(
+          onNotification: (scroll) {
+            if (scroll.metrics.pixels >=
+                    scroll.metrics.maxScrollExtent - 200.r &&
+                provider.romsHasMore &&
+                !provider.loadingRoms) {
+              provider.loadMoreRoms();
+            }
+            return false;
+          },
+          child: GridView.builder(
+            padding: EdgeInsets.all(12.r),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _romColumns,
+              childAspectRatio: 0.62,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+            ),
+            itemCount: provider.roms.length,
+            itemBuilder: (context, index) {
+              final rom = provider.roms[index];
+              return _RomCard(
+                key: _romKeys.putIfAbsent(index, GlobalKey.new),
+                rom: rom,
+                provider: provider,
+                romFolders: romFolders,
+                isFocused: _romIndex == index,
+                onDownload: () => _startDownload(rom),
+                onCancel: () => provider.cancelDownload(rom.id),
+                onTap: () => setState(() => _romIndex = index),
+              );
+            },
+          ),
+        );
       },
-      child: GridView.builder(
-        padding: EdgeInsets.all(12.r),
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 140.r,
-          childAspectRatio: 0.62,
-          crossAxisSpacing: 10.r,
-          mainAxisSpacing: 10.r,
-        ),
-        itemCount: provider.roms.length,
-        itemBuilder: (context, index) {
-          final rom = provider.roms[index];
-          return _RomCard(
-            rom: rom,
-            provider: provider,
-            romFolders: romFolders,
-            onDownload: () => _startDownload(rom),
-            onCancel: () => provider.cancelDownload(rom.id),
-          );
-        },
-      ),
     );
   }
 }
@@ -340,15 +821,20 @@ class _RomCard extends StatefulWidget {
   final RommRom rom;
   final RommProvider provider;
   final List<String> romFolders;
+  final bool isFocused;
   final VoidCallback onDownload;
   final VoidCallback onCancel;
+  final VoidCallback onTap;
 
   const _RomCard({
+    super.key,
     required this.rom,
     required this.provider,
     required this.romFolders,
+    required this.isFocused,
     required this.onDownload,
     required this.onCancel,
+    required this.onTap,
   });
 
   @override
@@ -380,29 +866,57 @@ class _RomCardState extends State<_RomCard> {
     final coverUrl = widget.provider.service.coverUrl(widget.rom);
     final download = widget.provider.downloadFor(widget.rom.id);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildCover(theme, coverUrl),
-                _buildOverlay(theme, download),
-              ],
+    final scheme = theme.colorScheme;
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: widget.isFocused ? scheme.primary : Colors.transparent,
+                  width: 2.r,
+                ),
+                boxShadow: widget.isFocused
+                    ? [
+                        BoxShadow(
+                          color: scheme.primary.withValues(alpha: 0.3),
+                          blurRadius: 8.r,
+                          spreadRadius: 1.r,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6.r),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildCover(theme, coverUrl),
+                    _buildOverlay(theme, download),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        SizedBox(height: 4.r),
-        Text(
-          widget.rom.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 10.r, color: theme.colorScheme.onSurface),
-        ),
-      ],
+          SizedBox(height: 4.r),
+          Text(
+            widget.rom.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.r,
+              fontWeight: widget.isFocused
+                  ? FontWeight.w700
+                  : FontWeight.normal,
+              color: widget.isFocused ? scheme.primary : scheme.onSurface,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
