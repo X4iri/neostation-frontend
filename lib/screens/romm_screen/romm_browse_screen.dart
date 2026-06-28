@@ -1154,15 +1154,16 @@ class _PlatformIconState extends State<_PlatformIcon> {
     );
 
     if (_svg != null) {
-      // RomM's icons use dark fills meant for a light backing, so render them
-      // on a light chip to stay visible on the dark UI.
-      return _chip(SvgPicture.string(_svg!, fit: BoxFit.contain));
+      // RomM's platform icons are full-colour illustrations (their <style> class
+      // fills are inlined in RommService.fetchSvg). Render the art as-is, with
+      // no white backing, so it sits cleanly on the dark UI.
+      return _frame(SvgPicture.string(_svg!, fit: BoxFit.contain));
     }
 
     // No SVG (yet or 404): try the IGDB raster logo before the generic icon.
     final logoUrl = widget.service.platformLogoUrl(widget.platform);
     if (_loaded && logoUrl != null) {
-      return _chip(
+      return _frame(
         Image.network(
           logoUrl,
           fit: BoxFit.contain,
@@ -1177,16 +1178,9 @@ class _PlatformIconState extends State<_PlatformIcon> {
     return fallback;
   }
 
-  Widget _chip(Widget child) {
-    return Container(
-      width: 40.r,
-      height: 40.r,
-      padding: EdgeInsets.all(4.r),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: child,
-    );
+  /// Frames an icon at a consistent size with no background — the artwork
+  /// (colour SVG or logo) carries its own colours on the dark surface.
+  Widget _frame(Widget child) {
+    return SizedBox(width: 40.r, height: 40.r, child: child);
   }
 }
