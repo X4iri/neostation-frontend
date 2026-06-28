@@ -996,7 +996,7 @@ class _RomCardState extends State<_RomCard> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 6.r, vertical: 3.r),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Colors.black.withValues(alpha: 0.82),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Row(
