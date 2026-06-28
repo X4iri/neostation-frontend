@@ -920,6 +920,7 @@ class _RomCardState extends State<_RomCard> {
                   fit: StackFit.expand,
                   children: [
                     _buildCover(theme, coverUrl),
+                    if (widget.rom.hasRetroAchievements) _buildRaBadge(),
                     _buildOverlay(theme, download),
                   ],
                 ),
@@ -968,6 +969,60 @@ class _RomCardState extends State<_RomCard> {
           Symbols.videogame_asset_rounded,
           size: 28.r,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+        ),
+      ),
+    );
+  }
+
+  /// Top-left badge showing the ROM has RetroAchievements and, when RomM has
+  /// synced the user's progression, their earned/total count. The download
+  /// badge owns the bottom-right corner, so this sits top-left.
+  Widget _buildRaBadge() {
+    final rom = widget.rom;
+    final earned = widget.provider.raEarnedFor(rom);
+    final total = rom.raTotalAchievements;
+    final hasProgress = earned != null;
+    final label = hasProgress ? '$earned/$total' : '$total';
+
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Padding(
+          padding: EdgeInsets.all(4.r),
+          child: Semantics(
+            label: hasProgress
+                ? 'RetroAchievements: $earned of $total earned'
+                : 'RetroAchievements: $total achievements',
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.r, vertical: 3.r),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Symbols.emoji_events_rounded,
+                    size: 14.r,
+                    // Dim the trophy when progress isn't synced.
+                    color: Colors.orangeAccent.withValues(
+                      alpha: hasProgress ? 1.0 : 0.6,
+                    ),
+                  ),
+                  SizedBox(width: 3.r),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.r,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

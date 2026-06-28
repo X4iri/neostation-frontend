@@ -283,6 +283,38 @@ class RommService {
         .toList();
   }
 
+  /// Returns the current user's RetroAchievements progression as a map of
+  /// RA game id → earned achievement count (`num_awarded`).
+  ///
+  /// RomM exposes per-user RA progress on the user (`GET /api/users/me` →
+  /// `ra_progression.results`, each keyed by `rom_ra_id`), not on individual
+  /// ROMs. Returns an empty map when the user hasn't linked/synced RA.
+  Future<Map<int, int>> getRaProgression() async {
+    final resp = await _authedGet('/api/users/me');
+    return parseRaProgression(resp.body);
+  }
+
+  /// Parses `/api/users/me` JSON into a map of RA game id → earned count.
+  /// Extracted for testability; tolerates missing/partial progression data.
+  static Map<int, int> parseRaProgression(String body) {
+    final result = <int, int>{};
+    final decoded = jsonDecode(body);
+    if (decoded is! Map) return result;
+    final progression = decoded['ra_progression'];
+    if (progression is! Map) return result;
+    final results = progression['results'];
+    if (results is! List) return result;
+    for (final entry in results) {
+      if (entry is! Map) continue;
+      final gameId = (entry['rom_ra_id'] as num?)?.toInt();
+      final awarded = (entry['num_awarded'] as num?)?.toInt();
+      if (gameId != null && awarded != null) {
+        result[gameId] = awarded;
+      }
+    }
+    return result;
+  }
+
   /// Returns the user's collections (`GET /api/collections`). Tolerates both a
   /// bare list and a `{items: [...]}` envelope; an empty/`{}` body yields [].
   Future<List<RommCollection>> getCollections() async {

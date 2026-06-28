@@ -81,6 +81,10 @@ class RommProvider extends ChangeNotifier {
 
   final Map<int, RommDownload> _downloads = {};
 
+  /// Current user's RetroAchievements progress: RA game id → earned count.
+  /// Loaded best-effort from `/api/users/me`; empty when RA isn't linked.
+  Map<int, int> _raEarnedByGameId = {};
+
   /// Systems that received at least one successful download this session, keyed
   /// by folder name. Used to refresh the library when the browse screen closes.
   final Map<String, SystemModel> _downloadedSystems = {};
@@ -108,6 +112,14 @@ class RommProvider extends ChangeNotifier {
   RommService get service => _service;
   Map<int, RommDownload> get downloads => Map.unmodifiable(_downloads);
   RommDownload? downloadFor(int romId) => _downloads[romId];
+
+  /// The user's earned achievement count for [rom], or null when the game has
+  /// no RA set or the user's RA progress hasn't been synced in RomM.
+  int? raEarnedFor(RommRom rom) {
+    final id = rom.raId;
+    if (id == null) return null;
+    return _raEarnedByGameId[id];
+  }
 
   /// Systems that received a successful download this session (for an on-exit
   /// library refresh).
@@ -263,6 +275,7 @@ class RommProvider extends ChangeNotifier {
     _romsHasMore = false;
     _searchTerm = '';
     _downloads.clear();
+    _raEarnedByGameId = {};
     _downloadedSystems.clear();
     notifyListeners();
   }
@@ -280,6 +293,8 @@ class RommProvider extends ChangeNotifier {
       _platforms = await _service.getPlatforms();
       // Persist any refreshed token so it survives restarts.
       await _persistRefreshedTokens();
+      // RA progress is supplementary; never let it block platform browsing.
+      await _loadRaProgression();
     } on RommException catch (e) {
       _lastError = e.message;
     } catch (e) {
@@ -727,5 +742,15 @@ class RommProvider extends ChangeNotifier {
       refreshToken: _service.refreshToken,
       tokenExpires: _service.tokenExpiresMs,
     );
+  }
+
+  /// Best-effort fetch of the user's RetroAchievements progress. Failures are
+  /// swallowed so a missing/unconfigured RA link never breaks library browsing.
+  Future<void> _loadRaProgression() async {
+    try {
+      _raEarnedByGameId = await _service.getRaProgression();
+    } catch (e) {
+      _log.w('RomM RA progression fetch failed (non-fatal): $e');
+    }
   }
 }

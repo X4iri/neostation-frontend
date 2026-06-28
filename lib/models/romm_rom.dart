@@ -55,6 +55,17 @@ class RommRom {
   /// Relative or absolute cover URL (may need the server base URL + auth).
   final String? urlCover;
 
+  /// RetroAchievements game id RomM matched this ROM to, or null if none.
+  /// A non-null id means the game has a RetroAchievements set.
+  ///
+  /// Per-user earned progress is NOT carried on the ROM: RomM exposes it on the
+  /// current user (`/api/users/me` → `ra_progression.results`, keyed by this
+  /// [raId]). See `RommService.getRaProgression` / `RommProvider.raEarnedFor`.
+  final int? raId;
+
+  /// Total number of achievements in the RA set (0 when unknown / no set).
+  final int raTotalAchievements;
+
   const RommRom({
     required this.id,
     required this.name,
@@ -66,10 +77,15 @@ class RommRom {
     this.fsSizeBytes = 0,
     this.files = const [],
     this.urlCover,
+    this.raId,
+    this.raTotalAchievements = 0,
   });
 
   /// True when RomM serves this ROM as a multi-file zip archive.
   bool get isMultiFile => files.length > 1;
+
+  /// True when this ROM has a RetroAchievements set (per RomM metadata).
+  bool get hasRetroAchievements => raId != null && raTotalAchievements > 0;
 
   factory RommRom.fromJson(Map<String, dynamic> json) {
     final filesJson = json['files'];
@@ -94,6 +110,21 @@ class RommRom {
       fsSizeBytes: (json['fs_size_bytes'] as num?)?.toInt() ?? 0,
       files: files,
       urlCover: json['url_cover']?.toString(),
+      raId: (json['ra_id'] as num?)?.toInt(),
+      raTotalAchievements: _parseRaTotal(json),
     );
+  }
+
+  /// Total achievements in the RA set. Prefers the length of the merged
+  /// metadata's achievement list, falling back to numeric count fields.
+  static int _parseRaTotal(Map<String, dynamic> json) {
+    final meta = json['merged_ra_metadata'];
+    if (meta is Map) {
+      final ach = meta['achievements'];
+      if (ach is List) return ach.length;
+      final maxPossible = (meta['max_possible'] as num?)?.toInt();
+      if (maxPossible != null) return maxPossible;
+    }
+    return (json['num_achievements'] as num?)?.toInt() ?? 0;
   }
 }
