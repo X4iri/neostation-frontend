@@ -186,6 +186,11 @@ class GameService {
   /// Callback triggered when a game session terminates on Android.
   static Function(int)? _onGameReturnedCallback;
 
+  /// Callback for raw device screen on/off, registered by a context-aware
+  /// widget so context-only services (e.g. NotificationService) can be
+  /// suspended while locked. `true` = screen on, `false` = screen off.
+  static void Function(bool screenOn)? onScreenStateChanged;
+
   /// Callback triggered when the game process exits on desktop platforms.
   static Function()? _onProcessExitCallback;
 
@@ -217,14 +222,17 @@ class GameService {
         }
       } else if (call.method == 'onDeviceScreenOff') {
         // As a HOME launcher we are not paused on lock, so this is the only
-        // reliable signal to release the audio engine while the screen is off.
+        // reliable signal to release background resources while locked.
         MusicPlayerService().appPaused();
+        onScreenStateChanged?.call(false);
       } else if (call.method == 'onDeviceScreenOn') {
         // Skip restore while a game owns the foreground — the game-return
-        // (lifecycle resumed) path re-opens the engine. Restoring here would
-        // reopen it (and restart music) behind the running emulator.
+        // (lifecycle resumed) path re-opens everything. Restoring here would
+        // reopen the audio engine (and restart music/websocket) behind the
+        // running emulator.
         if (!_isGameLaunched) {
           MusicPlayerService().appResumed();
+          onScreenStateChanged?.call(true);
         }
       }
     });
