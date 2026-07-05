@@ -186,15 +186,15 @@ class SqliteConfigService {
             3,
         nowPlayingDimLevel:
             (int.tryParse(
-                  userConfig?['now_playing_dim_level']?.toString() ?? '100',
-                ) ??
-                100)
+                      userConfig?['now_playing_dim_level']?.toString() ?? '100',
+                    ) ??
+                    100)
                 .clamp(0, 100),
         fanartDimLevel:
             (int.tryParse(
-                  userConfig?['fanart_dim_level']?.toString() ?? '25',
-                ) ??
-                25)
+                      userConfig?['fanart_dim_level']?.toString() ?? '25',
+                    ) ??
+                    25)
                 .clamp(0, 100),
       );
     } catch (e) {

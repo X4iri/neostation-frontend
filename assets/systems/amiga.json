@@ -54,6 +54,7 @@
   "emulators": [
     {
       "name": "RetroArch64 puae",
+      "default_core": true,
       "unique_id": "amiga.ra64.puae",
       "description": "Supported extensions: 7z, adf, adz, ccd, chd, cue, dms, fdi, hdf, hdz, info, ipf, iso, lha, m3u, mds, nrg, rp9, slave, uae, zip.",
       "is_retroachievements_compatible": false,
@@ -76,6 +77,7 @@
     },
     {
       "name": "RetroArch32 puae",
+      "default_core": true,
       "unique_id": "amiga.ra32.puae",
       "description": "Supported extensions: 7z, adf, adz, ccd, chd, cue, dms, fdi, hdf, hdz, info, ipf, iso, lha, m3u, mds, nrg, rp9, slave, uae, zip.",
       "is_retroachievements_compatible": false,
@@ -98,7 +100,7 @@
     },
     {
       "name": "RetroArch puae",
-      "default": true,
+      "default_core": true,
       "unique_id": "amiga.ra.puae",
       "description": "Supported extensions: 7z, adf, adz, ccd, chd, cue, dms, fdi, hdf, hdz, info, ipf, iso, lha, m3u, mds, nrg, rp9, slave, uae, zip.",
       "is_retroachievements_compatible": false,

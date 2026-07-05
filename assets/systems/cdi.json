@@ -32,6 +32,7 @@
   "emulators": [
     {
       "name": "Retroarch 64 same_cdi",
+      "default_core": true,
       "unique_id": "cdi.ra64.same_cdi",
       "description": "Supported extensions: cue, chd, iso",
       "is_retroachievements_compatible": false,
@@ -43,6 +44,7 @@
     },
     {
       "name": "Retroarch32 same_cdi",
+      "default_core": true,
       "unique_id": "cdi.ra32.same_cdi",
       "description": "Supported extensions: cue, chd, iso",
       "is_retroachievements_compatible": false,
@@ -54,6 +56,7 @@
     },
     {
       "name": "Retroarch same_cdi",
+      "default_core": true,
       "unique_id": "cdi.ra.same_cdi",
       "description": "Supported extensions: cue, chd, iso",
       "is_retroachievements_compatible": false,

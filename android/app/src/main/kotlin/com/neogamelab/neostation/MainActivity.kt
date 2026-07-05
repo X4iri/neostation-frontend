@@ -365,6 +365,14 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
                         result.error("INVALID_ARGUMENTS", "File path is required", null)
                     }
                 }
+                "deleteSafFile" -> {
+                    val uriString = call.argument<String>("uri")
+                    if (uriString != null) {
+                        deleteSafFile(uriString, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "URI is required", null)
+                    }
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -1025,6 +1033,34 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
                 runOnUiThread {
                     result.error("LIST_FAILED", e.message, null)
                 }
+            }
+        }.start()
+    }
+
+    private fun deleteSafFile(uriString: String, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val uri = Uri.parse(uriString)
+
+                // Determine the document ID: supports both tree URIs and document URIs
+                val docId = if (android.provider.DocumentsContract.isDocumentUri(this, uri)) {
+                    android.provider.DocumentsContract.getDocumentId(uri)
+                } else {
+                    android.provider.DocumentsContract.getTreeDocumentId(uri)
+                }
+
+                // Build the child document URI if needed
+                val deleteUri = if (android.provider.DocumentsContract.isTreeUri(uri)) {
+                    android.provider.DocumentsContract.buildDocumentUriUsingTree(uri, docId)
+                } else {
+                    uri
+                }
+
+                val deleted = android.provider.DocumentsContract.deleteDocument(contentResolver, deleteUri)
+                runOnUiThread { result.success(deleted) }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "deleteSafFile error: ${e.message}")
+                runOnUiThread { result.error("DELETE_FAILED", e.message, null) }
             }
         }.start()
     }

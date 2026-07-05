@@ -438,7 +438,9 @@ class SecondarySettingsContentState extends State<SecondarySettingsContent>
           _buildValueRow(
             index: 3,
             title: AppLocale.nowPlayingDimDarkness.getString(context),
-            subtitle: AppLocale.nowPlayingDimDarknessSubtitle.getString(context),
+            subtitle: AppLocale.nowPlayingDimDarknessSubtitle.getString(
+              context,
+            ),
             valueText: '${config.nowPlayingDimLevel}%',
             enabled: config.nowPlayingDimDelay > 0,
             onTap: () => _cycleDimLevel(provider),
@@ -450,7 +452,9 @@ class SecondarySettingsContentState extends State<SecondarySettingsContent>
           _buildToggleRow(
             index: 4,
             title: AppLocale.nowPlayingDockEnabled.getString(context),
-            subtitle: AppLocale.nowPlayingDockEnabledSubtitle.getString(context),
+            subtitle: AppLocale.nowPlayingDockEnabledSubtitle.getString(
+              context,
+            ),
             value: config.dockEnabled,
             onChanged: (v) => provider.updateDockEnabled(v),
           ),

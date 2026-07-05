@@ -113,8 +113,9 @@ void main() {
 
     test('applies documented defaults for a minimal payload', () {
       // Only the one required field is present; everything else defaults.
-      final restored =
-          SecondaryDisplayStateData.fromJson(const {'systemName': 'nes'});
+      final restored = SecondaryDisplayStateData.fromJson(const {
+        'systemName': 'nes',
+      });
 
       expect(restored.systemName, 'nes');
       expect(restored.gameImageBytes, isNull);

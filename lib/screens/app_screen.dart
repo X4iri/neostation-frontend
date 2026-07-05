@@ -188,12 +188,19 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
   /// Detects which RetroArch variant the user has installed on Android and sets
   /// it as the default package for all systems. Priority order:
   ///   com.retroarch.aarch64 > com.retroarch > com.retroarch.ra32
+  ///
+  /// If no RetroArch is installed, clears RetroArch defaults so standalone
+  /// defaults (marked with [default_standalone] in JSON) take effect.
   Future<void> _fixRetroarchAndroidDefault() async {
     if (!Platform.isAndroid) return;
 
     try {
       final packages = await EmulatorRepository.getAndroidRetroArchPackages();
-      if (packages.isEmpty) return;
+      if (packages.isEmpty) {
+        await EmulatorRepository.clearRetroArchDefaultsForAndroid();
+        _log.i('Android: No RetroArch found, cleared RetroArch defaults');
+        return;
+      }
 
       const priorityOrder = [
         'com.retroarch.aarch64',

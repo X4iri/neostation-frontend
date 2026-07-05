@@ -112,6 +112,7 @@ class SecondaryDisplayStateData {
   /// cache and keys its widgets on the path — needs this to know it must evict
   /// and re-decode rather than show the stale cached bitmap.
   final int mediaRevision;
+
   /// Whether the RetroAchievements panel should be rendered (in-game view).
   final bool showAchievementPanel;
 

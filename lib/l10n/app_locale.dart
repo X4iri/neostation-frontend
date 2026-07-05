@@ -801,6 +801,10 @@ mixin AppLocale {
       'migrating_user_data_complete';
   static const String migratingUserDataError = 'migrating_user_data_error';
   static const String migratingFiles = 'migrating_files';
+  static const String deleteGame = 'delete_game';
+  static const String deleteGameConfirm = 'delete_game_confirm';
+  static const String deleteGameConfirmBody = 'delete_game_confirm_body';
+  static const String deleteGameSubtitle = 'delete_game_subtitle';
   static const String restartRequired = 'restart_required';
   static const String restartRequiredBody = 'restart_required_body';
   static const String userDataLocationUpdated = 'user_data_location_updated';

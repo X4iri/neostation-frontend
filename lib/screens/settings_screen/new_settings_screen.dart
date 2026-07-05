@@ -97,7 +97,9 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
   /// Display category is included only while a secondary display is active.
   void _initializeMenuItems() {
     _menuItems.clear();
-    _menuIncludesSecondary = context.read<SqliteConfigProvider>().isSecondaryActive;
+    _menuIncludesSecondary = context
+        .read<SqliteConfigProvider>()
+        .isSecondaryActive;
 
     _menuItems.add(
       SettingsMenuItem(

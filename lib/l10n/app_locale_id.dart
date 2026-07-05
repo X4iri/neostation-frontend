@@ -33,7 +33,7 @@ const Map<String, dynamic> appLocaleId = {
 
   AppLocale.settings: 'Pengaturan',
   AppLocale.general: 'Umum',
-  AppLocale.secondaryDisplay: 'Secondary Screen',
+  AppLocale.secondaryDisplay: 'Layar Sekunder',
   AppLocale.directories: 'Direktori',
   AppLocale.palettes: 'Palet',
   AppLocale.neoThemes: 'Tema',
@@ -101,22 +101,27 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.errorConfiguringRetroArchPath:
       'Kesalahan saat mengonfigurasi jalur RetroArch: {error}',
   AppLocale.scanOnStartup: 'Pindai folder saat mulai',
-  AppLocale.nowPlayingDimAfter: 'Dim Now Playing after',
-  AppLocale.nowPlayingDimAfterSubtitle: 'Inactivity before the in-game panel dims on the secondary screen',
-  AppLocale.nowPlayingDimDarkness: 'Dim darkness',
-  AppLocale.nowPlayingDimDarknessSubtitle: 'How dark the in-game panel goes when it dims',
-  AppLocale.nowPlayingDimNever: 'Never',
-  AppLocale.nowPlayingDockEnabled: 'App dock',
-  AppLocale.nowPlayingDockEnabledSubtitle: 'Show the app dock on the secondary Now Playing panel',
-  AppLocale.nowPlayingDockSlots: 'Dock slots',
-  AppLocale.nowPlayingDockSlotsSubtitle: 'How many app slots the dock shows (1-5)',
-  AppLocale.nowPlayingFanartDim: 'Dim fanart',
-  AppLocale.nowPlayingFanartDimSubtitle: 'Darken the background art behind the logo so a busy fanart does not clash with it',
-  AppLocale.nowPlayingDimOff: 'Off',
-  AppLocale.secondarySectionNowPlaying: 'Now Playing panel',
-  AppLocale.secondarySectionDock: 'App dock',
-  AppLocale.screenshotAccess: 'Screenshot access',
-  AppLocale.screenshotAccessSubtitle: 'Allow the screenshot button to capture the main screen (opens Android accessibility settings)',
+  AppLocale.nowPlayingDimAfter: 'Redupkan Now Playing setelah',
+  AppLocale.nowPlayingDimAfterSubtitle:
+      'Waktu tidak aktif sebelum panel meredup di layar sekunder',
+  AppLocale.nowPlayingDimDarkness: 'Gelapnya peredupan',
+  AppLocale.nowPlayingDimDarknessSubtitle: 'Seberapa gelap panel saat meredup',
+  AppLocale.nowPlayingDimNever: 'Jangan Pernah',
+  AppLocale.nowPlayingDockEnabled: 'Dock aplikasi',
+  AppLocale.nowPlayingDockEnabledSubtitle:
+      'Tampilkan dock aplikasi di panel Now Playing sekunder',
+  AppLocale.nowPlayingDockSlots: 'Slot dock',
+  AppLocale.nowPlayingDockSlotsSubtitle:
+      'Berapa banyak slot aplikasi yang ditampilkan dock (1-5)',
+  AppLocale.nowPlayingFanartDim: 'Redupkan fanart',
+  AppLocale.nowPlayingFanartDimSubtitle:
+      'Gelapkan seni latar belakang di belakang logo agar fanart yang ramai tidak bertabrakan',
+  AppLocale.nowPlayingDimOff: 'Mati',
+  AppLocale.secondarySectionNowPlaying: 'Panel Now Playing',
+  AppLocale.secondarySectionDock: 'Dock aplikasi',
+  AppLocale.screenshotAccess: 'Akses tangkapan layar',
+  AppLocale.screenshotAccessSubtitle:
+      'Izinkan tombol tangkapan layar untuk menangkap layar utama (membuka pengaturan aksesibilitas Android)',
   AppLocale.scanOnStartupSubtitle:
       'Pindai folder ROM secara otomatis saat membuka aplikasi',
   AppLocale.ignoreHiddenFiles: 'Abaikan item tersembunyi',
@@ -599,7 +604,7 @@ const Map<String, dynamic> appLocaleId = {
       'Setiap folder sistem akan dianalisis untuk menghitung file ROM Anda.',
   AppLocale.step4ReadyToPlay: '4. Siap Bermain',
   AppLocale.step4Desc:
-      'Starte Spiele direkt aus deiner organisierten Bibliothek.',
+      'Luncurkan game langsung dari perpustakaan yang terorganisir.',
   AppLocale.timePlayedLabel: 'Waktu dimainkan: {time}',
   AppLocale.hour: 'jam',
   AppLocale.minute: 'menit',
@@ -813,4 +818,10 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+
+  AppLocale.deleteGame: 'Hapus Game',
+  AppLocale.deleteGameConfirm: 'Hapus Secara Permanen',
+  AppLocale.deleteGameConfirmBody:
+      'Ini akan menghapus permanen ROM game, data scraping, dan file media. Tindakan ini tidak dapat dibatalkan.',
+  AppLocale.deleteGameSubtitle: 'Menghapus permanen file ROM dari disk',
 };

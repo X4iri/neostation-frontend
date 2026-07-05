@@ -36,18 +36,18 @@ void main() {
       );
     });
 
-    test('keeps dots that belong to the title (only the last is extension)', () {
-      expect(
-        RetroAchievementsResolver.sanitizeRomName('Mega Man X.v1.1.smc'),
-        'Mega Man X.v1.1',
-      );
-    });
+    test(
+      'keeps dots that belong to the title (only the last is extension)',
+      () {
+        expect(
+          RetroAchievementsResolver.sanitizeRomName('Mega Man X.v1.1.smc'),
+          'Mega Man X.v1.1',
+        );
+      },
+    );
 
     test('handles a name with no extension', () {
-      expect(
-        RetroAchievementsResolver.sanitizeRomName('Contra'),
-        'Contra',
-      );
+      expect(RetroAchievementsResolver.sanitizeRomName('Contra'), 'Contra');
     });
   });
 

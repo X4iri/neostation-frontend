@@ -85,6 +85,7 @@ class GameDetailsCardList extends StatefulWidget {
   final VoidCallback? onShowRandomGame;
   final VoidCallback? onGameUpdated;
   final VoidCallback? onFavoriteToggled;
+  final void Function(String romname)? onGameDeleted;
 
   /// Callback to register the primary trigger action (standard Gamepad A).
   final Function(VoidCallback)? onRegisterTriggerAction;
@@ -132,6 +133,7 @@ class GameDetailsCardList extends StatefulWidget {
     this.onShowRandomGame,
     this.onGameUpdated,
     this.onFavoriteToggled,
+    this.onGameDeleted,
     this.onRegisterTriggerAction,
     this.onRegisterSecondaryAction,
     this.onRegisterIsPlayingGameBlocked,
@@ -866,6 +868,7 @@ class _GameDetailsCardListState extends State<GameDetailsCardList>
                 syncProvider: widget.syncProvider,
                 isAllMode: widget.isAllMode,
                 onGameUpdated: widget.onGameUpdated,
+                onGameDeleted: widget.onGameDeleted,
               ),
             if (_currentTab == DetailTab.achievements)
               GameDetailsAchievementsTab(

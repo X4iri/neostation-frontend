@@ -1070,7 +1070,9 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
     final bg = value.backgroundColor != null
         ? Color(value.backgroundColor!)
         : base.surface;
-    final fg = bg.computeLuminance() > 0.5 ? const Color(0xFF14161A) : Colors.white;
+    final fg = bg.computeLuminance() > 0.5
+        ? const Color(0xFF14161A)
+        : Colors.white;
     final accent = _contrastRatio(base.primary, bg) >= 3.0 ? base.primary : fg;
     return base.copyWith(surface: bg, onSurface: fg, primary: accent);
   }
@@ -1092,83 +1094,78 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-          _buildNowPlayingBoxart(value.gameBoxart),
-          SizedBox(width: 32.r),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'NOW PLAYING',
-                  style: TextStyle(
-                    color: scheme.primary,
-                    fontSize: 14.r,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 3.r,
+                _buildNowPlayingBoxart(value.gameBoxart),
+                SizedBox(width: 32.r),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'NOW PLAYING',
+                        style: TextStyle(
+                          color: scheme.primary,
+                          fontSize: 14.r,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 3.r,
+                        ),
+                      ),
+                      SizedBox(height: 12.r),
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 30.r,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.r),
+                      Text(
+                        value.systemName.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: scheme.onSurface.withValues(alpha: 0.7),
+                          fontSize: 16.r,
+                          letterSpacing: 1.5.r,
+                        ),
+                      ),
+                      SizedBox(height: 26.r),
+                      _buildNowPlayingStat(
+                        scheme: scheme,
+                        icon: Symbols.schedule_rounded,
+                        label: 'PLAY TIME',
+                        text: _formatPlayTime(value.playTimeSeconds),
+                      ),
+                      if (_sessionWatch.isRunning) ...[
+                        SizedBox(height: 12.r),
+                        _buildNowPlayingStat(
+                          scheme: scheme,
+                          icon: Symbols.timer_rounded,
+                          label: 'SESSION',
+                          text: _formatSessionTime(),
+                        ),
+                      ],
+                      SizedBox(height: 12.r),
+                      _buildNowPlayingStat(
+                        scheme: scheme,
+                        icon: Symbols.history_rounded,
+                        label: 'LAST PLAYED',
+                        text: _formatLastPlayed(value.lastPlayedMillis),
+                      ),
+                      if (value.screenshotAccessEnabled) ...[
+                        SizedBox(height: 28.r),
+                        _buildScreenshotButton(scheme),
+                      ],
+                    ],
                   ),
                 ),
-                SizedBox(height: 12.r),
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: scheme.onSurface,
-                    fontSize: 30.r,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8.r),
-                Text(
-                  value.systemName.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: scheme.onSurface.withValues(alpha: 0.7),
-                    fontSize: 16.r,
-                    letterSpacing: 1.5.r,
-                  ),
-                ),
-                SizedBox(height: 26.r),
-                _buildNowPlayingStat(
-                  scheme: scheme,
-                  icon: Symbols.schedule_rounded,
-                  label: 'PLAY TIME',
-                  text: _formatPlayTime(value.playTimeSeconds),
-                ),
-                if (_sessionWatch.isRunning) ...[
-                  SizedBox(height: 12.r),
-                  _buildNowPlayingStat(
-                    scheme: scheme,
-                    icon: Symbols.timer_rounded,
-                    label: 'SESSION',
-                    text: _formatSessionTime(),
-                  ),
-                ],
-                SizedBox(height: 12.r),
-                _buildNowPlayingStat(
-                  scheme: scheme,
-                  icon: Symbols.history_rounded,
-                  label: 'LAST PLAYED',
-                  text: _formatLastPlayed(value.lastPlayedMillis),
-                ),
-                if (value.screenshotAccessEnabled) ...[
-                  SizedBox(height: 28.r),
-                  _buildScreenshotButton(scheme),
-                ],
               ],
             ),
           ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildAppDock(value),
-          ),
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildAppDock(value)),
         ],
       ),
     );
@@ -1284,7 +1281,11 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
       builder: (context, snapshot) {
         final bytes = snapshot.data;
         if (bytes != null) {
-          return Image.memory(bytes, fit: BoxFit.contain, gaplessPlayback: true);
+          return Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            gaplessPlayback: true,
+          );
         }
         return Icon(
           Symbols.android_rounded,
@@ -1455,11 +1456,7 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
         SizedBox(width: 10.r),
         Text(
           '$label  ',
-          style: TextStyle(
-            color: muted,
-            fontSize: 14.r,
-            letterSpacing: 1.r,
-          ),
+          style: TextStyle(color: muted, fontSize: 14.r, letterSpacing: 1.r),
         ),
         Text(
           text,

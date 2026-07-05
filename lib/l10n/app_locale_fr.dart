@@ -33,7 +33,7 @@ const Map<String, dynamic> appLocaleFr = {
 
   AppLocale.settings: 'Paramètres',
   AppLocale.general: 'Général',
-  AppLocale.secondaryDisplay: 'Secondary Screen',
+  AppLocale.secondaryDisplay: 'Écran secondaire',
   AppLocale.directories: 'Répertoires',
   AppLocale.palettes: 'Palettes',
   AppLocale.neoThemes: 'Thèmes',
@@ -107,22 +107,28 @@ const Map<String, dynamic> appLocaleFr = {
   AppLocale.errorConfiguringRetroArchPath:
       'Erreur lors de la configuration du chemin RetroArch : {error}',
   AppLocale.scanOnStartup: 'Analyser les dossiers au démarrage',
-  AppLocale.nowPlayingDimAfter: 'Dim Now Playing after',
-  AppLocale.nowPlayingDimAfterSubtitle: 'Inactivity before the in-game panel dims on the secondary screen',
-  AppLocale.nowPlayingDimDarkness: 'Dim darkness',
-  AppLocale.nowPlayingDimDarknessSubtitle: 'How dark the in-game panel goes when it dims',
-  AppLocale.nowPlayingDimNever: 'Never',
-  AppLocale.nowPlayingDockEnabled: 'App dock',
-  AppLocale.nowPlayingDockEnabledSubtitle: 'Show the app dock on the secondary Now Playing panel',
-  AppLocale.nowPlayingDockSlots: 'Dock slots',
-  AppLocale.nowPlayingDockSlotsSubtitle: 'How many app slots the dock shows (1-5)',
-  AppLocale.nowPlayingFanartDim: 'Dim fanart',
-  AppLocale.nowPlayingFanartDimSubtitle: 'Darken the background art behind the logo so a busy fanart does not clash with it',
-  AppLocale.nowPlayingDimOff: 'Off',
-  AppLocale.secondarySectionNowPlaying: 'Now Playing panel',
-  AppLocale.secondarySectionDock: 'App dock',
-  AppLocale.screenshotAccess: 'Screenshot access',
-  AppLocale.screenshotAccessSubtitle: 'Allow the screenshot button to capture the main screen (opens Android accessibility settings)',
+  AppLocale.nowPlayingDimAfter: 'Atténuer Now Playing après',
+  AppLocale.nowPlayingDimAfterSubtitle:
+      'Inactivité avant que le panneau ne s\'atténue sur l\'écran secondaire',
+  AppLocale.nowPlayingDimDarkness: 'Niveau d\'atténuation',
+  AppLocale.nowPlayingDimDarknessSubtitle:
+      'À quel point le panneau s\'assombrit lorsqu\'il s\'atténue',
+  AppLocale.nowPlayingDimNever: 'Jamais',
+  AppLocale.nowPlayingDockEnabled: 'Dock d\'applications',
+  AppLocale.nowPlayingDockEnabledSubtitle:
+      'Afficher le dock d\'applications sur le panneau Now Playing secondaire',
+  AppLocale.nowPlayingDockSlots: 'Emplacements du dock',
+  AppLocale.nowPlayingDockSlotsSubtitle:
+      'Combien d\'emplacements le dock affiche (1-5)',
+  AppLocale.nowPlayingFanartDim: 'Atténuer le fanart',
+  AppLocale.nowPlayingFanartDimSubtitle:
+      'Assombrir l\'arrière-plan derrière le logo pour éviter les conflits visuels',
+  AppLocale.nowPlayingDimOff: 'Désactivé',
+  AppLocale.secondarySectionNowPlaying: 'Panneau Now Playing',
+  AppLocale.secondarySectionDock: 'Dock d\'applications',
+  AppLocale.screenshotAccess: 'Accès aux captures d\'écran',
+  AppLocale.screenshotAccessSubtitle:
+      'Permettre au bouton de capture de capturer l\'écran principal (ouvre les paramètres d\'accessibilité Android)',
   AppLocale.scanOnStartupSubtitle:
       'Analyse automatiquement les dossiers de ROMs à l’ouverture de l’application',
   AppLocale.ignoreHiddenFiles: 'Ignorer les éléments cachés',
@@ -838,4 +844,11 @@ const Map<String, dynamic> appLocaleFr = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+
+  AppLocale.deleteGame: 'Supprimer le jeu',
+  AppLocale.deleteGameConfirm: 'Supprimer définitivement',
+  AppLocale.deleteGameConfirmBody:
+      'Le fichier ROM, les données et médias scrapés seront définitivement supprimés. Cette action est irréversible.',
+  AppLocale.deleteGameSubtitle:
+      'Supprime définitivement le fichier ROM du disque',
 };

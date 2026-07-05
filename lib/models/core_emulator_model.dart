@@ -21,6 +21,9 @@ class CoreEmulatorModel {
   /// Whether this emulator is the default choice for its system.
   final bool isDefault;
 
+  /// Whether this core is marked as default_core in the system definition JSON.
+  final bool isDefaultCore;
+
   /// Whether this emulator supports RetroAchievements.
   final bool isretroAchievementsCompatible;
 
@@ -38,6 +41,7 @@ class CoreEmulatorModel {
     required this.isStandalone,
     this.coreFilename,
     required this.isDefault,
+    this.isDefaultCore = false,
     required this.isretroAchievementsCompatible,
     this.androidPackageName,
     this.isInstalled = false,
@@ -54,6 +58,8 @@ class CoreEmulatorModel {
           (int.tryParse(map['is_standalone']?.toString() ?? '0') ?? 0) == 1,
       coreFilename: map['core_filename']?.toString(),
       isDefault: (int.tryParse(map['is_default']?.toString() ?? '0') ?? 0) == 1,
+      isDefaultCore:
+          (int.tryParse(map['is_default_core']?.toString() ?? '0') ?? 0) == 1,
       isretroAchievementsCompatible:
           (int.tryParse(map['is_ra_compatible']?.toString() ?? '0') ?? 0) == 1,
       androidPackageName: map['android_package_name']?.toString(),
@@ -71,6 +77,7 @@ class CoreEmulatorModel {
       'is_standalone': isStandalone ? 1 : 0,
       'core_filename': coreFilename,
       'is_default': isDefault ? 1 : 0,
+      'is_default_core': isDefaultCore ? 1 : 0,
       'is_ra_compatible': isretroAchievementsCompatible ? 1 : 0,
       'android_package_name': androidPackageName,
     };
@@ -85,6 +92,7 @@ class CoreEmulatorModel {
     bool? isStandalone,
     String? coreFilename,
     bool? isDefault,
+    bool? isDefaultCore,
     bool? isretroAchievementsCompatible,
     String? androidPackageName,
     bool? isInstalled,
@@ -97,6 +105,7 @@ class CoreEmulatorModel {
       isStandalone: isStandalone ?? this.isStandalone,
       coreFilename: coreFilename ?? this.coreFilename,
       isDefault: isDefault ?? this.isDefault,
+      isDefaultCore: isDefaultCore ?? this.isDefaultCore,
       isretroAchievementsCompatible:
           isretroAchievementsCompatible ?? this.isretroAchievementsCompatible,
       androidPackageName: androidPackageName ?? this.androidPackageName,
@@ -106,7 +115,7 @@ class CoreEmulatorModel {
 
   @override
   String toString() {
-    return 'CoreEmulatorModel(uniqueId: $uniqueId, name: $name, isDefault: $isDefault, isretroAchievementsCompatible: $isretroAchievementsCompatible, androidPackageName: $androidPackageName)';
+    return 'CoreEmulatorModel(uniqueId: $uniqueId, name: $name, isDefault: $isDefault, isDefaultCore: $isDefaultCore, isretroAchievementsCompatible: $isretroAchievementsCompatible, androidPackageName: $androidPackageName)';
   }
 
   @override
@@ -138,6 +147,8 @@ class CoreEmulatorModel {
         return coreFilename;
       case 'is_default':
         return isDefault ? 1 : 0;
+      case 'is_default_core':
+        return isDefaultCore ? 1 : 0;
       case 'is_ra_compatible':
         return isretroAchievementsCompatible ? 1 : 0;
       case 'android_package_name':

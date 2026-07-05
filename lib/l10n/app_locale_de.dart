@@ -33,7 +33,7 @@ const Map<String, dynamic> appLocaleDe = {
 
   AppLocale.settings: 'Einstellungen',
   AppLocale.general: 'Allgemein',
-  AppLocale.secondaryDisplay: 'Secondary Screen',
+  AppLocale.secondaryDisplay: 'Zweitbildschirm',
   AppLocale.directories: 'Verzeichnisse',
   AppLocale.palettes: 'Paletten',
   AppLocale.neoThemes: 'Themes',
@@ -102,22 +102,28 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.errorConfiguringRetroArchPath:
       'Fehler beim Konfigurieren des RetroArch-Pfads: {error}',
   AppLocale.scanOnStartup: 'Ordner beim Start scannen',
-  AppLocale.nowPlayingDimAfter: 'Dim Now Playing after',
-  AppLocale.nowPlayingDimAfterSubtitle: 'Inactivity before the in-game panel dims on the secondary screen',
-  AppLocale.nowPlayingDimDarkness: 'Dim darkness',
-  AppLocale.nowPlayingDimDarknessSubtitle: 'How dark the in-game panel goes when it dims',
-  AppLocale.nowPlayingDimNever: 'Never',
-  AppLocale.nowPlayingDockEnabled: 'App dock',
-  AppLocale.nowPlayingDockEnabledSubtitle: 'Show the app dock on the secondary Now Playing panel',
-  AppLocale.nowPlayingDockSlots: 'Dock slots',
-  AppLocale.nowPlayingDockSlotsSubtitle: 'How many app slots the dock shows (1-5)',
-  AppLocale.nowPlayingFanartDim: 'Dim fanart',
-  AppLocale.nowPlayingFanartDimSubtitle: 'Darken the background art behind the logo so a busy fanart does not clash with it',
-  AppLocale.nowPlayingDimOff: 'Off',
-  AppLocale.secondarySectionNowPlaying: 'Now Playing panel',
-  AppLocale.secondarySectionDock: 'App dock',
-  AppLocale.screenshotAccess: 'Screenshot access',
-  AppLocale.screenshotAccessSubtitle: 'Allow the screenshot button to capture the main screen (opens Android accessibility settings)',
+  AppLocale.nowPlayingDimAfter: 'Now Playing abdunkeln nach',
+  AppLocale.nowPlayingDimAfterSubtitle:
+      'Inaktivität bevor das In-Game-Panel auf dem Zweitbildschirm abgedunkelt wird',
+  AppLocale.nowPlayingDimDarkness: 'Abdunkelungsstärke',
+  AppLocale.nowPlayingDimDarknessSubtitle:
+      'Wie dunkel das Panel beim Abdunkeln wird',
+  AppLocale.nowPlayingDimNever: 'Nie',
+  AppLocale.nowPlayingDockEnabled: 'App-Dock',
+  AppLocale.nowPlayingDockEnabledSubtitle:
+      'App-Dock auf dem Now Playing-Panel des Zweitbildschirms anzeigen',
+  AppLocale.nowPlayingDockSlots: 'Dock-Plätze',
+  AppLocale.nowPlayingDockSlotsSubtitle:
+      'Wie viele App-Plätze das Dock anzeigt (1-5)',
+  AppLocale.nowPlayingFanartDim: 'Fanart abdunkeln',
+  AppLocale.nowPlayingFanartDimSubtitle:
+      'Hintergrundbild hinter dem Logo abdunkeln, damit ein unruhiges Fanart nicht stört',
+  AppLocale.nowPlayingDimOff: 'Aus',
+  AppLocale.secondarySectionNowPlaying: 'Now Playing-Bereich',
+  AppLocale.secondarySectionDock: 'App-Dock',
+  AppLocale.screenshotAccess: 'Screenshot-Zugriff',
+  AppLocale.screenshotAccessSubtitle:
+      'Screenshot-Taste erlaubt Aufnahme des Hauptbildschirms (öffnet Android-Bedienungshilfen)',
   AppLocale.scanOnStartupSubtitle:
       'Scant ROM-Ordner automatisch beim Öffnen der App',
   AppLocale.ignoreHiddenFiles: 'Versteckte Elemente ignorieren',
@@ -836,4 +842,11 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+
+  AppLocale.deleteGame: 'Spiel löschen',
+  AppLocale.deleteGameConfirm: 'Endgültig löschen',
+  AppLocale.deleteGameConfirmBody:
+      'Die ROM-Datei, gescrapte Daten und Mediendateien werden dauerhaft gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.',
+  AppLocale.deleteGameSubtitle:
+      'Entfernt die ROM-Datei dauerhaft von der Festplatte',
 };

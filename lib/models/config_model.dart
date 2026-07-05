@@ -35,6 +35,7 @@ class ConfigModel {
     }
     return out;
   }
+
   /// List of absolute paths to directories containing game ROMs.
   final List<String> romFolders;
 
@@ -290,25 +291,21 @@ class ConfigModel {
               .toString(),
       nowPlayingDimDelay:
           int.tryParse(
-                (json['nowPlayingDimDelay'] ??
-                        json['now_playing_dim_delay'] ??
-                        3)
-                    .toString(),
-              ) ??
+            (json['nowPlayingDimDelay'] ?? json['now_playing_dim_delay'] ?? 3)
+                .toString(),
+          ) ??
           3,
       nowPlayingDimLevel:
           int.tryParse(
-                (json['nowPlayingDimLevel'] ??
-                        json['now_playing_dim_level'] ??
-                        100)
-                    .toString(),
-              ) ??
+            (json['nowPlayingDimLevel'] ?? json['now_playing_dim_level'] ?? 100)
+                .toString(),
+          ) ??
           100,
       fanartDimLevel:
           int.tryParse(
-                (json['fanartDimLevel'] ?? json['fanart_dim_level'] ?? 25)
-                    .toString(),
-              ) ??
+            (json['fanartDimLevel'] ?? json['fanart_dim_level'] ?? 25)
+                .toString(),
+          ) ??
           25,
       dockApps: normalizeDock(json['dockApps'] ?? json['dock_apps']),
       dockEnabled:

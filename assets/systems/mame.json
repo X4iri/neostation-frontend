@@ -87,6 +87,7 @@
     },
     {
       "name": "RetroArch64 MAME",
+      "default_core": true,
       "unique_id": "mame.ra64.mamearcade",
       "description": "Supported extensions: 7z, chd, cmd, zip.",
       "is_retroachievements_compatible": false,
@@ -153,6 +154,7 @@
     },
     {
       "name": "RetroArch32 MAME",
+      "default_core": true,
       "unique_id": "mame.ra32.mamearcade",
       "description": "Supported extensions: 7z, chd, cmd, zip.",
       "is_retroachievements_compatible": false,
@@ -255,7 +257,7 @@
     },
     {
       "name": "RetroArch MAME",
-      "default": true,
+      "default_core": true,
       "unique_id": "mame.ra.mamearcade",
       "description": "Supported extensions: 7z, chd, cmd, zip.",
       "is_retroachievements_compatible": false,

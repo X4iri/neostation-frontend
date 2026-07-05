@@ -87,6 +87,19 @@ class SafDirectoryService {
     }
   }
 
+  /// Deletes a file identified by a SAF content:// URI.
+  /// Returns true if the file was successfully deleted.
+  static Future<bool> deleteFile(String uri) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final result = await platform.invokeMethod('deleteSafFile', {'uri': uri});
+      return result == true;
+    } on PlatformException catch (e) {
+      _log.e('Error deleting SAF file: ${e.message}');
+      return false;
+    }
+  }
+
   /// Retrieves the total file size in bytes for a SAF URI.
   static Future<int> getFileSize(String uri) async {
     if (!Platform.isAndroid) return 0;

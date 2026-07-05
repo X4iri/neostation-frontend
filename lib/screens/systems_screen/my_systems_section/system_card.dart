@@ -211,8 +211,8 @@ class _SystemCardState extends State<SystemCard> {
       cursor: SystemMouseCursors.basic,
       child: Container(
         margin: EdgeInsets.all(2.r),
-        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
@@ -222,24 +222,46 @@ class _SystemCardState extends State<SystemCard> {
             ),
           ],
         ),
-        child: InkWell(
-          focusNode: _focusNode,
-          onTap: () {
-            SfxService().playNavSound();
-            widget.onTap?.call();
-          },
-          canRequestFocus: false,
-          focusColor: Colors.transparent,
-          hoverColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          child: Stack(
-            key: _contentStackKey,
-            children: [
-              _buildSystemBackground(),
-              _buildMainBodyContent(context, true),
-              if (widget.info.isGame) _buildRecentFooter(context),
-            ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: InkWell(
+            focusNode: _focusNode,
+            onTap: () {
+              SfxService().playNavSound();
+              widget.onTap?.call();
+            },
+            canRequestFocus: false,
+            focusColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            child: Padding(
+              padding: EdgeInsets.all(4.r),
+              child: widget.info.isGame
+                  ? Stack(
+                      key: _contentStackKey,
+                      children: [
+                        _buildSystemBackground(),
+                        _buildMainBodyContent(context, true),
+                        _buildRecentFooter(context),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: Stack(
+                            key: _contentStackKey,
+                            children: [
+                              _buildSystemBackground(),
+                              _buildMainBodyContent(context, true),
+                            ],
+                          ),
+                        ),
+                        _buildSystemFooter(context),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -366,7 +388,8 @@ class _SystemCardState extends State<SystemCard> {
   }
 
   /// Renders the system brand logo with fallback support.
-  Widget _buildSystemLogo(String assetLogoPath) {
+  Widget _buildSystemLogo(String assetLogoPath, {double? height}) {
+    height ??= 128.r;
     final customLogoPath = widget.info.customLogoPath;
     final hasCustomLogo = customLogoPath != null && customLogoPath.isNotEmpty;
 
@@ -374,12 +397,12 @@ class _SystemCardState extends State<SystemCard> {
       return Image.file(
         File(customLogoPath),
         key: ValueKey('${customLogoPath}_${widget.info.imageVersion}'),
-        height: 128.r,
+        height: height,
         cacheWidth: 384,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => Image.asset(
           assetLogoPath,
-          height: 128.r,
+          height: height,
           cacheWidth: 384,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => SystemLogoFallback(
@@ -396,12 +419,12 @@ class _SystemCardState extends State<SystemCard> {
       return Image.file(
         File(themeLogoPath),
         key: ValueKey(themeLogoPath),
-        height: 128.r,
+        height: height,
         cacheWidth: 384,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => Image.asset(
           assetLogoPath,
-          height: 128.r,
+          height: height,
           cacheWidth: 384,
           fit: BoxFit.contain,
           errorBuilder: (context, error2, stackTrace2) => SystemLogoFallback(
@@ -415,7 +438,7 @@ class _SystemCardState extends State<SystemCard> {
 
     return Image.asset(
       assetLogoPath,
-      height: 128.r,
+      height: height,
       cacheWidth: 384,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) => SystemLogoFallback(
@@ -429,14 +452,6 @@ class _SystemCardState extends State<SystemCard> {
   /// Builds the foreground content, including badges and specialized layouts for 'Recent Games'.
   Widget _buildMainBodyContent(BuildContext context, bool includeInnerCard) {
     final isGame = widget.info.isGame;
-    final resolvedLogoFolder = widget.info.primaryFolderName?.isNotEmpty == true
-        ? widget.info.primaryFolderName!
-        : (widget.info.folderName?.isNotEmpty == true
-              ? widget.info.folderName!
-              : 'all');
-
-    final assetLogoPath =
-        'assets/images/systems/logos/$resolvedLogoFolder.webp';
 
     return Stack(
       children: [
@@ -481,13 +496,6 @@ class _SystemCardState extends State<SystemCard> {
                           const SizedBox.shrink(),
                     ),
             ),
-          ),
-        ] else ...[
-          // Centered branding for standard system cards.
-          Center(
-            child: widget.info.hideLogo
-                ? const SizedBox.shrink()
-                : _buildSystemLogo(assetLogoPath),
           ),
         ],
       ],
@@ -591,6 +599,26 @@ class _SystemCardState extends State<SystemCard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Renders a bottom footer with the system logo for non-game system cards.
+  Widget _buildSystemFooter(BuildContext context) {
+    if (widget.info.hideLogo) return const SizedBox.shrink();
+
+    final resolvedLogoFolder = widget.info.primaryFolderName?.isNotEmpty == true
+        ? widget.info.primaryFolderName!
+        : (widget.info.folderName?.isNotEmpty == true
+              ? widget.info.folderName!
+              : 'all');
+    final assetLogoPath =
+        'assets/images/systems/logos/$resolvedLogoFolder.webp';
+
+    return SizedBox(
+      height: 44.r,
+      child: Center(
+        child: _buildSystemLogo(assetLogoPath, height: 36.r),
       ),
     );
   }

@@ -8,7 +8,11 @@ import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/services/logger_service.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/widgets/custom_notification.dart';
+import 'package:neostation/services/game_service.dart';
+import 'package:neostation/utils/gamepad_nav.dart';
+import 'package:provider/provider.dart';
 import '../../../../models/system_model.dart';
+import '../../../../providers/file_provider.dart';
 import '../../../../models/game_model.dart';
 import '../../../../models/core_emulator_model.dart';
 import '../../../../sync/i_sync_provider.dart';
@@ -27,6 +31,7 @@ class GameDetailsSettingsTab extends StatefulWidget {
   final ISyncProvider syncProvider;
   final bool isAllMode;
   final VoidCallback? onGameUpdated;
+  final void Function(String romname)? onGameDeleted;
 
   const GameDetailsSettingsTab({
     super.key,
@@ -35,6 +40,7 @@ class GameDetailsSettingsTab extends StatefulWidget {
     required this.syncProvider,
     required this.isAllMode,
     this.onGameUpdated,
+    this.onGameDeleted,
   });
 
   @override
@@ -48,6 +54,7 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
   late bool _cloudSyncEnabled;
   bool _isUpdatingCloudSync = false;
   bool _isResettingPlayTime = false;
+  bool _isDeleting = false;
   List<CoreEmulatorModel> _availableEmulators = [];
   int _settingsSelectedIndex = 0;
 
@@ -65,12 +72,13 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
   bool get _settingsShowCloudSync => widget.syncProvider.isAuthenticated;
   int get _settingsCloudSyncIdx => 0;
   int get _settingsPlayTimeIdx => _settingsShowCloudSync ? 1 : 0;
+  int get _settingsDeleteGameIdx => _settingsPlayTimeIdx + 1;
   bool get _settingsShowEmulators => _availableEmulators.length > 1;
-  int get _settingsEmulatorStartIdx => _settingsPlayTimeIdx + 1;
+  int get _settingsEmulatorStartIdx => _settingsDeleteGameIdx + 1;
   int get _settingsEmulatorItemCount =>
       _settingsShowEmulators ? 1 + _availableEmulators.length : 0;
   int get _settingsTotalItems =>
-      _settingsPlayTimeIdx + 1 + _settingsEmulatorItemCount;
+      _settingsDeleteGameIdx + 1 + _settingsEmulatorItemCount;
 
   /// Resolves the current emulator ID, falling back to the game's persistence value if uninitialized.
   String? get _resolvedEmulatorId => identical(_activeEmulatorId, _sentinel)
@@ -150,6 +158,10 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
     // Play-time Reset Action.
     else if (idx == _settingsPlayTimeIdx) {
       if ((_game.playTime ?? 0) > 0) _resetPlayTime();
+    }
+    // Delete Game Action.
+    else if (idx == _settingsDeleteGameIdx) {
+      _confirmDeleteGame();
     }
     // Emulator Selection.
     else if (_settingsShowEmulators && idx >= _settingsEmulatorStartIdx) {
@@ -250,6 +262,53 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
       _log.e('Play-time reset operation failed: \$e');
     } finally {
       if (mounted) setState(() => _isResettingPlayTime = false);
+    }
+  }
+
+  /// Shows a confirmation dialog and permanently deletes the game and its data.
+  Future<void> _confirmDeleteGame() async {
+    SfxService().playNavSound();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _DeleteGameDialog(gameName: _game.name),
+    );
+    if (confirmed == true && mounted) {
+      _deleteGame();
+    }
+  }
+
+  /// Permanently deletes the current game from the database, its scraped media,
+  /// and the ROM file on disk, then navigates back.
+  Future<void> _deleteGame() async {
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+
+    final targetSystemFolder =
+        widget.isAllMode && _game.systemFolderName != null
+        ? _game.systemFolderName!
+        : widget.system.folderName;
+    final targetSystemId = _game.systemId ?? widget.system.id;
+    final fileProvider = Provider.of<FileProvider>(context, listen: false);
+    final deletedRomname = _game.romname;
+
+    try {
+      await GameRepository.deleteGame(
+        appSystemId: targetSystemId,
+        filename: deletedRomname,
+        systemFolderName: targetSystemFolder,
+        romBaseName: deletedRomname,
+        romPath: _game.romPath,
+        fileProvider: fileProvider,
+      );
+    } catch (e) {
+      _log.e('Game deletion failed: $e');
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+
+    if (mounted) {
+      widget.onGameDeleted?.call(deletedRomname);
     }
   }
 
@@ -508,6 +567,65 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
                                 ),
                               ),
                       ),
+
+                      // Delete Game Option.
+                      _SettingsRow(
+                        key: _settingsKey(_settingsDeleteGameIdx),
+                        isSelected:
+                            _settingsSelectedIndex == _settingsDeleteGameIdx,
+                        icon: Symbols.delete_rounded,
+                        label: AppLocale.deleteGame.getString(context),
+                        subtitle: AppLocale.deleteGameSubtitle.getString(
+                          context,
+                        ),
+                        onTap: () {
+                          SfxService().playNavSound();
+                          setState(
+                            () =>
+                                _settingsSelectedIndex = _settingsDeleteGameIdx,
+                          );
+                          _confirmDeleteGame();
+                        },
+                        trailing: _isDeleting
+                            ? SizedBox(
+                                width: 20.r,
+                                height: 20.r,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              )
+                            : ExcludeFocus(
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.r,
+                                    vertical: 3.r,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.error.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4.r),
+                                    border: Border.all(
+                                      color: Theme.of(context).colorScheme.error
+                                          .withValues(alpha: 0.4),
+                                      width: 1.r,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    AppLocale.delete.getString(context),
+                                    style: TextStyle(
+                                      fontSize: 11.r,
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      SizedBox(height: 8.r),
 
                       // Emulator Overrides Section.
                       if (_settingsShowEmulators) ...[
@@ -839,6 +957,162 @@ class _EmulatorRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A gamepad-friendly confirmation dialog that warns about permanent game deletion.
+class _DeleteGameDialog extends StatefulWidget {
+  final String gameName;
+
+  const _DeleteGameDialog({required this.gameName});
+
+  @override
+  State<_DeleteGameDialog> createState() => _DeleteGameDialogState();
+}
+
+class _DeleteGameDialogState extends State<_DeleteGameDialog> {
+  late final GamepadNavigation _gamepadNav;
+
+  @override
+  void initState() {
+    super.initState();
+    _gamepadNav = GamepadNavigation(
+      onSelectItem: () {
+        if (mounted) Navigator.of(context).pop(true);
+      },
+      onBack: () {
+        if (mounted) Navigator.of(context).pop(false);
+      },
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _gamepadNav.initialize();
+      GamepadNavigationManager.pushLayer(
+        'delete_game_dialog',
+        onActivate: () => _gamepadNav.activate(),
+        onDeactivate: () => _gamepadNav.deactivate(),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    GamepadNavigationManager.popLayer('delete_game_dialog');
+    _gamepadNav.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+
+    return AlertDialog(
+      backgroundColor: theme.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        side: BorderSide(color: errorColor.withValues(alpha: 0.3)),
+      ),
+      title: Row(
+        children: [
+          Icon(Symbols.delete_rounded, color: errorColor, size: 20.r),
+          SizedBox(width: 8.r),
+          Flexible(
+            child: Text(
+              AppLocale.deleteGame.getString(context),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 14.r,
+                color: errorColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '"${widget.gameName}"',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontSize: 13.r,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8.r),
+          Text(
+            AppLocale.deleteGameConfirmBody.getString(context),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontSize: 11.r,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 18.r,
+                height: 18.r,
+                child: Image.asset(
+                  'assets/images/gamepad/Xbox_B_button.png',
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  colorBlendMode: BlendMode.srcIn,
+                ),
+              ),
+              SizedBox(width: 4.r),
+              Text(
+                AppLocale.cancel.getString(context),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 12.r,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: errorColor,
+            foregroundColor: theme.colorScheme.onError,
+            padding: EdgeInsets.symmetric(horizontal: 16.r, vertical: 8.r),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+          ),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 18.r,
+                height: 18.r,
+                child: Image.asset(
+                  'assets/images/gamepad/Xbox_A_button.png',
+                  color: theme.colorScheme.onError,
+                  colorBlendMode: BlendMode.srcIn,
+                ),
+              ),
+              SizedBox(width: 4.r),
+              Text(
+                AppLocale.deleteGameConfirm.getString(context),
+                style: TextStyle(
+                  color: theme.colorScheme.onError,
+                  fontSize: 12.r,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

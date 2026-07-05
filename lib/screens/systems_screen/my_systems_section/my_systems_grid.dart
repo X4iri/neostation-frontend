@@ -395,7 +395,7 @@ class MySystems extends StatelessWidget {
               crossAxisCount: Responsive.getSystemsCrossAxisCountFromSize(
                 configProvider.config.systemGridColumns,
               ),
-              childAspectRatio: 1,
+              childAspectRatio: 0.80,
               selectedIndex: selectedIndex,
               onCardTapped: onCardTapped,
               systems: allSystems,
@@ -1373,7 +1373,14 @@ class _SystemCardGridViewState extends State<SystemCardGridView> {
     final availableWidth = screenWidth - totalSpacing;
     final itemWidth = availableWidth / _cols;
 
-    final itemHeight = itemWidth / widget.childAspectRatio;
+    // For game cards (childAspectRatio = 1) use traditional square calculation.
+    // For system cards (childAspectRatio != 1) add extra height for logo footer.
+    final double itemHeight;
+    if (widget.childAspectRatio != 1) {
+      itemHeight = itemWidth + 56.r;
+    } else {
+      itemHeight = itemWidth / widget.childAspectRatio;
+    }
     final rowHeight = itemHeight + mainAxisSpacing;
 
     return {

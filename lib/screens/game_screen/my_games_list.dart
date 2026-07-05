@@ -2869,6 +2869,7 @@ class _SystemGamesListState extends State<SystemGamesList> {
         onBack: _goBack,
         onGameUpdated: _handleGameUpdated, // Sync UI after metadata edits.
         onFavoriteToggled: _handleFavoriteToggledFromCard,
+        onGameDeleted: _handleGameDeleted,
       ),
     );
   }
@@ -2890,6 +2891,39 @@ class _SystemGamesListState extends State<SystemGamesList> {
       }
     });
     _reorderGamesListKeepingVisualPosition();
+  }
+
+  /// Called after a game is permanently deleted. Removes it from the list and
+  /// selects the previous game (or the next one if at the start).
+  void _handleGameDeleted(String romname) {
+    if (_games.isEmpty) return;
+
+    _resetVideoState();
+
+    final deletedIndex = _games.indexWhere((g) => g.romname == romname);
+    if (deletedIndex == -1) return;
+
+    final previousIndex = deletedIndex > 0 ? deletedIndex - 1 : 0;
+
+    setState(() {
+      _games.removeWhere((g) => g.romname == romname);
+      _gameIndexMap = {for (int i = 0; i < _games.length; i++) _games[i]: i};
+
+      if (_games.isEmpty) {
+        _selectedGame = null;
+        _selectedGameIndex = 0;
+      } else {
+        final newIndex = previousIndex.clamp(0, _games.length - 1);
+        _selectedGame = _games[newIndex];
+        _selectedGameIndex = newIndex;
+      }
+    });
+
+    if (_games.isNotEmpty && _selectedGame != null) {
+      _updateSecondaryDisplay(_selectedGame!);
+      _updateBackground(_selectedGame!);
+      _startVideoTimer();
+    }
   }
 
   /// Synchronizes the selected game's metadata and refreshes the list sorting.

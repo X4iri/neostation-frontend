@@ -288,6 +288,9 @@ class SqliteMigrations {
       case 94:
         await _migrateToVersion94(db);
         break;
+      case 95:
+        await _migrateToVersion95(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4622,10 +4625,33 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v93: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
+  /// Migration v93: Adds `is_default_core` column to `app_emulators` to mark
+  /// which RetroArch core is the recommended default per variant (RA, RA32, RA64).
   static Future<void> _migrateToVersion93(Database db) async {
-    _log.i('Migration v93: Creating user_romm_config table');
+    _log.i('Migration v93: Adding is_default_core to app_emulators');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(app_emulators)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+
+      if (!columns.contains('is_default_core')) {
+        db.execute(
+          'ALTER TABLE app_emulators ADD COLUMN is_default_core INTEGER NOT NULL DEFAULT 0',
+        );
+        _log.i('Column is_default_core added via v93');
+      } else {
+        _log.i('Column is_default_core already exists');
+      }
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v93: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v94: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  static Future<void> _migrateToVersion94(Database db) async {
+    _log.i('Migration v94: Creating user_romm_config table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS user_romm_config (
@@ -4640,19 +4666,19 @@ class SqliteMigrations {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
       ''');
-      _log.i('Table user_romm_config created via v93');
+      _log.i('Table user_romm_config created via v94');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v93: $e');
+      _log.e('Error in migration v94: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
   }
 
-  /// Migration v94: Adds the [app_romm_rom_map] table, which links a local game
+  /// Migration v95: Adds the [app_romm_rom_map] table, which links a local game
   /// (romname + system folder) to its RomM ROM id so save/state sync can target
   /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
-  static Future<void> _migrateToVersion94(Database db) async {
-    _log.i('Migration v94: Creating app_romm_rom_map table');
+  static Future<void> _migrateToVersion95(Database db) async {
+    _log.i('Migration v95: Creating app_romm_rom_map table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS app_romm_rom_map (
@@ -4668,9 +4694,9 @@ class SqliteMigrations {
         CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
         ON app_romm_rom_map(romm_rom_id);
       ''');
-      _log.i('Table app_romm_rom_map created via v94');
+      _log.i('Table app_romm_rom_map created via v95');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v94: $e');
+      _log.e('Error in migration v95: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

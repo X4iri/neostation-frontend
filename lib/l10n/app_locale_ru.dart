@@ -33,7 +33,7 @@ const Map<String, dynamic> appLocaleRu = {
 
   AppLocale.settings: 'Настройки',
   AppLocale.general: 'Общие',
-  AppLocale.secondaryDisplay: 'Secondary Screen',
+  AppLocale.secondaryDisplay: 'Второй экран',
   AppLocale.directories: 'Директории',
   AppLocale.palettes: 'Палитры',
   AppLocale.neoThemes: 'Темы',
@@ -101,22 +101,28 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.errorConfiguringRetroArchPath:
       'Ошибка при настройке пути для RetroArch: {error}',
   AppLocale.scanOnStartup: 'Сканировать папки при запуске',
-  AppLocale.nowPlayingDimAfter: 'Dim Now Playing after',
-  AppLocale.nowPlayingDimAfterSubtitle: 'Inactivity before the in-game panel dims on the secondary screen',
-  AppLocale.nowPlayingDimDarkness: 'Dim darkness',
-  AppLocale.nowPlayingDimDarknessSubtitle: 'How dark the in-game panel goes when it dims',
-  AppLocale.nowPlayingDimNever: 'Never',
-  AppLocale.nowPlayingDockEnabled: 'App dock',
-  AppLocale.nowPlayingDockEnabledSubtitle: 'Show the app dock on the secondary Now Playing panel',
-  AppLocale.nowPlayingDockSlots: 'Dock slots',
-  AppLocale.nowPlayingDockSlotsSubtitle: 'How many app slots the dock shows (1-5)',
-  AppLocale.nowPlayingFanartDim: 'Dim fanart',
-  AppLocale.nowPlayingFanartDimSubtitle: 'Darken the background art behind the logo so a busy fanart does not clash with it',
-  AppLocale.nowPlayingDimOff: 'Off',
-  AppLocale.secondarySectionNowPlaying: 'Now Playing panel',
-  AppLocale.secondarySectionDock: 'App dock',
-  AppLocale.screenshotAccess: 'Screenshot access',
-  AppLocale.screenshotAccessSubtitle: 'Allow the screenshot button to capture the main screen (opens Android accessibility settings)',
+  AppLocale.nowPlayingDimAfter: 'Затемнять Now Playing через',
+  AppLocale.nowPlayingDimAfterSubtitle:
+      'Бездействие перед затемнением панели на втором экране',
+  AppLocale.nowPlayingDimDarkness: 'Степень затемнения',
+  AppLocale.nowPlayingDimDarknessSubtitle:
+      'Насколько темной становится панель при затемнении',
+  AppLocale.nowPlayingDimNever: 'Никогда',
+  AppLocale.nowPlayingDockEnabled: 'Док приложений',
+  AppLocale.nowPlayingDockEnabledSubtitle:
+      'Показывать док приложений на панели Now Playing второго экрана',
+  AppLocale.nowPlayingDockSlots: 'Слоты дока',
+  AppLocale.nowPlayingDockSlotsSubtitle:
+      'Сколько слотов приложений показывает док (1-5)',
+  AppLocale.nowPlayingFanartDim: 'Затемнять фанарт',
+  AppLocale.nowPlayingFanartDimSubtitle:
+      'Затемнять фон за логотипом, чтобы яркий фанарт не мешал',
+  AppLocale.nowPlayingDimOff: 'Выкл',
+  AppLocale.secondarySectionNowPlaying: 'Панель Now Playing',
+  AppLocale.secondarySectionDock: 'Док приложений',
+  AppLocale.screenshotAccess: 'Доступ к скриншотам',
+  AppLocale.screenshotAccessSubtitle:
+      'Разрешить кнопке скриншота захватывать главный экран (открывает настройки специальных возможностей Android)',
   AppLocale.scanOnStartupSubtitle:
       'Автоматически сканировать папки ROM при запуске приложения',
   AppLocale.ignoreHiddenFiles: 'Игнорировать скрытые элементы',
@@ -808,4 +814,10 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+
+  AppLocale.deleteGame: 'Удалить игру',
+  AppLocale.deleteGameConfirm: 'Удалить навсегда',
+  AppLocale.deleteGameConfirmBody:
+      'ROM-файл игры, данные скрапинга и медиафайлы будут безвозвратно удалены. Это действие нельзя отменить.',
+  AppLocale.deleteGameSubtitle: 'Навсегда удаляет ROM-файл с диска',
 };
