@@ -18,6 +18,7 @@ import '../constants/system_folder_names.dart';
 import 'config_service.dart';
 import 'game_session_persistence.dart';
 import 'android_service.dart';
+import 'music_player_service.dart';
 import 'launcher_service.dart';
 
 /// Represents the result of a game launch attempt.
@@ -213,6 +214,17 @@ class GameService {
 
         if (_onGameReturnedCallback != null) {
           _onGameReturnedCallback!(elapsedSeconds);
+        }
+      } else if (call.method == 'onDeviceScreenOff') {
+        // As a HOME launcher we are not paused on lock, so this is the only
+        // reliable signal to release the audio engine while the screen is off.
+        MusicPlayerService().appPaused();
+      } else if (call.method == 'onDeviceScreenOn') {
+        // Skip restore while a game owns the foreground — the game-return
+        // (lifecycle resumed) path re-opens the engine. Restoring here would
+        // reopen it (and restart music) behind the running emulator.
+        if (!_isGameLaunched) {
+          MusicPlayerService().appResumed();
         }
       }
     });
