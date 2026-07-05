@@ -794,6 +794,16 @@ const Map<String, dynamic> appLocaleDe = {
       'Wähle, wo Medien, Themes und App-Daten gespeichert werden',
   AppLocale.userDataLocationDefault: 'Standardspeicherort',
   AppLocale.selectUserDataFolder: 'Datenordner auswählen',
+  AppLocale.folderNotEmptyTitle: 'Ordner nicht leer',
+  AppLocale.folderNotEmptyBody:
+      'Dieser Ordner enthält bereits {count} Element(e). NeoStation speichert seine eigenen Daten hier, zusammen mit den vorhandenen Inhalten.',
+  AppLocale.folderNotEmptyUseAnyway: 'Trotzdem verwenden',
+  AppLocale.moveUserDataTitle: 'Benutzerdaten verschieben?',
+  AppLocale.moveUserDataBody:
+      'NeoStation verschiebt seine eigenen Daten – Datenbank, gescrapte Medien und Einstellungen – vom aktuellen Ordner in den neuen. Dateien, die nicht von NeoStation erstellt wurden, bleiben unberührt.',
+  AppLocale.moveUserDataDestNotEmpty:
+      'Der neue Ordner enthält bereits {count} Element(e). Die Daten von NeoStation werden daneben abgelegt.',
+  AppLocale.moveUserDataConfirm: 'Daten verschieben',
   AppLocale.migratingUserData: 'Daten werden verschoben',
   AppLocale.migratingUserDataComplete: 'Migration abgeschlossen',
   AppLocale.migratingUserDataError: 'Migration fehlgeschlagen',

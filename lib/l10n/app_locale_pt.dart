@@ -777,6 +777,16 @@ const Map<String, dynamic> appLocalePt = {
       'Escolha onde mídias, temas e dados do aplicativo são armazenados',
   AppLocale.userDataLocationDefault: 'Localização padrão',
   AppLocale.selectUserDataFolder: 'Selecionar Pasta de Dados',
+  AppLocale.folderNotEmptyTitle: 'Pasta não vazia',
+  AppLocale.folderNotEmptyBody:
+      'Esta pasta já contém {count} item(ns). O NeoStation irá armazenar os seus próprios dados aqui, junto com o conteúdo existente.',
+  AppLocale.folderNotEmptyUseAnyway: 'Usar mesmo assim',
+  AppLocale.moveUserDataTitle: 'Mover dados do usuário?',
+  AppLocale.moveUserDataBody:
+      'O NeoStation moverá seus próprios dados — banco de dados, mídia obtida e configurações — da pasta atual para a nova. Arquivos não criados pelo NeoStation permanecem intactos.',
+  AppLocale.moveUserDataDestNotEmpty:
+      'A nova pasta já contém {count} item(ns). Os dados do NeoStation serão adicionados junto a eles.',
+  AppLocale.moveUserDataConfirm: 'Mover dados',
   AppLocale.migratingUserData: 'Movendo Dados',
   AppLocale.migratingUserDataComplete: 'Migração concluída',
   AppLocale.migratingUserDataError: 'Falha na migração',

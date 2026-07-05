@@ -796,6 +796,14 @@ mixin AppLocale {
   static const String userDataLocationSubtitle = 'user_data_location_subtitle';
   static const String userDataLocationDefault = 'user_data_location_default';
   static const String selectUserDataFolder = 'select_user_data_folder';
+  static const String folderNotEmptyTitle = 'folder_not_empty_title';
+  static const String folderNotEmptyBody = 'folder_not_empty_body';
+  static const String folderNotEmptyUseAnyway = 'folder_not_empty_use_anyway';
+  static const String moveUserDataTitle = 'move_user_data_title';
+  static const String moveUserDataBody = 'move_user_data_body';
+  static const String moveUserDataDestNotEmpty =
+      'move_user_data_dest_not_empty';
+  static const String moveUserDataConfirm = 'move_user_data_confirm';
   static const String migratingUserData = 'migrating_user_data';
   static const String migratingUserDataComplete =
       'migrating_user_data_complete';

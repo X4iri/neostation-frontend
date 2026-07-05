@@ -770,6 +770,16 @@ const Map<String, dynamic> appLocaleId = {
       'Pilih di mana media, tema, dan data aplikasi disimpan',
   AppLocale.userDataLocationDefault: 'Lokasi default',
   AppLocale.selectUserDataFolder: 'Pilih Folder Data',
+  AppLocale.folderNotEmptyTitle: 'Folder Tidak Kosong',
+  AppLocale.folderNotEmptyBody:
+      'Folder ini sudah berisi {count} item. NeoStation akan menyimpan datanya sendiri di sini, bersama konten yang sudah ada.',
+  AppLocale.folderNotEmptyUseAnyway: 'Tetap Gunakan',
+  AppLocale.moveUserDataTitle: 'Pindahkan Data Pengguna?',
+  AppLocale.moveUserDataBody:
+      'NeoStation akan memindahkan datanya sendiri — basis data, media hasil scrape, dan pengaturan — dari folder saat ini ke folder baru. Berkas yang tidak dibuat oleh NeoStation tidak akan diubah.',
+  AppLocale.moveUserDataDestNotEmpty:
+      'Folder baru sudah berisi {count} item. Data NeoStation akan ditambahkan di sampingnya.',
+  AppLocale.moveUserDataConfirm: 'Pindahkan Data',
   AppLocale.migratingUserData: 'Memindahkan Data',
   AppLocale.migratingUserDataComplete: 'Migrasi selesai',
   AppLocale.migratingUserDataError: 'Migrasi gagal',

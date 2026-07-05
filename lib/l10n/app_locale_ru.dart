@@ -766,6 +766,16 @@ const Map<String, dynamic> appLocaleRu = {
       'Выберите, где хранятся медиафайлы, темы и данные приложения',
   AppLocale.userDataLocationDefault: 'Стандартное расположение',
   AppLocale.selectUserDataFolder: 'Выбрать папку данных',
+  AppLocale.folderNotEmptyTitle: 'Папка не пуста',
+  AppLocale.folderNotEmptyBody:
+      'Эта папка уже содержит {count} элемент(ов). NeoStation будет хранить свои данные здесь, рядом с существующим содержимым.',
+  AppLocale.folderNotEmptyUseAnyway: 'Всё равно использовать',
+  AppLocale.moveUserDataTitle: 'Переместить данные пользователя?',
+  AppLocale.moveUserDataBody:
+      'NeoStation переместит свои данные (базу данных, загруженные медиа и настройки) из текущей папки в новую. Файлы, созданные не NeoStation, останутся нетронутыми.',
+  AppLocale.moveUserDataDestNotEmpty:
+      'Новая папка уже содержит {count} элемент(ов). Данные NeoStation будут добавлены рядом с ними.',
+  AppLocale.moveUserDataConfirm: 'Переместить',
   AppLocale.migratingUserData: 'Перемещение данных',
   AppLocale.migratingUserDataComplete: 'Миграция завершена',
   AppLocale.migratingUserDataError: 'Ошибка миграции',

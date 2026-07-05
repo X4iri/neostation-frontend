@@ -691,6 +691,16 @@ const Map<String, dynamic> appLocaleZh = {
   AppLocale.userDataLocationSubtitle: '选择媒体、主题和应用数据的存储位置',
   AppLocale.userDataLocationDefault: '默认位置',
   AppLocale.selectUserDataFolder: '选择数据文件夹',
+  AppLocale.folderNotEmptyTitle: '文件夹非空',
+  AppLocale.folderNotEmptyBody:
+      '此文件夹已包含 {count} 个项目。NeoStation 会将自己的数据存储在此处，与现有内容放在一起。',
+  AppLocale.folderNotEmptyUseAnyway: '仍然使用',
+  AppLocale.moveUserDataTitle: '移动用户数据？',
+  AppLocale.moveUserDataBody:
+      'NeoStation 会将自己的数据（数据库、抓取的媒体和设置）从当前文件夹移动到新文件夹。非 NeoStation 创建的文件不会被改动。',
+  AppLocale.moveUserDataDestNotEmpty:
+      '新文件夹已包含 {count} 个项目。NeoStation 的数据将添加在它们旁边。',
+  AppLocale.moveUserDataConfirm: '移动数据',
   AppLocale.migratingUserData: '正在迁移数据',
   AppLocale.migratingUserDataComplete: '迁移完成',
   AppLocale.migratingUserDataError: '迁移失败',

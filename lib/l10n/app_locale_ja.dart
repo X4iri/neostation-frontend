@@ -700,6 +700,16 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.userDataLocationSubtitle: 'メディア、テーマ、アプリデータの保存場所を選択します',
   AppLocale.userDataLocationDefault: 'デフォルトの場所',
   AppLocale.selectUserDataFolder: 'データフォルダを選択',
+  AppLocale.folderNotEmptyTitle: 'フォルダが空ではありません',
+  AppLocale.folderNotEmptyBody:
+      'このフォルダには既に {count} 個の項目があります。NeoStation は既存の内容とともに、ここに独自のデータを保存します。',
+  AppLocale.folderNotEmptyUseAnyway: 'このまま使用',
+  AppLocale.moveUserDataTitle: 'ユーザーデータを移動しますか？',
+  AppLocale.moveUserDataBody:
+      'NeoStation は自身のデータ（データベース、取得したメディア、設定）を現在のフォルダから新しいフォルダへ移動します。NeoStation が作成していないファイルはそのまま残ります。',
+  AppLocale.moveUserDataDestNotEmpty:
+      '新しいフォルダには既に {count} 個の項目があります。NeoStation のデータはそれらと一緒に追加されます。',
+  AppLocale.moveUserDataConfirm: 'データを移動',
   AppLocale.migratingUserData: 'データを移動中',
   AppLocale.migratingUserDataComplete: '移行完了',
   AppLocale.migratingUserDataError: '移行に失敗しました',

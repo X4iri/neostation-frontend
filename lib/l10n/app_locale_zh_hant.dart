@@ -691,6 +691,16 @@ const Map<String, dynamic> appLocaleZhHant = {
   AppLocale.userDataLocationSubtitle: '選擇媒體、主題和應用程式資料的存儲位置',
   AppLocale.userDataLocationDefault: '預設位置',
   AppLocale.selectUserDataFolder: '選擇資料資料夾',
+  AppLocale.folderNotEmptyTitle: '資料夾非空',
+  AppLocale.folderNotEmptyBody:
+      '此資料夾已包含 {count} 個項目。NeoStation 會將自己的資料儲存在此處，與現有內容放在一起。',
+  AppLocale.folderNotEmptyUseAnyway: '仍然使用',
+  AppLocale.moveUserDataTitle: '移動使用者資料？',
+  AppLocale.moveUserDataBody:
+      'NeoStation 會將自己的資料（資料庫、抓取的媒體和設定）從目前的資料夾移動到新的資料夾。非 NeoStation 建立的檔案不會被更動。',
+  AppLocale.moveUserDataDestNotEmpty:
+      '新資料夾已包含 {count} 個項目。NeoStation 的資料將新增在它們旁邊。',
+  AppLocale.moveUserDataConfirm: '移動資料',
   AppLocale.migratingUserData: '正在遷移資料',
   AppLocale.migratingUserDataComplete: '遷移完成',
   AppLocale.migratingUserDataError: '遷移失敗',
