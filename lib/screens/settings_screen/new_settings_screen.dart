@@ -5,6 +5,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/services/sfx_service.dart';
+import 'package:neostation/utils/adaptive_scroll.dart';
 import 'new_settings_options/general_settings_content.dart';
 import 'new_settings_options/secondary_settings_content.dart';
 import 'new_settings_options/directories_settings_content.dart';
@@ -54,17 +55,15 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
   /// scrolled into view (e.g. the bottom "Exit" entry on small displays).
   final GlobalKey _selectedMenuItemKey = GlobalKey();
 
+  /// Snaps during rapid D-pad navigation, animates on a single move.
+  final AdaptiveScroller _menuScroller = AdaptiveScroller();
+
   /// Brings the selected category menu item into view after the next frame.
   void _scrollMenuToSelected() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctx = _selectedMenuItemKey.currentContext;
       if (ctx == null) return;
-      Scrollable.ensureVisible(
-        ctx,
-        alignment: 0.5,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-      );
+      _menuScroller.ensureVisible(ctx);
     });
   }
 

@@ -10,6 +10,7 @@ import 'package:neostation/services/game_service.dart'
     show GamepadNavigationManager;
 import 'package:neostation/services/logger_service.dart';
 import 'package:neostation/services/sfx_service.dart';
+import 'package:neostation/utils/adaptive_scroll.dart';
 import 'package:neostation/utils/gamepad_nav.dart';
 import 'package:provider/provider.dart';
 import 'settings_title.dart';
@@ -36,6 +37,9 @@ class ThemesSettingsContentState extends State<ThemesSettingsContent> {
   final ScrollController _scrollController = ScrollController();
   final List<GlobalKey> _itemKeys = [];
 
+  /// Snaps during rapid D-pad navigation, animates on a single move.
+  final AdaptiveScroller _scroller = AdaptiveScroller();
+
   int get _gridColumns => Responsive.getThemesCrossAxisCount(context);
 
   int getItemCount() => _itemKeys.length;
@@ -51,12 +55,7 @@ class ThemesSettingsContentState extends State<ThemesSettingsContent> {
     if (index >= 0 && index < _itemKeys.length) {
       final ctx = _itemKeys[index].currentContext;
       if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          alignment: 0.5,
-        );
+        _scroller.ensureVisible(ctx);
       }
     }
   }
