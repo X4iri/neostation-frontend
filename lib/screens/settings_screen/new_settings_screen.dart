@@ -50,6 +50,24 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
 
   final List<SettingsMenuItem> _menuItems = [];
 
+  /// Key attached to the currently-selected left-menu item, so it can be
+  /// scrolled into view (e.g. the bottom "Exit" entry on small displays).
+  final GlobalKey _selectedMenuItemKey = GlobalKey();
+
+  /// Brings the selected category menu item into view after the next frame.
+  void _scrollMenuToSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _selectedMenuItemKey.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
   // Content Keys: Used for cross-component communication and scrolling orchestration.
   final GlobalKey<GeneralSettingsContentState> _generalSettingsKey =
       GlobalKey<GeneralSettingsContentState>();
@@ -195,6 +213,7 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
         _selectedMenuIndex =
             (_selectedMenuIndex - 1 + _menuItems.length) % _menuItems.length;
       });
+      _scrollMenuToSelected();
       return;
     }
 
@@ -242,6 +261,7 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       setState(() {
         _selectedMenuIndex = (_selectedMenuIndex + 1) % _menuItems.length;
       });
+      _scrollMenuToSelected();
       return;
     }
 
@@ -449,6 +469,7 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
           final isSelected = _selectedMenuIndex == index;
 
           return Material(
+            key: isSelected ? _selectedMenuItemKey : null,
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
