@@ -371,28 +371,30 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _navigateContentDown() {
-    if (_selectedTabIndex == 0) return;
+  /// Returns whether the selection moved, so the gamepad handler can suppress
+  /// the nav sound when repeating against the start/end of a list.
+  bool _navigateContentDown() {
+    if (_selectedTabIndex == 0) return true;
     if (_selectedTabIndex == 3) {
       NewScraperOptionsScreen.navigateDown();
-      return;
+      return true;
     }
     if (_selectedTabIndex == 4) {
-      NewSettingsScreen.navigateDown();
-      return;
+      return NewSettingsScreen.navigateDown();
     }
+    return true;
   }
 
-  void _navigateContentUp() {
-    if (_selectedTabIndex == 0) return;
+  bool _navigateContentUp() {
+    if (_selectedTabIndex == 0) return true;
     if (_selectedTabIndex == 3) {
       NewScraperOptionsScreen.navigateUp();
-      return;
+      return true;
     }
     if (_selectedTabIndex == 4) {
-      NewSettingsScreen.navigateUp();
-      return;
+      return NewSettingsScreen.navigateUp();
     }
+    return true;
   }
 
   void _handleSettings() {

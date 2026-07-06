@@ -31,8 +31,10 @@ class NewSettingsScreen extends StatefulWidget {
   State<NewSettingsScreen> createState() => _NewSettingsScreenState();
 
   // Static Bridge: Provides delegation targets for external input managers.
-  static void navigateUp() => _currentInstance?._navigateUp();
-  static void navigateDown() => _currentInstance?._navigateDown();
+  /// Returns whether the selection moved (false when repeating at a list edge),
+  /// so callers can gate the nav sound.
+  static bool navigateUp() => _currentInstance?._navigateUp() ?? true;
+  static bool navigateDown() => _currentInstance?._navigateDown() ?? true;
   static void navigateLeft() => _currentInstance?._navigateLeft();
   static void navigateRight() => _currentInstance?._navigateRight();
   static void selectCurrent() => _currentInstance?._selectItem();
@@ -206,28 +208,32 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
   }
 
   /// Vertical Navigation Protocol: Handles wrap-around menu scrolling and content list progression.
-  void _navigateUp() {
+  ///
+  /// Returns whether the selection actually moved, so the caller can suppress
+  /// the nav sound when repeating against the start/end of a list.
+  bool _navigateUp() {
     if (_focusOnMenu) {
       setState(() {
         _selectedMenuIndex =
             (_selectedMenuIndex - 1 + _menuItems.length) % _menuItems.length;
       });
       _scrollMenuToSelected();
-      return;
+      return true;
     }
 
     // Content-Specific Navigation Overrides.
     final selectedKey = _menuItems[_selectedMenuIndex].localeKey;
     if (selectedKey == AppLocale.palettes) {
       _paletteSettingsKey.currentState?.navigateUp();
-      return;
+      return true;
     }
     if (selectedKey == AppLocale.neoThemes) {
       _themesSettingsKey.currentState?.navigateUp();
-      return;
+      return true;
     }
 
     // Generic linear navigation within content lists.
+    final previousIndex = _selectedContentIndex;
     setState(() {
       _selectedContentIndex = (_selectedContentIndex - 1).clamp(
         0,
@@ -235,6 +241,7 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       );
     });
     _triggerContentScroll();
+    return _selectedContentIndex != previousIndex;
   }
 
   /// Orchestrates visual alignment in content views to maintain visibility of the focused item.
@@ -255,25 +262,26 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
     }
   }
 
-  void _navigateDown() {
+  bool _navigateDown() {
     if (_focusOnMenu) {
       setState(() {
         _selectedMenuIndex = (_selectedMenuIndex + 1) % _menuItems.length;
       });
       _scrollMenuToSelected();
-      return;
+      return true;
     }
 
     final selectedKey = _menuItems[_selectedMenuIndex].localeKey;
     if (selectedKey == AppLocale.palettes) {
       _paletteSettingsKey.currentState?.navigateDown();
-      return;
+      return true;
     }
     if (selectedKey == AppLocale.neoThemes) {
       _themesSettingsKey.currentState?.navigateDown();
-      return;
+      return true;
     }
 
+    final previousIndex = _selectedContentIndex;
     setState(() {
       _selectedContentIndex = (_selectedContentIndex + 1).clamp(
         0,
@@ -281,6 +289,7 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       );
     });
     _triggerContentScroll();
+    return _selectedContentIndex != previousIndex;
   }
 
   /// Leftward Navigation Protocol: Returns focus to the master menu from the detail panel.
