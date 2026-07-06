@@ -78,6 +78,15 @@ class SecondaryAchievementsController {
     // achievements page on top.
     // ignore: unawaited_futures
     state.updateState(
+      // isGameLaunching is set here — in the SAME atomic snapshot as
+      // nowPlayingActive — rather than via a separate _updateSecondaryDisplay
+      // push. The cross-engine transport delivers full snapshots without
+      // ordering guarantees, so a separate launch snapshot carrying
+      // nowPlayingActive=false could land after this one and clobber it (the
+      // intermittent "no Now Playing on PSX/GameCube" race). One snapshot = no
+      // race. It also stops the secondary preview video (the receiver keys the
+      // video teardown off isGameLaunching).
+      isGameLaunching: true,
       nowPlayingActive: true,
       gameTitle: game.name,
       gameBoxart: boxartPath,

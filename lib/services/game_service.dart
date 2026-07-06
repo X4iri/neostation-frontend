@@ -170,6 +170,26 @@ class GameService {
   static bool _isGameLaunched = false;
   static bool get isGameLaunched => _isGameLaunched;
 
+  /// True from the moment a launch is initiated (Now Playing pushed) until the
+  /// launch resolves — i.e. [_registerGameLaunch] flips [_isGameLaunched], or
+  /// the launch fails. Covers the ~2s dialog+handoff window during which
+  /// [_isGameLaunched] is still false, so a transient resume in that window
+  /// can't clear the Now Playing state we just pushed.
+  static bool _launchPending = false;
+
+  /// Whether a game is running OR a launch is in progress. Callers reacting to
+  /// an app resume should use this (not [isGameLaunched]) before clearing
+  /// secondary-display in-game state, to avoid a launch-window race.
+  static bool get isGameLaunchInProgress => _isGameLaunched || _launchPending;
+
+  /// Opens the launch-pending window. Call when a launch is initiated, before
+  /// the emulator handoff. Cleared by [_registerGameLaunch] on success or
+  /// [clearLaunchPending] on failure.
+  static void beginLaunchPending() => _launchPending = true;
+
+  /// Closes the launch-pending window (e.g. on launch failure).
+  static void clearLaunchPending() => _launchPending = false;
+
   /// Timestamp when the current game session was initiated.
   static DateTime? _gameLaunchTime;
 
@@ -696,6 +716,7 @@ class GameService {
     String? emulatorExeName,
   ]) {
     _isGameLaunched = true;
+    _launchPending = false;
     _gameLaunchTime = DateTime.now();
     _lastPlaytimeSave = _gameLaunchTime;
     _launchedEmulatorExe = emulatorExeName;

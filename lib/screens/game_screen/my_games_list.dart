@@ -245,13 +245,8 @@ class _SystemGamesListState extends State<SystemGamesList> {
     MusicPlayerService().addListener(_onMusicPlayerStateChanged);
 
     if (Platform.isAndroid) {
-      _secondaryDisplayState = SecondaryDisplayState();
-      _secondaryDisplayState!.addListener(() {
-        if (mounted) {
-          setState(() {});
-          _updateMusicDucking();
-        }
-      });
+      _secondaryDisplayState = SecondaryDisplayState.instance;
+      _secondaryDisplayState!.addListener(_onSecondaryDisplayChanged);
     }
   }
 
@@ -265,6 +260,13 @@ class _SystemGamesListState extends State<SystemGamesList> {
     _letterIndicatorTextShadow = primary;
   }
 
+  void _onSecondaryDisplayChanged() {
+    if (mounted) {
+      setState(() {});
+      _updateMusicDucking();
+    }
+  }
+
   @override
   void dispose() {
     // Detach listeners before disposal.
@@ -272,7 +274,8 @@ class _SystemGamesListState extends State<SystemGamesList> {
     _databaseProvider.removeListener(_onDatabaseUpdated);
     MusicPlayerService().removeListener(_onMusicPlayerStateChanged);
 
-    _secondaryDisplayState?.dispose();
+    // Shared singleton — detach our listener, never dispose the instance.
+    _secondaryDisplayState?.removeListener(_onSecondaryDisplayChanged);
     _achievementsController.dispose();
 
     _cleanupResources();
@@ -1499,9 +1502,13 @@ class _SystemGamesListState extends State<SystemGamesList> {
 
     // Resource termination and UI synchronization prior to process handoff.
     _stopVideoAndCleanup();
-    // Await the art push first so it can't land after the achievement push and
-    // re-hide the panel; the panel push is then the definitive last write.
-    await _updateSecondaryDisplay(_selectedGame!);
+    // NOTE: do NOT push a separate _updateSecondaryDisplay here. The game's
+    // media is already in the shared state from browsing, and a separate launch
+    // snapshot (carrying nowPlayingActive=false + isGameLaunching=true) can be
+    // delivered to the secondary engine AFTER the Now Playing push below and
+    // clobber it — the cross-engine transport gives no ordering guarantee. The
+    // launch push (_pushAchievementsForLaunch) now carries isGameLaunching
+    // itself, so it is the single authoritative launch write.
     if (!mounted) return;
 
     // Push the in-game RetroAchievements panel. Fired without awaiting so it

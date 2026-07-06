@@ -70,7 +70,7 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
   void initState() {
     super.initState();
     if (Platform.isAndroid) {
-      _secondaryDisplayState = SecondaryDisplayState();
+      _secondaryDisplayState = SecondaryDisplayState.instance;
       _secondaryDisplayState!.addListener(_onStateChanged);
       // Signal that the secondary screen is active — but only after the initial
       // state sync. Pushing it while the synced value is still null makes
@@ -325,8 +325,8 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
 
   @override
   void dispose() {
+    // Shared singleton — detach our listener, never dispose the instance.
     _secondaryDisplayState?.removeListener(_onStateChanged);
-    _secondaryDisplayState?.dispose();
     _celebrationTimer?.cancel();
     _playTimeTicker?.cancel();
     _dimTimer?.cancel();

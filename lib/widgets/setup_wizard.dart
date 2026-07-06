@@ -45,7 +45,7 @@ class _SetupWizardState extends State<SetupWizard> {
     _initializeSteps();
     _initGamepad();
     if (Platform.isAndroid) {
-      _secondaryDisplayState = SecondaryDisplayState();
+      _secondaryDisplayState = SecondaryDisplayState.instance;
     }
   }
 
@@ -78,7 +78,7 @@ class _SetupWizardState extends State<SetupWizard> {
   @override
   void dispose() {
     _gamepadNav?.dispose();
-    _secondaryDisplayState?.dispose();
+    // Shared singleton — never dispose the instance.
     super.dispose();
   }
 
