@@ -291,6 +291,9 @@ class SqliteMigrations {
       case 95:
         await _migrateToVersion95(db);
         break;
+      case 96:
+        await _migrateToVersion96(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4648,10 +4651,37 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v94: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
   static Future<void> _migrateToVersion94(Database db) async {
-    _log.i('Migration v94: Creating user_romm_config table');
+    // The RetroAchievements overhaul requires each user to supply their own
+    // username AND personal web API key. Older builds let users connect with a
+    // username alone (riding on the bundled build-time key), so any existing
+    // session must be invalidated on upgrade to force a fresh login. Clearing
+    // ra_user is sufficient: auto-login is skipped when no username is stored.
+    _log.i(
+      'Migration v94: Clearing saved RetroAchievements user to force '
+      're-login with a personal API key',
+    );
+    try {
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+
+      if (columns.contains('ra_user')) {
+        db.execute('UPDATE user_config SET ra_user = NULL');
+        _log.i('Cleared ra_user via v94');
+      } else {
+        _log.i('user_config has no ra_user column; nothing to clear in v94');
+      }
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v94: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v95: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  static Future<void> _migrateToVersion95(Database db) async {
+    _log.i('Migration v95: Creating user_romm_config table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS user_romm_config (
@@ -4666,19 +4696,19 @@ class SqliteMigrations {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
       ''');
-      _log.i('Table user_romm_config created via v94');
+      _log.i('Table user_romm_config created via v95');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v94: $e');
+      _log.e('Error in migration v95: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
   }
 
-  /// Migration v95: Adds the [app_romm_rom_map] table, which links a local game
+  /// Migration v96: Adds the [app_romm_rom_map] table, which links a local game
   /// (romname + system folder) to its RomM ROM id so save/state sync can target
   /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
-  static Future<void> _migrateToVersion95(Database db) async {
-    _log.i('Migration v95: Creating app_romm_rom_map table');
+  static Future<void> _migrateToVersion96(Database db) async {
+    _log.i('Migration v96: Creating app_romm_rom_map table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS app_romm_rom_map (
@@ -4694,9 +4724,9 @@ class SqliteMigrations {
         CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
         ON app_romm_rom_map(romm_rom_id);
       ''');
-      _log.i('Table app_romm_rom_map created via v95');
+      _log.i('Table app_romm_rom_map created via v96');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v95: $e');
+      _log.e('Error in migration v96: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
