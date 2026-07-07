@@ -379,8 +379,7 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
   bool _navigateContentDown() {
     if (_selectedTabIndex == 0) return true;
     if (_selectedTabIndex == 2) {
-      RAContent.navigateDown();
-      return true;
+      return RAContent.navigateDown();
     }
     if (_selectedTabIndex == 3) {
       NewScraperOptionsScreen.navigateDown();
@@ -395,8 +394,7 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
   bool _navigateContentUp() {
     if (_selectedTabIndex == 0) return true;
     if (_selectedTabIndex == 2) {
-      RAContent.navigateUp();
-      return true;
+      return RAContent.navigateUp();
     }
     if (_selectedTabIndex == 3) {
       NewScraperOptionsScreen.navigateUp();
