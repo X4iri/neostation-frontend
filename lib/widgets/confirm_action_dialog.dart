@@ -20,6 +20,9 @@ class ConfirmActionDialog extends StatefulWidget {
   final String confirmLabel;
   final IconData icon;
 
+  /// Label for the cancel/back button. Defaults to `AppLocale.cancel`.
+  final String? cancelLabel;
+
   /// Accent colour for the title icon and confirm button. Defaults to the
   /// theme error colour for destructive intent.
   final Color? accentColor;
@@ -30,6 +33,7 @@ class ConfirmActionDialog extends StatefulWidget {
     required this.body,
     required this.confirmLabel,
     required this.icon,
+    this.cancelLabel,
     this.accentColor,
   });
 
@@ -39,6 +43,7 @@ class ConfirmActionDialog extends StatefulWidget {
     required String body,
     required String confirmLabel,
     required IconData icon,
+    String? cancelLabel,
     Color? accentColor,
   }) async {
     final result = await showDialog<bool>(
@@ -49,6 +54,7 @@ class ConfirmActionDialog extends StatefulWidget {
         body: body,
         confirmLabel: confirmLabel,
         icon: icon,
+        cancelLabel: cancelLabel,
         accentColor: accentColor,
       ),
     );
@@ -146,7 +152,7 @@ class _ConfirmActionDialogState extends State<ConfirmActionDialog> {
               ),
               SizedBox(width: 4.r),
               Text(
-                AppLocale.cancel.getString(context),
+                widget.cancelLabel ?? AppLocale.cancel.getString(context),
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 12.r,

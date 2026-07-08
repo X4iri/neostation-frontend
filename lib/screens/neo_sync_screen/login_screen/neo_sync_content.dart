@@ -203,15 +203,13 @@ class NeoSyncContentState extends State<NeoSyncContent>
     _savesGamepadNav.deactivate();
 
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return _CancelSubscriptionDialog(
-          onKeepSubscription: () => Navigator.of(context).pop(false),
-          onCancelSubscription: () => Navigator.of(context).pop(true),
-        );
-      },
+    final confirmed = await ConfirmActionDialog.show(
+      context,
+      title: AppLocale.cancelSubscription.getString(context),
+      body: AppLocale.cancelSubscriptionConfirm.getString(context),
+      confirmLabel: AppLocale.cancelSubscription.getString(context),
+      cancelLabel: AppLocale.keepSubscription.getString(context),
+      icon: Symbols.cancel_rounded,
     );
 
     // Reactivar navegación por gamepad después de cerrar el modal
@@ -2380,135 +2378,6 @@ class _UpgradeModalDialogState extends State<_UpgradeModalDialog> {
 }
 
 // Cancel Subscription Dialog with Gamepad Navigation
-class _CancelSubscriptionDialog extends StatefulWidget {
-  final VoidCallback onKeepSubscription;
-  final VoidCallback onCancelSubscription;
-
-  const _CancelSubscriptionDialog({
-    required this.onKeepSubscription,
-    required this.onCancelSubscription,
-  });
-
-  @override
-  State<_CancelSubscriptionDialog> createState() =>
-      _CancelSubscriptionDialogState();
-}
-
-class _CancelSubscriptionDialogState extends State<_CancelSubscriptionDialog> {
-  late GamepadNavigation _gamepadNav;
-
-  @override
-  void initState() {
-    super.initState();
-    _gamepadNav = GamepadNavigation(
-      onSelectItem: () {
-        widget.onCancelSubscription();
-      },
-      onBack: () {
-        widget.onKeepSubscription();
-      },
-    );
-    _gamepadNav.initialize();
-    _gamepadNav.activate();
-  }
-
-  @override
-  void dispose() {
-    _gamepadNav.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      backgroundColor: theme.colorScheme.surface,
-      surfaceTintColor: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      title: Row(
-        children: [
-          Icon(
-            Symbols.cancel_rounded,
-            color: theme.colorScheme.error,
-            size: 24.r,
-          ),
-          SizedBox(width: 12.r),
-          Text(
-            AppLocale.cancelSubscription.getString(context),
-            style: TextStyle(
-              fontSize: 18.r,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppLocale.cancelSubscriptionConfirm.getString(context),
-            style: TextStyle(
-              fontSize: 14.r,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton.icon(
-          onPressed: widget.onKeepSubscription,
-          icon: Image.asset(
-            'assets/images/gamepad/Xbox_B_button.png',
-            width: 16.r,
-            height: 16.r,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-          label: Text(
-            AppLocale.keepSubscription.getString(context),
-            style: TextStyle(
-              fontSize: 14.r,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 16.r, vertical: 8.r),
-          ),
-        ),
-        TextButton.icon(
-          onPressed: widget.onCancelSubscription,
-          icon: Image.asset(
-            'assets/images/gamepad/Xbox_A_button.png',
-            width: 16.r,
-            height: 16.r,
-            color: theme.colorScheme.error,
-          ),
-          label: Text(
-            AppLocale.cancelSubscription.getString(context),
-            style: TextStyle(
-              fontSize: 14.r,
-              color: theme.colorScheme.error,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 16.r, vertical: 8.r),
-          ),
-        ),
-      ],
-      actionsPadding: EdgeInsets.only(
-        left: 16.r,
-        right: 16.r,
-        bottom: 16.r,
-        top: 8.r,
-      ),
-    );
-  }
-}
-
 // Delete Cloud Save Dialog with Gamepad Navigation
 class _DeleteCloudSaveDialog extends StatefulWidget {
   final NeoSyncFile file;
