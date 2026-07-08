@@ -10,6 +10,7 @@ import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/widgets/custom_notification.dart';
 import 'package:neostation/services/game_service.dart';
 import 'package:neostation/utils/gamepad_nav.dart';
+import 'package:neostation/widgets/confirm_action_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../../../models/system_model.dart';
 import '../../../../providers/file_provider.dart';
@@ -157,7 +158,7 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
     }
     // Play-time Reset Action.
     else if (idx == _settingsPlayTimeIdx) {
-      if ((_game.playTime ?? 0) > 0) _resetPlayTime();
+      if ((_game.playTime ?? 0) > 0) _confirmResetPlayTime();
     }
     // Delete Game Action.
     else if (idx == _settingsDeleteGameIdx) {
@@ -262,6 +263,21 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
       _log.e('Play-time reset operation failed: \$e');
     } finally {
       if (mounted) setState(() => _isResettingPlayTime = false);
+    }
+  }
+
+  /// Confirms with the user before clearing the recorded play-time.
+  Future<void> _confirmResetPlayTime() async {
+    SfxService().playNavSound();
+    final confirmed = await ConfirmActionDialog.show(
+      context,
+      title: AppLocale.resetPlayTimeConfirm.getString(context),
+      body: AppLocale.resetPlayTimeConfirmBody.getString(context),
+      confirmLabel: AppLocale.reset.getString(context),
+      icon: Symbols.timer_off_rounded,
+    );
+    if (confirmed && mounted) {
+      _resetPlayTime();
     }
   }
 
@@ -505,7 +521,7 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
                           );
                           if ((_game.playTime ?? 0) > 0 &&
                               !_isResettingPlayTime) {
-                            _resetPlayTime();
+                            _confirmResetPlayTime();
                           }
                         },
                         trailing: _isResettingPlayTime
@@ -527,7 +543,7 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
                                         !_isResettingPlayTime;
                                     final theme = Theme.of(context);
                                     return GestureDetector(
-                                      onTap: canReset ? _resetPlayTime : null,
+                                      onTap: canReset ? _confirmResetPlayTime : null,
                                       child: Container(
                                         padding: EdgeInsets.symmetric(
                                           horizontal: 8.r,

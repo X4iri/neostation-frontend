@@ -792,6 +792,16 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.romDirectories: 'Direktori ROM',
   AppLocale.addRomFolder: 'Tambah Folder ROM',
   AppLocale.removeRomFolder: 'Hapus',
+  AppLocale.resetPlayTimeConfirm: 'Atur Ulang Waktu Bermain',
+  AppLocale.resetPlayTimeConfirmBody:
+      'Ini akan mengatur ulang waktu bermain yang tercatat untuk game ini menjadi nol secara permanen. Tindakan ini tidak dapat dibatalkan.',
+  AppLocale.removeRomFolderConfirmBody:
+      'Ini akan menghapus folder ROM ini dari sumber pustaka Anda. File Anda di disk tidak akan dihapus.',
+  AppLocale.disconnectRaConfirm: 'Putuskan RetroAchievements',
+  AppLocale.disconnectRaConfirmBody:
+      'Ini akan mengeluarkan Anda dan menghapus kredensial RetroAchievements yang tersimpan dari perangkat ini.',
+  AppLocale.neoSyncLogoutConfirmBody:
+      'Ini akan mengeluarkan Anda dari akun NeoSync di perangkat ini.',
 
   AppLocale.deleteGame: 'Hapus Game',
   AppLocale.deleteGameConfirm: 'Hapus Secara Permanen',

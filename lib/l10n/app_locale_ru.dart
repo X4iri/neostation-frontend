@@ -788,6 +788,16 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.romDirectories: 'Директории ROM',
   AppLocale.addRomFolder: 'Добавить папку ROM',
   AppLocale.removeRomFolder: 'Удалить',
+  AppLocale.resetPlayTimeConfirm: 'Сбросить время игры',
+  AppLocale.resetPlayTimeConfirmBody:
+      'Записанное время игры для этой игры будет безвозвратно сброшено до нуля. Это действие нельзя отменить.',
+  AppLocale.removeRomFolderConfirmBody:
+      'Эта папка ROM будет удалена из источников вашей библиотеки. Ваши файлы на диске не будут удалены.',
+  AppLocale.disconnectRaConfirm: 'Отключить RetroAchievements',
+  AppLocale.disconnectRaConfirmBody:
+      'Вы выйдете из системы, а сохранённые учётные данные RetroAchievements будут удалены с этого устройства.',
+  AppLocale.neoSyncLogoutConfirmBody:
+      'Вы выйдете из своей учётной записи NeoSync на этом устройстве.',
 
   AppLocale.deleteGame: 'Удалить игру',
   AppLocale.deleteGameConfirm: 'Удалить навсегда',

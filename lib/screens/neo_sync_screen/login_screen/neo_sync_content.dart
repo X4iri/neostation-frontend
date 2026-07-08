@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:neostation/l10n/app_locale.dart';
+import 'package:neostation/widgets/confirm_action_dialog.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/widgets/custom_notification.dart' as custom;
 import 'package:neostation/services/neosync/auth_service.dart';
@@ -1085,7 +1086,16 @@ class NeoSyncContentState extends State<NeoSyncContent>
     }
   }
 
-  void _onLogout() {
+  Future<void> _onLogout() async {
+    final confirmed = await ConfirmActionDialog.show(
+      context,
+      title: AppLocale.logoutConfirm.getString(context),
+      body: AppLocale.neoSyncLogoutConfirmBody.getString(context),
+      confirmLabel: AppLocale.logout.getString(context),
+      icon: Symbols.logout_rounded,
+    );
+    if (!confirmed || !mounted) return;
+
     final authService = Provider.of<AuthService>(context, listen: false);
     authService.logout();
     // Reset profile loaded flag for next login

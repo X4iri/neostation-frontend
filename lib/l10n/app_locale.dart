@@ -821,6 +821,14 @@ mixin AppLocale {
   static const String addRomFolder = 'add_rom_folder';
   static const String removeRomFolder = 'remove_rom_folder';
 
+  // Destructive-action confirmation prompts
+  static const String resetPlayTimeConfirm = 'reset_play_time_confirm';
+  static const String resetPlayTimeConfirmBody = 'reset_play_time_confirm_body';
+  static const String removeRomFolderConfirmBody = 'remove_rom_folder_confirm_body';
+  static const String disconnectRaConfirm = 'disconnect_ra_confirm';
+  static const String disconnectRaConfirmBody = 'disconnect_ra_confirm_body';
+  static const String neoSyncLogoutConfirmBody = 'neo_sync_logout_confirm_body';
+
   // RetroAchievements dashboard & achievement comments
   static const String raCompletionsLabel = 'ra_completions_label';
   static const String raMasteriesLabel = 'ra_masteries_label';

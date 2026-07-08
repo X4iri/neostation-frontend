@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_locale.dart';
+import '../../widgets/confirm_action_dialog.dart';
 import '../../models/retro_achievements_dashboard_models.dart';
 import '../../models/retro_achievements_user_awards.dart';
 import '../../providers/file_provider.dart';
@@ -243,7 +244,15 @@ class _RADashboardHubState extends State<RADashboardHub> {
             ),
           ),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
+              final confirmed = await ConfirmActionDialog.show(
+                context,
+                title: AppLocale.disconnectRaConfirm.getString(context),
+                body: AppLocale.disconnectRaConfirmBody.getString(context),
+                confirmLabel: AppLocale.logout.getString(context),
+                icon: Symbols.logout_rounded,
+              );
+              if (!confirmed || !context.mounted) return;
               raProvider.disconnect(clearSavedUser: true);
               if (!context.mounted) return;
               AppNotification.showNotification(

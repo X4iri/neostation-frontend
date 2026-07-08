@@ -712,6 +712,16 @@ const Map<String, dynamic> appLocaleZhHant = {
   AppLocale.romDirectories: 'ROM 目錄',
   AppLocale.addRomFolder: '新增 ROM 資料夾',
   AppLocale.removeRomFolder: '移除',
+  AppLocale.resetPlayTimeConfirm: '重設遊玩時間',
+  AppLocale.resetPlayTimeConfirmBody:
+      '這將永久將此遊戲記錄的遊玩時間重設為零。此操作無法復原。',
+  AppLocale.removeRomFolderConfirmBody:
+      '這將從您的媒體庫來源中移除此 ROM 資料夾。磁碟上的檔案不會被刪除。',
+  AppLocale.disconnectRaConfirm: '中斷 RetroAchievements 連線',
+  AppLocale.disconnectRaConfirmBody:
+      '這將使您登出，並從此裝置中移除已儲存的 RetroAchievements 憑證。',
+  AppLocale.neoSyncLogoutConfirmBody:
+      '這將使您在此裝置上登出 NeoSync 帳戶。',
 
   AppLocale.deleteGame: '刪除遊戲',
   AppLocale.deleteGameConfirm: '永久刪除',
