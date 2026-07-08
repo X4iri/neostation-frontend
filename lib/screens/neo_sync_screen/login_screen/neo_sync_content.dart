@@ -461,17 +461,10 @@ class NeoSyncContentState extends State<NeoSyncContent>
                     onPressed: _onLogout,
                     icon: Icon(
                       Symbols.logout_rounded,
-                      size: 12.r,
+                      size: 20.r,
                       color: Theme.of(context).colorScheme.error,
                     ),
                     tooltip: AppLocale.logout.getString(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.error.withValues(alpha: 0.1),
-                      padding: EdgeInsets.all(8.r),
-                      minimumSize: Size(32.r, 32.r),
-                    ),
                   ),
                 ],
               ),
