@@ -147,7 +147,7 @@ class _RADashboardHubState extends State<RADashboardHub> {
   ) {
     final theme = Theme.of(context);
     final user = raProvider.user!;
-    final showCompletions = user.isSoftcore;
+    final showCompletions = user.isCasual;
     final trackedGames = raProvider.completionProgress?.total ?? 0;
     final highlightColor = showCompletions
         ? const Color(0xFFC0C0C0)
@@ -526,7 +526,7 @@ class _RADashboardHubState extends State<RADashboardHub> {
     BuildContext context,
     RetroAchievementsProvider raProvider,
   ) {
-    final showCompletions = raProvider.user?.isSoftcore ?? false;
+    final showCompletions = raProvider.user?.isCasual ?? false;
     final items =
         (showCompletions
                 ? raProvider.recentCompletions
