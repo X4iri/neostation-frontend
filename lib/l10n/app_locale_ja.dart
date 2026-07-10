@@ -104,9 +104,9 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.nowPlayingDimOff: 'オフ',
   AppLocale.secondarySectionNowPlaying: 'Now Playingパネル',
   AppLocale.secondarySectionDock: 'アプリドック',
-  AppLocale.screenshotAccess: 'スクリーンショットアクセス',
+  AppLocale.screenshotAccess: 'Screen return & screenshots',
   AppLocale.screenshotAccessSubtitle:
-      'スクリーンショットボタンでメイン画面をキャプチャできるようにする（Androidのアクセシビリティ設定を開きます）',
+      'Restores the Now Playing screen when you close an app opened from the dock, and lets the screenshot button capture the screen (opens Android accessibility settings)',
   AppLocale.scanOnStartupSubtitle: 'アプリ起動時にROMフォルダを自動的にスキャン',
   AppLocale.ignoreHiddenFiles: '隠しアイテムを無視',
   AppLocale.ignoreHiddenFilesSubtitle: 'ROMスキャン中に隠しファイルとフォルダを非表示にする',
@@ -505,6 +505,10 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.storagePermission: 'ストレージの許可',
   AppLocale.storagePermissionDesc:
       'NeoStationがRetroArchの設定を管理し、セーブデータを正しく同期するには「すべてのファイルへのアクセス」が必要です。\n\n次の画面でこの許可を与えてください。',
+  AppLocale.screenReturnAccess: 'Screen Return Access',
+  AppLocale.screenReturnAccessDesc:
+      'Brings the Now Playing screen back when you close an app opened from the dock, and enables system screenshots. Only the foreground app name is read \u2014 no screen content is collected.',
+  AppLocale.screenReturnAccessHint: 'Turn on NeoStation, then tap Allow',
   AppLocale.selectRomFolder: 'ROMフォルダを選択',
   AppLocale.romFolderSelected: 'ROMフォルダが選択されました！',
   AppLocale.chooseRomFolderDesc:
@@ -757,6 +761,16 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+  AppLocale.resetPlayTimeConfirm: 'プレイ時間をリセット',
+  AppLocale.resetPlayTimeConfirmBody:
+      'このゲームの記録されたプレイ時間を完全にゼロにリセットします。この操作は元に戻せません。',
+  AppLocale.removeRomFolderConfirmBody:
+      'このROMフォルダをライブラリのソースから削除します。ディスク上のファイルは削除されません。',
+  AppLocale.disconnectRaConfirm: 'RetroAchievements の接続を解除',
+  AppLocale.disconnectRaConfirmBody:
+      'ログアウトし、保存されたRetroAchievementsの認証情報をこのデバイスから削除します。',
+  AppLocale.neoSyncLogoutConfirmBody:
+      'このデバイスでNeoSyncアカウントからログアウトします。',
 
   AppLocale.deleteGame: 'ゲームを削除',
   AppLocale.deleteGameConfirm: '完全に削除する',

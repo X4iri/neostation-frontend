@@ -40,7 +40,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:neostation/screens/secondary_screen/secondary_screen.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-// Política personalizada para deshabilitar navegación por teclado
+// Politica personalizada para deshabilitar navegacion por teclado
 class NoFocusTraversalPolicy extends FocusTraversalPolicy {
   @override
   FocusNode? findFirstFocus(
@@ -111,7 +111,7 @@ class ToggleFullscreenAction extends Action<ToggleFullscreenIntent> {
     } else if (Platform.isMacOS) {
       final isFullscreen = await windowManager.isFullScreen();
       LoggerService.instance.i(
-        '🖥️ Toggle fullscreen (macOS): current=$isFullscreen, setting=${!isFullscreen}',
+        'Toggle fullscreen (macOS): current=$isFullscreen, setting=${!isFullscreen}',
       );
       await windowManager.setFullScreen(!isFullscreen);
 
@@ -184,9 +184,23 @@ void main() async {
   await log.init();
   log.i('Starting NeoStation...');
 
-  // Inicializar window_manager para desktop (solo Windows y macOS)
+  // Inicializar window_manager para desktop con tamano minimo 640x480
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-    // Cargar configuración de fullscreen
+    await windowManager.ensureInitialized();
+
+    WindowOptions windowOptions = WindowOptions(
+      size: const Size(1280, 720),
+      alwaysOnTop: false,
+      skipTaskbar: false,
+      minimumSize: const Size(640, 480),
+    );
+
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
+    // Cargar configuracion de fullscreen
     bool isFullscreen = true;
     try {
       final config = await ConfigRepository.getUserConfig();
@@ -201,41 +215,14 @@ void main() async {
       if (Platform.isWindows || Platform.isLinux) {
         FullScreenWindow.setFullScreen(true);
       } else if (Platform.isMacOS) {
-        LoggerService.instance.i('Initializing window manager...');
-        await windowManager.ensureInitialized();
-        WindowOptions windowOptions = WindowOptions(
-          size: const Size(1280, 720),
-          alwaysOnTop: false,
-          skipTaskbar: false,
-          minimumSize: const Size(640, 480),
-          fullScreen: isFullscreen,
-        );
-
-        windowManager.waitUntilReadyToShow(windowOptions, () async {
-          await windowManager.show();
-          await windowManager.focus();
-          await windowManager.setFullScreen(true);
-        });
+        await windowManager.setFullScreen(true);
       }
       FullscreenNotifier().notifyFullscreenChanged(true);
     } else {
       if (Platform.isWindows || Platform.isLinux) {
         FullScreenWindow.setFullScreen(false);
       } else if (Platform.isMacOS) {
-        await windowManager.ensureInitialized();
-        WindowOptions windowOptions = WindowOptions(
-          size: const Size(1280, 720),
-          alwaysOnTop: false,
-          skipTaskbar: false,
-          minimumSize: const Size(640, 480),
-          fullScreen: isFullscreen,
-        );
-
-        windowManager.waitUntilReadyToShow(windowOptions, () async {
-          await windowManager.show();
-          await windowManager.focus();
-          await windowManager.setFullScreen(false);
-        });
+        await windowManager.setFullScreen(false);
       }
       FullscreenNotifier().notifyFullscreenChanged(false);
     }
@@ -246,7 +233,7 @@ void main() async {
   // Inicializar fvp para soporte extendido de video (Windows, Linux, etc.)
   registerWith();
 
-  // Configurar manejo global de errores para evitar crashesß
+  // Configurar manejo global de errores para evitar crashes
   FlutterError.onError = (FlutterErrorDetails details) {
     // Para otros errores, usar el handler por defecto en debug
     if (details.stack != null) {
@@ -276,7 +263,7 @@ void main() async {
     log.e('Error initializing FileProvider: $e');
   }
 
-  // Inicializar localización con idioma persistido
+  // Inicializar localizacion con idioma persistido
   String initLang = 'en';
   try {
     final rawConfig = await ConfigRepository.getUserConfig();
@@ -308,7 +295,7 @@ void main() async {
   final authService = AuthService();
   await authService.initialize();
 
-  // Inicializar providers críticos
+  // Inicializar providers criticos
   final sqliteConfigProvider = SqliteConfigProvider();
   final sqliteDatabaseProvider = SqliteDatabaseProvider();
 
@@ -316,7 +303,7 @@ void main() async {
     // 1. Inicializar ConfigProvider primero (sincroniza sistemas)
     await sqliteConfigProvider.initialize();
 
-    // 2. Inicializar DatabaseProvider (carga juegos basándose en sistemas sincronizados)
+    // 2. Inicializar DatabaseProvider (carga juegos basandose en sistemas sincronizados)
     await sqliteDatabaseProvider.initialize(
       romFolders: sqliteConfigProvider.config.romFolders,
       availableSystems: sqliteConfigProvider.availableSystems,
@@ -332,7 +319,7 @@ void main() async {
   if (Platform.isAndroid) {
     try {
       GameService.initializeAndroidGameListener();
-      // Verificar si hay una sesión de juego pendiente (app fue matada)
+      // Verificar si hay una sesion de juego pendiente (app fue matada)
       await GameService.checkPendingGameSession();
     } catch (e) {
       log.e('Error initializing GameService: $e');

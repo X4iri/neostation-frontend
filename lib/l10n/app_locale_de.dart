@@ -121,9 +121,9 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.nowPlayingDimOff: 'Aus',
   AppLocale.secondarySectionNowPlaying: 'Now Playing-Bereich',
   AppLocale.secondarySectionDock: 'App-Dock',
-  AppLocale.screenshotAccess: 'Screenshot-Zugriff',
+  AppLocale.screenshotAccess: 'Screen return & screenshots',
   AppLocale.screenshotAccessSubtitle:
-      'Screenshot-Taste erlaubt Aufnahme des Hauptbildschirms (öffnet Android-Bedienungshilfen)',
+      'Restores the Now Playing screen when you close an app opened from the dock, and lets the screenshot button capture the screen (opens Android accessibility settings)',
   AppLocale.scanOnStartupSubtitle:
       'Scant ROM-Ordner automatisch beim Öffnen der App',
   AppLocale.ignoreHiddenFiles: 'Versteckte Elemente ignorieren',
@@ -567,6 +567,10 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.storagePermission: 'Speicherberechtigung',
   AppLocale.storagePermissionDesc:
       'NeoStation benötigt "Zugriff auf alle Dateien", um deine RetroArch-Konfigurationen zu verwalten und deine Spielstände korrekt zu synchronisieren.\n\nBitte erteile diese Berechtigung im nächsten Bildschirm.',
+  AppLocale.screenReturnAccess: 'Screen Return Access',
+  AppLocale.screenReturnAccessDesc:
+      'Brings the Now Playing screen back when you close an app opened from the dock, and enables system screenshots. Only the foreground app name is read \u2014 no screen content is collected.',
+  AppLocale.screenReturnAccessHint: 'Turn on NeoStation, then tap Allow',
   AppLocale.selectRomFolder: 'ROM-Ordner auswählen',
   AppLocale.romFolderSelected: 'ROM-Ordner ausgewählt!',
   AppLocale.chooseRomFolderDesc:
@@ -852,6 +856,16 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.rommNoWritableFolder:
       'Could not write to your ROM folder. Grant "All files access" to NeoStation and try again.',
   AppLocale.rommNotConnected: 'Connect to a RomM server in Settings first',
+  AppLocale.resetPlayTimeConfirm: 'Spielzeit zurücksetzen',
+  AppLocale.resetPlayTimeConfirmBody:
+      'Dadurch wird die erfasste Spielzeit dieses Spiels dauerhaft auf null zurückgesetzt. Dies kann nicht rückgängig gemacht werden.',
+  AppLocale.removeRomFolderConfirmBody:
+      'Dadurch wird dieser ROM-Ordner aus deinen Bibliotheksquellen entfernt. Deine Dateien auf dem Datenträger werden nicht gelöscht.',
+  AppLocale.disconnectRaConfirm: 'RetroAchievements trennen',
+  AppLocale.disconnectRaConfirmBody:
+      'Dadurch wirst du abgemeldet und deine gespeicherten RetroAchievements-Anmeldedaten werden von diesem Gerät entfernt.',
+  AppLocale.neoSyncLogoutConfirmBody:
+      'Dadurch wirst du auf diesem Gerät von deinem NeoSync-Konto abgemeldet.',
 
   AppLocale.deleteGame: 'Spiel löschen',
   AppLocale.deleteGameConfirm: 'Endgültig löschen',

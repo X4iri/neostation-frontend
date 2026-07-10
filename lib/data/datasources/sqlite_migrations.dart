@@ -294,6 +294,9 @@ class SqliteMigrations {
       case 96:
         await _migrateToVersion96(db);
         break;
+      case 97:
+        await _migrateToVersion97(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4678,10 +4681,30 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v95: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
   static Future<void> _migrateToVersion95(Database db) async {
-    _log.i('Migration v95: Creating user_romm_config table');
+    _log.i('Migration v95: Adding game_carousel_card_style to user_config');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+      if (!columns.contains('game_carousel_card_style')) {
+        db.execute(
+          "ALTER TABLE user_config ADD COLUMN game_carousel_card_style TEXT DEFAULT 'fanart'",
+        );
+        _log.i('Column game_carousel_card_style added via v95');
+      } else {
+        _log.i('Column game_carousel_card_style already exists');
+      }
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v95: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v96: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  static Future<void> _migrateToVersion96(Database db) async {
+    _log.i('Migration v96: Creating user_romm_config table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS user_romm_config (
@@ -4696,19 +4719,19 @@ class SqliteMigrations {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
       ''');
-      _log.i('Table user_romm_config created via v95');
+      _log.i('Table user_romm_config created via v96');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v95: $e');
+      _log.e('Error in migration v96: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
   }
 
-  /// Migration v96: Adds the [app_romm_rom_map] table, which links a local game
+  /// Migration v97: Adds the [app_romm_rom_map] table, which links a local game
   /// (romname + system folder) to its RomM ROM id so save/state sync can target
   /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
-  static Future<void> _migrateToVersion96(Database db) async {
-    _log.i('Migration v96: Creating app_romm_rom_map table');
+  static Future<void> _migrateToVersion97(Database db) async {
+    _log.i('Migration v97: Creating app_romm_rom_map table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS app_romm_rom_map (
@@ -4724,9 +4747,9 @@ class SqliteMigrations {
         CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
         ON app_romm_rom_map(romm_rom_id);
       ''');
-      _log.i('Table app_romm_rom_map created via v96');
+      _log.i('Table app_romm_rom_map created via v97');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v96: $e');
+      _log.e('Error in migration v97: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
