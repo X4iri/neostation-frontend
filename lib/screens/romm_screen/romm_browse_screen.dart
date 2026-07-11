@@ -11,7 +11,6 @@ import '../../models/romm_rom.dart';
 import '../../providers/file_provider.dart';
 import '../../providers/romm_provider.dart';
 import '../../providers/sqlite_config_provider.dart';
-import '../../providers/sqlite_database_provider.dart';
 import '../../services/game_service.dart';
 import '../../services/romm_service.dart';
 import '../../utils/gamepad_nav.dart';
@@ -46,11 +45,9 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
   int _sourceIndex = 0;
   int _collectionIndex = 0;
 
-  // Captured in initState so they're usable from dispose() (context is defunct
-  // by then). Both are app-level providers that outlive this screen.
+  // Captured in initState so it's usable from dispose() (context is defunct by
+  // then). App-level provider that outlives this screen.
   late final RommProvider _rommProvider;
-  late final SqliteConfigProvider _configProvider;
-  late final SqliteDatabaseProvider _dbProvider;
 
   // ── Gamepad navigation ──────────────────────────────────────────────────────
   late final GamepadNavigation _gamepadNav;
@@ -91,8 +88,6 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
   void initState() {
     super.initState();
     _rommProvider = context.read<RommProvider>();
-    _configProvider = context.read<SqliteConfigProvider>();
-    _dbProvider = context.read<SqliteDatabaseProvider>();
     _gamepadNav = GamepadNavigation(
       onNavigateUp: _navigateUp,
       onNavigateDown: _navigateDown,
@@ -122,20 +117,13 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     _collectionScroll.dispose();
     _romScroll.dispose();
     _searchController.dispose();
-    // After downloads: run the same full re-detect + scan the manual "Rescan
-    // all folders" action uses (a per-system scan misses brand-new system
-    // folders), then reload each affected system's in-memory game list so the
-    // freshly imported metadata + covers actually show in the UI.
-    final systems = _rommProvider.downloadedSystems;
-    _rommProvider.clearDownloadedSystems();
-    if (systems.isNotEmpty) {
-      () async {
-        await _configProvider.scanSystems();
-        for (final system in systems) {
-          await _dbProvider.refreshSystem(system.folderName);
-        }
-      }();
-    }
+    // The post-download rescan + per-system list refresh is handled by
+    // RommProvider's debounced settle (see RommProvider.onDownloadsSettled,
+    // wired in main.dart). It fires independently of this screen's lifecycle,
+    // so downloads that are still transferring when the user backs out are
+    // still indexed and shown — no scan is triggered from dispose (running
+    // scanSystems() here throws mid-disposal and would leave the scanning flag
+    // stuck, freezing input).
     super.dispose();
   }
 

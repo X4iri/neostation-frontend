@@ -319,13 +319,10 @@ class RommSettingsContentState extends State<RommSettingsContent> {
       _buildActionRow(
         theme,
         index: 1,
-        icon: _isSaveSyncActive
-            ? Symbols.cloud_done_rounded
-            : Symbols.cloud_sync_rounded,
-        label: _isSaveSyncActive
-            ? AppLocale.rommSaveSyncActive.getString(context)
-            : AppLocale.rommUseForSaveSync.getString(context),
+        icon: Symbols.cloud_sync_rounded,
+        label: AppLocale.rommUseForSaveSync.getString(context),
         primary: _isSaveSyncActive,
+        toggleValue: _isSaveSyncActive,
         onTap: _toggleSaveSync,
       ),
       SizedBox(height: 10.r),
@@ -414,6 +411,7 @@ class RommSettingsContentState extends State<RommSettingsContent> {
     required String label,
     required VoidCallback onTap,
     bool primary = false,
+    bool? toggleValue,
   }) {
     final selected = _isSelected(index);
     final accent = theme.colorScheme.primary;
@@ -457,6 +455,13 @@ class RommSettingsContentState extends State<RommSettingsContent> {
                 width: 12.r,
                 height: 12.r,
                 child: CircularProgressIndicator(strokeWidth: 2.r),
+              ),
+            ],
+            if (toggleValue != null) ...[
+              const Spacer(),
+              Switch(
+                value: toggleValue,
+                onChanged: _busy ? null : (_) => onTap(),
               ),
             ],
           ],

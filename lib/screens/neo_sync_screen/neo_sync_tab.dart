@@ -64,6 +64,9 @@ class _NeoSyncTabState extends State<NeoSyncTab> {
     if (_selectedIndex == 0) {
       GamepadNavigationManager.popLayer('neosync_provider_selector');
       setState(() => _neoSyncSelected = true);
+    } else if (_selectedIndex == 1) {
+      // RomM card: redirect to its settings section (mirrors the touch onTap).
+      AppNavigation.openRommSettings();
     }
   }
 
@@ -118,10 +121,16 @@ class _NeoSyncTabState extends State<NeoSyncTab> {
                 index: 1,
                 selectedIndex: _selectedIndex,
                 icon: Symbols.storage_rounded,
-                name: 'Romm.app',
+                name: 'RomM',
                 subtitle: 'ROM manager',
-                isActive: false,
-                onTap: () => setState(() => _selectedIndex = 1),
+                // RomM is a real, working provider, so its card highlights like
+                // NeoSync (accent when focused, full opacity) rather than being
+                // dimmed like the not-yet-implemented Google Drive card.
+                isActive: true,
+                onTap: () {
+                  setState(() => _selectedIndex = 1);
+                  AppNavigation.openRommSettings();
+                },
               ),
               SizedBox(width: 14.r),
               _ProviderCard(
@@ -363,7 +372,7 @@ class _ProviderCardState extends State<_ProviderCard>
                               borderRadius: BorderRadius.circular(20.r),
                             ),
                             child: Text(
-                              'In Progress',
+                              'Select',
                               style: TextStyle(
                                 fontSize: 8.r,
                                 color: theme.colorScheme.onSurface.withValues(

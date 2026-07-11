@@ -40,6 +40,19 @@ class NewSettingsScreen extends StatefulWidget {
   static void navigateRight() => _currentInstance?._navigateRight();
   static void selectCurrent() => _currentInstance?._selectItem();
 
+  /// Opens the RomM settings section. Safe to call before the settings tab has
+  /// mounted: the request is stashed and consumed once the screen is active
+  /// (used by the Cloud Sync tab's RomM provider card).
+  static void openRommSection() => _openSection(AppLocale.romm);
+
+  static void _openSection(String localeKey) {
+    _pendingSectionKey = localeKey;
+    _currentInstance?._consumePendingSection();
+  }
+
+  /// Locale key of a section to open as soon as the screen is active, or null.
+  static String? _pendingSectionKey;
+
   static _NewSettingsScreenState? _currentInstance;
 }
 
@@ -100,6 +113,18 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _initializeMenuItems();
+    _consumePendingSection();
+  }
+
+  /// Opens a section requested via [NewSettingsScreen.openRommSection] before
+  /// this screen was mounted. No-op when there's no pending request.
+  void _consumePendingSection() {
+    final key = NewSettingsScreen._pendingSectionKey;
+    if (key == null || _menuItems.isEmpty) return;
+    final index = _menuItems.indexWhere((m) => m.localeKey == key);
+    if (index < 0) return;
+    NewSettingsScreen._pendingSectionKey = null;
+    _onMenuItemSelected(index);
   }
 
   @override

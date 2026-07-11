@@ -340,6 +340,31 @@ void main() async {
   // Build the RomM browse provider before runApp so the RomM save-sync provider
   // can share its authenticated connection, and so SyncManager can register it.
   final rommProvider = RommProvider()..initialize();
+  // After RomM downloads settle (debounced), index the new ROMs and refresh the
+  // affected systems' game lists so they appear progressively — even if the
+  // user backs out of the browse screen mid-batch.
+  //
+  // Scan only the affected systems (rescanSystemSilent), not the whole library,
+  // so downloading 100 ROMs doesn't trigger 100 full-library rescans. Fall back
+  // to a full scan only when a genuinely new (not-yet-detected) system appears,
+  // since detecting it needs the full re-detect pass.
+  rommProvider.onDownloadsSettled = (systems) async {
+    final detected = sqliteConfigProvider.config.detectedSystems;
+    final hasNewSystem = systems.any(
+      (s) =>
+          !detected.contains(s.folderName) && !s.folders.any(detected.contains),
+    );
+    if (hasNewSystem) {
+      await sqliteConfigProvider.scanSystems();
+    } else {
+      for (final system in systems) {
+        await sqliteConfigProvider.rescanSystemSilent(system);
+      }
+    }
+    for (final system in systems) {
+      await sqliteDatabaseProvider.refreshSystem(system.folderName);
+    }
+  };
   SyncManager.instance.register(
     RomMSyncProvider(rommProvider, neoSyncProvider),
   );

@@ -57,6 +57,11 @@ class AppNavigation {
   static void previousTab() {
     AppScreenState._navigateToPreviousTabStatic();
   }
+
+  /// Jumps to the Global Settings tab and opens the RomM section.
+  static void openRommSettings() {
+    AppScreenState.openRommSettings();
+  }
 }
 
 class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
@@ -64,6 +69,9 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
 
   /// Currently active top-level navigation tab index.
   int _selectedTabIndex = 0;
+
+  /// Index of the Global Settings tab within [_tabContents].
+  static const int _settingsTabIndex = 4;
 
   /// Internal state tracker for system selection within the System tab.
   int _selectedSystemIndex = 0;
@@ -348,6 +356,18 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
   /// Static hook to resume global navigation input.
   static void activateNavigation() {
     _currentInstance?._gamepadNav.activate();
+  }
+
+  /// Switches to the Global Settings tab and opens its RomM section.
+  static void openRommSettings() {
+    _currentInstance?._openRommSettings();
+  }
+
+  void _openRommSettings() {
+    // Stash the section request first so the settings screen picks it up when
+    // it mounts (tab content is built on demand, so it isn't alive yet).
+    NewSettingsScreen.openRommSection();
+    _onTabSelected(_settingsTabIndex);
   }
 
   static void _navigateToNextTabStatic() {

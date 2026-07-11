@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -81,6 +82,16 @@ class RommProvider extends ChangeNotifier {
 
   final Map<int, RommDownload> _downloads = {};
 
+  /// Invoked (debounced) after downloads settle so freshly downloaded ROMs get
+  /// indexed and the affected systems' game lists refreshed. Wired in main.dart
+  /// to the config/database providers; receives the systems whose downloads
+  /// completed since the last settle.
+  Future<void> Function(List<SystemModel> systems)? onDownloadsSettled;
+
+  Timer? _settleTimer;
+  bool _settling = false;
+  static const Duration _settleDebounce = Duration(seconds: 2);
+
   /// Current user's RetroAchievements progress: RA game id → earned count.
   /// Loaded best-effort from `/api/users/me`; empty when RA isn't linked.
   Map<int, int> _raEarnedByGameId = {};
@@ -126,6 +137,36 @@ class RommProvider extends ChangeNotifier {
   List<SystemModel> get downloadedSystems =>
       _downloadedSystems.values.toList(growable: false);
   void clearDownloadedSystems() => _downloadedSystems.clear();
+
+  /// (Re)arms the debounced settle. Called on each completed download so a
+  /// burst of completions coalesces into a single rescan a short quiet period
+  /// after the last one, instead of scanning per ROM or waiting for the whole
+  /// batch. Fires independently of the browse screen's lifecycle.
+  void _scheduleSettle() {
+    _settleTimer?.cancel();
+    _settleTimer = Timer(_settleDebounce, _runSettle);
+  }
+
+  Future<void> _runSettle() async {
+    final handler = onDownloadsSettled;
+    if (handler == null) return;
+    // Serialize: if a settle is already scanning, re-arm and let it finish so a
+    // long batch never overlaps scans — completions accumulate and get picked
+    // up by the next run.
+    if (_settling) {
+      _scheduleSettle();
+      return;
+    }
+    final systems = downloadedSystems;
+    if (systems.isEmpty) return;
+    clearDownloadedSystems();
+    _settling = true;
+    try {
+      await handler(systems);
+    } finally {
+      _settling = false;
+    }
+  }
 
   /// Known IGDB-style RomM slug → NeoStation folder name mismatches. Tried after
   /// direct slug/fs_slug lookups, which already cover the matching majority.
@@ -505,25 +546,55 @@ class RommProvider extends ChangeNotifier {
     return null;
   }
 
+  /// All folder names (primary + aliases) a system's ROMs can live under.
+  ///
+  /// A system can map to several on-disk folders — Sega CD, for example, is
+  /// indexed under both `scd` and `segacd`. The library scan reads every alias,
+  /// so download/dedup logic must consider all of them, not just [folderName].
+  List<String> _systemFolderNames(SystemModel system) {
+    return <String>{
+      if (system.folderName.isNotEmpty) system.folderName,
+      ...system.folders,
+    }.toList();
+  }
+
+  /// Directory of an already-downloaded copy of [rom] under any of the system's
+  /// folder aliases, or null if none exists.
+  ///
+  /// Checking every alias (not just the canonical [folderName]) is what stops a
+  /// re-download from writing a second copy under a different alias — e.g. a ROM
+  /// already sitting in `segacd/` would otherwise be re-fetched into `scd/` and
+  /// show up as a duplicate game once the scan indexes both.
+  Future<String?> _existingRomDir(
+    SystemModel system,
+    RommRom rom,
+    List<String> romFolders,
+  ) async {
+    for (final folder in romFolders) {
+      final base = _folderToRealBase(folder);
+      if (base == null) continue;
+      for (final name in _systemFolderNames(system)) {
+        final dir = p.join(base, name);
+        if (await File(p.join(dir, rom.fsName)).exists()) return dir;
+      }
+    }
+    return null;
+  }
+
   /// True when a file named after [rom] already exists in a configured folder.
   Future<bool> isDownloaded(RommRom rom, List<String> romFolders) async {
     final system = await resolveSystem(rom);
     if (system == null) return false;
-    for (final folder in romFolders) {
-      final base = _folderToRealBase(folder);
-      if (base == null) continue;
-      final candidate = File(p.join(base, system.folderName, rom.fsName));
-      if (await candidate.exists()) return true;
-    }
-    return false;
+    return await _existingRomDir(system, rom, romFolders) != null;
   }
 
   // ── Download ────────────────────────────────────────────────────────────────
 
   /// Downloads [rom] into a configured ROM folder. On success the resolved
-  /// system is recorded in [downloadedSystems] so the library can be refreshed
-  /// once, when the browse screen closes (cheaper than rescanning per ROM, and
-  /// the SAF directory listing reliably sees the new file by then).
+  /// system is recorded in [downloadedSystems] and a debounced rescan is armed
+  /// (see [_scheduleSettle]) so freshly downloaded ROMs are indexed and their
+  /// system lists refreshed progressively — even if the user backs out of the
+  /// browse screen mid-batch, since this provider outlives that screen.
   ///
   /// Updates [downloadFor] progress as it goes. Returns the final
   /// [RommDownload]; inspect its `status`/`error` for the outcome.
@@ -545,7 +616,12 @@ class RommProvider extends ChangeNotifier {
       return tracker;
     }
 
-    final destDir = await _resolveDestDir(system, romFolders);
+    // Reuse the folder an existing copy already lives in (possibly a different
+    // alias, e.g. segacd vs scd) so a re-download overwrites in place rather
+    // than creating a duplicate the scan would index twice.
+    final destDir =
+        await _existingRomDir(system, rom, romFolders) ??
+        await _resolveDestDir(system, romFolders);
     if (destDir == null) {
       tracker
         ..status = RommDownloadStatus.failed
@@ -605,6 +681,10 @@ class RommProvider extends ChangeNotifier {
       fsName: rom.fsName,
     );
     notifyListeners();
+    // Arm the debounced rescan so this ROM (and any others finishing around the
+    // same time) get indexed + their lists refreshed shortly, without waiting
+    // for the whole batch or the browse screen to close.
+    _scheduleSettle();
     return tracker;
   }
 

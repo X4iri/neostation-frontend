@@ -69,11 +69,19 @@ class _NewScraperOptionsScreenState extends State<NewScraperOptionsScreen> {
   void initState() {
     super.initState();
     NewScraperOptionsScreen._currentInstance = this;
-    _initializeMenuItems();
     _loadCredentials();
     _loadCurrentScrapeMode();
     _loadCurrentLanguage();
     _loadCurrentMediaConfig();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Menu titles are localized via getString(context), which reads the
+    // Localizations inherited widget — that isn't available in initState().
+    // Building here also refreshes the titles when the locale changes.
+    _initializeMenuItems();
   }
 
   @override
