@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 97;
+  static const int _databaseVersion = 98;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -710,16 +710,24 @@ class SqliteService {
 
         if (osName == 'android') {
           packageName = platformData['package'];
+          String? activityName = platformData['activity'];
 
-          // Fallback: Parse launch_arguments if package is missing (new format)
-          if (packageName == null &&
+          // Parse launch_arguments if package/activity are missing (new format)
+          if ((packageName == null || activityName == null) &&
               platformData.containsKey('launch_arguments')) {
             final args = platformData['launch_arguments'].toString();
 
-            // Extract package from "-n package/activity"
-            final componentMatch = RegExp(r'-n\s+([^\s/]+)').firstMatch(args);
+            // Extract package and activity from "-n package/activity"
+            final componentMatch = RegExp(
+              r'-n\s+([^\s/]+)/([^\s]+)',
+            ).firstMatch(args);
             if (componentMatch != null) {
-              packageName = componentMatch.group(1);
+              packageName ??= componentMatch.group(1);
+              var activity = componentMatch.group(2)!;
+              if (activity.startsWith('.') && packageName != null) {
+                activity = '$packageName$activity';
+              }
+              activityName ??= activity;
             }
 
             // Check if RetroArch
@@ -750,6 +758,10 @@ class SqliteService {
               }
             }
           }
+
+          // Persist the resolved activity alongside the package so standalone
+          // fallback launches have a complete component name.
+          platformData['_resolved_activity_name'] = activityName;
         } else if (osName == 'windows') {
           executable = platformData['executable'];
           if (executable != null &&
@@ -830,6 +842,7 @@ class SqliteService {
             'is_standalone': isStandalone ? 1 : 0,
             'core_filename': coreFilename,
             'android_package_name': packageName,
+            'android_activity_name': platformData['_resolved_activity_name'],
             'is_ra_compatible': retroAchievementsCompatible ? 1 : 0,
           };
 
@@ -863,6 +876,7 @@ class SqliteService {
               'is_standalone': isStandalone ? 1 : 0,
               'core_filename': coreFilename,
               'android_package_name': packageName,
+              'android_activity_name': platformData['_resolved_activity_name'],
               'is_ra_compatible': retroAchievementsCompatible ? 1 : 0,
             };
             if (isDefaultCore) {
@@ -887,6 +901,7 @@ class SqliteService {
               'is_standalone': isStandalone ? 1 : 0,
               'core_filename': coreFilename,
               'android_package_name': packageName,
+              'android_activity_name': platformData['_resolved_activity_name'],
               'is_default': applyJsonDefault ? 1 : 0,
               'is_ra_compatible': retroAchievementsCompatible ? 1 : 0,
             };
@@ -1633,7 +1648,7 @@ class SqliteService {
         last_scan TEXT,
         game_view_mode TEXT DEFAULT 'list',
         system_view_mode TEXT DEFAULT 'grid',
-        palette_name TEXT DEFAULT 'system',
+        theme_name TEXT DEFAULT 'system',
         video_sound INTEGER DEFAULT 1,
         ra_user TEXT,
         show_game_info INTEGER DEFAULT 0,
@@ -2288,7 +2303,7 @@ class SqliteService {
         'id': 1,
         'last_scan': null,
         'system_view_mode': 'grid',
-        'palette_name': 'system',
+        'theme_name': 'system',
         'video_sound': 1,
         'ra_user': null,
         'show_game_info': 0,
@@ -2385,7 +2400,7 @@ class SqliteService {
     String? lastScan,
     String? gameViewMode,
     String? systemViewMode,
-    String? paletteName,
+    String? themeName,
     int? videoSound,
     String? raUser,
     int? showGameInfo,
@@ -2435,7 +2450,7 @@ class SqliteService {
       newConfig['game_view_mode'] = gameViewMode;
     }
     if (systemViewMode != null) newConfig['system_view_mode'] = systemViewMode;
-    if (paletteName != null) newConfig['palette_name'] = paletteName;
+    if (themeName != null) newConfig['theme_name'] = themeName;
     if (videoSound != null) newConfig['video_sound'] = videoSound;
     if (raUser != null) newConfig['ra_user'] = raUser;
     if (showGameInfo != null) newConfig['show_game_info'] = showGameInfo;
@@ -2707,15 +2722,15 @@ class SqliteService {
     await saveUserConfig(systemViewMode: mode);
   }
 
-  /// Updates the palette name.
-  static Future<void> updatePaletteName(String paletteName) async {
-    await saveUserConfig(paletteName: paletteName);
+  /// Updates the theme name.
+  static Future<void> updateThemeName(String themeName) async {
+    await saveUserConfig(themeName: themeName);
   }
 
-  /// Retrieves the current palette name.
-  static Future<String> getPaletteName() async {
+  /// Retrieves the current theme name.
+  static Future<String> getThemeName() async {
     final config = await getUserConfig();
-    return config?['palette_name']?.toString() ?? 'system';
+    return config?['theme_name']?.toString() ?? 'system';
   }
 
   /// Retrieves the active asset theme (neostation-assets).

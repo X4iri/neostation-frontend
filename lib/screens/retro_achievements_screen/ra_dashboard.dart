@@ -574,7 +574,9 @@ class _RADashboardHubState extends State<RADashboardHub> {
             : AppLocale.raMasteryLabel.getString(context),
         accentLabelColor: showCompletions
             ? (isLightTheme ? const Color(0xFF757575) : const Color(0xFFC0C0C0))
-            : (isLightTheme ? const Color(0xFFB8860B) : const Color(0xFFFFD700)),
+            : (isLightTheme
+                  ? const Color(0xFFB8860B)
+                  : const Color(0xFFFFD700)),
       ),
     );
   }

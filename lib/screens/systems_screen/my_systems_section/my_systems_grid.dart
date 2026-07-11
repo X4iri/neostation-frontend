@@ -10,6 +10,7 @@ import 'package:neostation/models/system_model.dart';
 import 'package:neostation/screens/app_screen.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:provider/provider.dart';
+import '../../../themes/corner_radii.dart';
 import '../../../utils/gamepad_nav.dart';
 import '../../../services/game_service.dart';
 import '../../../utils/game_launch_utils.dart';
@@ -24,7 +25,7 @@ import 'my_systems_carousel.dart';
 import 'package:neostation/widgets/custom_notification.dart';
 import 'package:neostation/widgets/system_emulator_settings_dialog.dart';
 import 'package:neostation/sync/sync_manager.dart';
-import 'package:neostation/providers/palette_provider.dart';
+import 'package:neostation/providers/theme_provider.dart';
 import '../../game_screen/android_apps/android_apps_grid.dart';
 import 'package:neostation/widgets/header_sort_dropdown.dart';
 import 'package:neostation/widgets/systems_grid_footer.dart';
@@ -171,7 +172,11 @@ class MySystems extends StatelessWidget {
               padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius:
+                    Theme.of(
+                      context,
+                    ).extension<CornerRadii>()?.radiusInternal ??
+                    BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
                     color: Theme.of(
@@ -674,11 +679,8 @@ class MySystems extends StatelessWidget {
     final String? systemBackground = hasCustomBg ? customBg : themeBg;
     final bool isBackgroundAsset = false;
 
-    final paletteProvider = Provider.of<PaletteProvider>(
-      context,
-      listen: false,
-    );
-    final isOled = paletteProvider.isOled;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isOled = themeProvider.isOled;
 
     secondaryState.updateState(
       systemName: system.title ?? "NEOSTATION",
@@ -975,11 +977,8 @@ class _SystemCardGridViewState extends State<SystemCardGridView> {
     final String? themeBg = hasCustomBg ? null : _themeBackgrounds[folder];
     final String? systemBackground = hasCustomBg ? customBg : themeBg;
 
-    final paletteProvider = Provider.of<PaletteProvider>(
-      context,
-      listen: false,
-    );
-    final isOled = paletteProvider.isOled;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isOled = themeProvider.isOled;
 
     // Recent game cards drive the secondary with the game's own art (fanart +
     // wheel) through the game-selected path, matching the game-view browse
@@ -1721,7 +1720,7 @@ class _SystemCardGridViewState extends State<SystemCardGridView> {
                 selHeight != null)
             ? AnimatedPositioned(
                 key: const ValueKey('focus_indicator'),
-                duration: const Duration(milliseconds: 350),
+                duration: const Duration(milliseconds: 256),
                 curve: Curves.fastOutSlowIn,
                 left: selLeft + 1.r,
                 top: selTop + 1.r,
@@ -1730,17 +1729,21 @@ class _SystemCardGridViewState extends State<SystemCardGridView> {
                 child: IgnorePointer(
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius:
+                          Theme.of(
+                            context,
+                          ).extension<CornerRadii>()?.radiusExternal ??
+                          BorderRadius.circular(14.r),
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                         colors: [
                           Theme.of(
                             context,
-                          ).colorScheme.secondary.withValues(alpha: 0.28),
+                          ).colorScheme.primary.withValues(alpha: 0.28),
                           Theme.of(
                             context,
-                          ).colorScheme.secondary.withValues(alpha: 0.08),
+                          ).colorScheme.primary.withValues(alpha: 0.08),
                           Colors.transparent,
                         ],
                         stops: const [0.0, 0.35, 1.0],
@@ -1748,7 +1751,7 @@ class _SystemCardGridViewState extends State<SystemCardGridView> {
                       border: Border.all(
                         color: Theme.of(
                           context,
-                        ).colorScheme.secondary.withValues(alpha: 0.55),
+                        ).colorScheme.primary.withValues(alpha: 0.55),
                         width: 2.r,
                       ),
                     ),

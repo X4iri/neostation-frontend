@@ -1,45 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:neostation/themes/corner_radii.dart';
 
-const Color _primaryColor = Color(0xFFBD93F9);
-const Color _onPrimaryColor = Color(0xFF262626);
-const Color _secondaryColor = Color(0xFFFF79C6);
-const Color _onSecondaryColor = Color(0xFF262626);
-const Color _tertiaryColor = Color(0xFF8BE9FD);
-const Color _onTertiaryColor = Color(0xFF262626);
-final Color _surfaceColor = HSLColor.fromColor(
-  const Color(0xFF282A36),
-).withLightness(0.25).toColor();
-const Color _onSurfaceColor = Color(0xFFF8F8F2);
-const Color _errorColor = Color(0xFFFF5555);
-const Color _onErrorColor = Color(0xFF262626);
-const Color _outlineColor = Color(0xFF7A7A7A);
-const Color _shadowColor = Color(0xFF000000);
+const Color _primaryColor = Color(0xFF5e81ac);
+const Color _onPrimaryColor = Color(0xFF03060b);
+const Color _secondaryColor = Color(0xFF81a1c1);
+const Color _onSecondaryColor = Color(0xFF06090d);
+const Color _tertiaryColor = Color(0xFF88c0d0);
+const Color _onTertiaryColor = Color(0xFF070d10);
+const Color _tertiaryFixedColor = Color(0xFF4c566a);
+const Color _onTertiaryFixedColor = Color(0xFFd8dee9);
+const Color _surfaceColor = Color(0xFFeceff4);
+const Color _onSurfaceColor = Color(0xFF2e3440);
 
-const Color _backgroundColor = Color(0xFF282A36);
+const Color _outlineColor = Color(0xFFF7FAFF);
+const Color _shadowColor = Color(0xFF2e3440);
 
-const Color _batteryFull = Color(0xFF50FA7B);
-const Color _batteryMedium = Color(0xFFF1FA8C);
-const Color _batteryLow = Color(0xFFFF5555);
-const Color _batteryPower = Color(0xFF8BE9FD);
+const Color _backgroundColor = Color(0xFFd8dee9);
 
-const Color _warningColor = Color(0xFFF1FA8C);
-const Color _onWarningColor = Color(0xFF262626);
-const Color _successColor = Color(0xFF50FA7B);
-const Color _onSuccessColor = Color(0xFF262626);
-const Color _infoColor = Color(0xFF8BE9FD);
-const Color _onInfoColor = Color(0xFF262626);
+const Color _batteryFull = Color(0xFFa3be8d);
+const Color _batteryMedium = Color(0xFFebcb8b);
+const Color _batteryLow = Color(0xFFbf616a);
+const Color _batteryPower = Color(0xFFb48ead);
 
-final ThemeData draculaPalette = ThemeData(
+const Color _errorColor = Color(0xFFbf616a);
+const Color _onErrorColor = Color(0xFF0d0304);
+const Color _warningColor = Color(0xFFebcb8b);
+const Color _onWarningColor = Color(0xFF130f07);
+const Color _successColor = Color(0xFFa3be8d);
+const Color _onSuccessColor = Color(0xFF0a0d07);
+const Color _infoColor = Color(0xFFb48ead);
+const Color _onInfoColor = Color(0xFF0c070b);
+
+final ThemeData nordTheme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.dark(
     primary: _primaryColor,
     secondary: _secondaryColor,
     tertiary: _tertiaryColor,
+    tertiaryFixed: _tertiaryFixedColor,
     surface: _surfaceColor,
 
     onPrimary: _onPrimaryColor,
     onSecondary: _onSecondaryColor,
     onTertiary: _onTertiaryColor,
+    onTertiaryFixed: _onTertiaryFixedColor,
     onSurface: _onSurfaceColor,
 
     error: _errorColor,
@@ -50,6 +54,7 @@ final ThemeData draculaPalette = ThemeData(
 
   cardColor: _backgroundColor,
   scaffoldBackgroundColor: _backgroundColor,
+  extensions: [CornerRadii.xs()],
 
   textTheme: TextTheme(
     displayLarge: TextStyle(
@@ -80,7 +85,7 @@ final ThemeData draculaPalette = ThemeData(
   ),
 );
 
-class DraculaCustomColors {
+class NordCustomColors {
   Color get batteryFull => _batteryFull;
   Color get batteryMedium => _batteryMedium;
   Color get batteryLow => _batteryLow;

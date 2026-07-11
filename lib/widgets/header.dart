@@ -3,10 +3,10 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:neostation/providers/palette_provider.dart';
+import 'package:neostation/providers/theme_provider.dart';
 import 'package:neostation/responsive.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:neostation/themes/app_palettes.dart';
+import 'package:neostation/themes/app_themes.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/services/permission_service.dart';
 import 'package:neostation/providers/sqlite_config_provider.dart';
@@ -14,6 +14,8 @@ import 'package:neostation/widgets/header_sort_dropdown.dart';
 import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/utils/time_format.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+
+import '../themes/corner_radii.dart';
 
 class Header extends StatefulWidget {
   final int selectedTabIndex;
@@ -144,11 +146,11 @@ class HeaderState extends State<Header> {
 
   @override
   Widget build(BuildContext context) {
-    final customColors = AppPalettes.getCustomColors(context);
+    final customColors = AppThemes.getCustomColors(context);
     // Soft horizontal gradient derived from headerColors.background (left->right)
 
-    return Consumer2<PaletteProvider, SqliteConfigProvider>(
-      builder: (context, paletteProvider, configProvider, child) {
+    return Consumer2<ThemeProvider, SqliteConfigProvider>(
+      builder: (context, themeProvider, configProvider, child) {
         return Container(
           decoration: BoxDecoration(
             color: Colors.transparent,
@@ -173,14 +175,22 @@ class HeaderState extends State<Header> {
                   padding: EdgeInsets.symmetric(horizontal: 2.r),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                      width: 1.r,
+                    ),
+                    borderRadius:
+                        Theme.of(
+                          context,
+                        ).extension<CornerRadii>()?.radiusExternal ??
+                        BorderRadius.circular(8.r),
                     // normal black shadow
                     boxShadow: [
                       BoxShadow(
                         color: Theme.of(
                           context,
-                        ).colorScheme.shadow.withValues(alpha: 0.25),
-                        blurRadius: 2.r,
+                        ).colorScheme.shadow.withValues(alpha: 0.1),
+                        blurRadius: 4.r,
                         offset: Offset(2.0.r, 2.0.r),
                       ),
                     ],
@@ -203,8 +213,12 @@ class HeaderState extends State<Header> {
                             curve: Curves.easeInOut,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.secondary,
-                                borderRadius: BorderRadius.circular(4.r),
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius:
+                                    Theme.of(context)
+                                        .extension<CornerRadii>()
+                                        ?.radiusInternal ??
+                                    BorderRadius.circular(4.r),
                               ),
                             ),
                           ),
@@ -284,7 +298,24 @@ class HeaderState extends State<Header> {
                   ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                      width: 1.r,
+                    ),
+                    borderRadius:
+                        Theme.of(
+                          context,
+                        ).extension<CornerRadii>()?.radiusExternal ??
+                        BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.shadow.withValues(alpha: 0.1),
+                        blurRadius: 4.r,
+                        offset: Offset(2.0.r, 2.0.r),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -369,7 +400,7 @@ class HeaderState extends State<Header> {
           child: Image.asset(
             icon,
             color: isSelected
-                ? Theme.of(context).colorScheme.surface
+                ? Theme.of(context).colorScheme.onPrimary
                 : Theme.of(context).colorScheme.onSurface,
           ),
         ),

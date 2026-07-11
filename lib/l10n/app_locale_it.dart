@@ -35,18 +35,18 @@ const Map<String, dynamic> appLocaleIt = {
   AppLocale.general: 'Generale',
   AppLocale.secondaryDisplay: 'Schermo Secondario',
   AppLocale.directories: 'Directory',
-  AppLocale.palettes: 'Palette',
-  AppLocale.neoThemes: 'Temi',
-  AppLocale.neoThemesSubtitle:
+  AppLocale.themes: 'Temi',
+  AppLocale.systemArt: 'System Art',
+  AppLocale.systemArtSubtitle:
       'Personalizza sfondi e loghi delle schede di sistema',
-  AppLocale.neoThemesNone: 'Nessuno',
-  AppLocale.neoThemesNoneSubtitle: 'Aspetto predefinito',
-  AppLocale.neoThemesLoading: 'Caricamento temi...',
-  AppLocale.neoThemesError: 'Impossibile caricare i temi',
-  AppLocale.neoThemesApplyTitle: 'Applicare il tema?',
-  AppLocale.neoThemesApplyBody:
+  AppLocale.systemArtNone: 'Nessuno',
+  AppLocale.systemArtNoneSubtitle: 'Aspetto predefinito',
+  AppLocale.systemArtLoading: 'Caricamento temi...',
+  AppLocale.systemArtError: 'Impossibile caricare i temi',
+  AppLocale.systemArtApplyTitle: 'Applicare il tema?',
+  AppLocale.systemArtApplyBody:
       'Le risorse del tema verranno scaricate per tutti i sistemi. Potrebbe richiedere alcuni istanti.',
-  AppLocale.neoThemesDownloading: 'Download delle risorse del tema...',
+  AppLocale.systemArtDownloading: 'Download delle risorse del tema...',
   AppLocale.about: 'Informazioni',
   AppLocale.exit: 'Esci',
   AppLocale.launcher: 'Launcher',
@@ -58,7 +58,7 @@ const Map<String, dynamic> appLocaleIt = {
   AppLocale.hideRecentCard: 'Scheda Recenti',
   AppLocale.hideRecentCardSubtitle:
       'Mostra la scheda dei giochi recenti nella griglia',
-  AppLocale.palettesSubtitle: "Personalizza l'aspetto di NeoStation",
+  AppLocale.themesSubtitle: "Personalizza l'aspetto di NeoStation",
   AppLocale.systemTheme: 'Tema di Sistema',
 
   AppLocale.generalSettings: 'Impostazioni Generali',

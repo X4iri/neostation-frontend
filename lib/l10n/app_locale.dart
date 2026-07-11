@@ -58,20 +58,20 @@ mixin AppLocale {
   static const String general = 'general';
   static const String secondaryDisplay = 'secondary_display';
   static const String directories = 'directories';
-  static const String palettes = 'palettes';
-  static const String neoThemes = 'neo_themes';
-  static const String neoThemesSubtitle = 'neo_themes_subtitle';
-  static const String neoThemesNone = 'neo_themes_none';
-  static const String neoThemesNoneSubtitle = 'neo_themes_none_subtitle';
-  static const String neoThemesLoading = 'neo_themes_loading';
-  static const String neoThemesError = 'neo_themes_error';
-  static const String neoThemesApplyTitle = 'neo_themes_apply_title';
-  static const String neoThemesApplyBody = 'neo_themes_apply_body';
-  static const String neoThemesDownloading = 'neo_themes_downloading';
+  static const String themes = 'themes';
+  static const String systemArt = 'system_art';
+  static const String systemArtSubtitle = 'system_art_subtitle';
+  static const String systemArtNone = 'system_art_none';
+  static const String systemArtNoneSubtitle = 'system_art_none_subtitle';
+  static const String systemArtLoading = 'system_art_loading';
+  static const String systemArtError = 'system_art_error';
+  static const String systemArtApplyTitle = 'system_art_apply_title';
+  static const String systemArtApplyBody = 'system_art_apply_body';
+  static const String systemArtDownloading = 'system_art_downloading';
   static const String about = 'about';
   static const String exit = 'exit';
   static const String launcher = 'launcher';
-  static const String palettesSubtitle = 'palettes_subtitle';
+  static const String themesSubtitle = 'themes_subtitle';
   static const String systemTheme = 'system_theme';
   static const String emulators = 'emulators';
   static const String appearance = 'appearance';
@@ -863,7 +863,8 @@ mixin AppLocale {
   // Destructive-action confirmation prompts
   static const String resetPlayTimeConfirm = 'reset_play_time_confirm';
   static const String resetPlayTimeConfirmBody = 'reset_play_time_confirm_body';
-  static const String removeRomFolderConfirmBody = 'remove_rom_folder_confirm_body';
+  static const String removeRomFolderConfirmBody =
+      'remove_rom_folder_confirm_body';
   static const String disconnectRaConfirm = 'disconnect_ra_confirm';
   static const String disconnectRaConfirmBody = 'disconnect_ra_confirm_body';
   static const String neoSyncLogoutConfirmBody = 'neo_sync_logout_confirm_body';

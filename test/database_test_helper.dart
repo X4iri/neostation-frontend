@@ -93,7 +93,6 @@ class DatabaseTestHelper {
         last_scan TEXT,
         system_view_mode TEXT,
         theme_name TEXT,
-        palette_name TEXT,
         video_sound INTEGER,
         ra_user TEXT,
         show_game_info INTEGER,
@@ -138,6 +137,7 @@ class DatabaseTestHelper {
         is_standalone INTEGER,
         core_filename TEXT,
         android_package_name TEXT,
+        android_activity_name TEXT,
         is_default INTEGER,
         is_ra_compatible INTEGER
       )

@@ -2,7 +2,7 @@ import 'package:neostation/providers/menu_app_provider.dart';
 import 'package:neostation/providers/sqlite_config_provider.dart';
 import 'package:neostation/providers/sqlite_database_provider.dart';
 import 'package:neostation/providers/file_provider.dart';
-import 'package:neostation/providers/palette_provider.dart';
+import 'package:neostation/providers/theme_provider.dart';
 import 'package:neostation/providers/scraping_provider.dart';
 import 'package:neostation/providers/retro_achievements_provider.dart';
 import 'package:neostation/providers/romm_provider.dart';
@@ -479,7 +479,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: SyncManager.instance),
         ChangeNotifierProvider(create: (context) => BillingService()),
         ChangeNotifierProvider(create: (context) => NotificationService()),
-        ChangeNotifierProvider(create: (context) => PaletteProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => ScrapingProvider()),
         ChangeNotifierProvider(
           // Eager (not lazy): auto-login must run at startup so RA is connected
@@ -495,8 +495,8 @@ class _MyAppState extends State<MyApp> {
           create: (context) => NeoAssetsProvider()..init(),
         ),
       ],
-      child: Consumer<PaletteProvider>(
-        builder: (context, paletteProvider, child) {
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
           return ScreenUtilInit(
             designSize: const Size(640, 480),
             minTextAdapt: true,
@@ -539,9 +539,9 @@ class _MyAppState extends State<MyApp> {
                           child: child!,
                         );
                       },
-                      theme: paletteProvider.currentPalette.copyWith(
+                      theme: themeProvider.currentTheme.copyWith(
                         textTheme: GoogleFonts.antaTextTheme(
-                          paletteProvider.currentPalette.textTheme,
+                          themeProvider.currentTheme.textTheme,
                         ),
                         iconTheme: const IconThemeData(fill: 1.0),
                         visualDensity: VisualDensity.adaptivePlatformDensity,

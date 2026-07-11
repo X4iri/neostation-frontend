@@ -7,7 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../l10n/app_locale.dart';
-import 'package:neostation/providers/palette_provider.dart';
+import 'package:neostation/providers/theme_provider.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/services/secondary_apps_service.dart';
 import 'package:video_player/video_player.dart';
@@ -600,7 +600,7 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
       builder: (_, child) => ValueListenableBuilder<SecondaryDisplayStateData?>(
         valueListenable: _secondaryDisplayState ?? ValueNotifier(null),
         builder: (context, value, child) {
-          final palette = _resolvePalette(value?.themeName);
+          final theme = _resolveTheme(value?.themeName);
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             localizationsDelegates:
@@ -610,13 +610,13 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
             // slight drag near the edge would flash white arcs at the screen
             // border, which looks like a rendering glitch on a static panel.
             scrollBehavior: const _NoGlowScrollBehavior(),
-            theme: palette.copyWith(
+            theme: theme.copyWith(
               scaffoldBackgroundColor: value?.backgroundColor != null
                   ? Color(value!.backgroundColor!)
-                  : palette.scaffoldBackgroundColor,
+                  : theme.scaffoldBackgroundColor,
               // Match the primary app: default all text to the neostation
               // (Anta) font so the secondary display stays on-brand.
-              textTheme: GoogleFonts.antaTextTheme(palette.textTheme),
+              textTheme: GoogleFonts.antaTextTheme(theme.textTheme),
             ),
             home: Builder(
               builder: (context) {
@@ -1124,7 +1124,7 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
     // Idle-dim wrapper: any touch wakes the panel (translucent so it never
     // swallows chevron taps). Once the idle countdown elapses a full-bleed black
     // scrim fades in over everything — panel and background art alike — so the
-    // display goes to near-black regardless of the current palette.
+    // display goes to near-black regardless of the current theme.
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) => _wakeInGamePanel(),
@@ -1239,20 +1239,18 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
 
   /// Renders the "Now Playing" page: boxart, title, system, total play time
   /// and last-played. Shown for every launched game (page 0). View-only.
-  /// Resolves the full user-selected palette for the secondary display from the
+  /// Resolves the full user-selected theme for the secondary display from the
   /// theme name pushed by the main engine. The secondary display runs in the
-  /// same isolate as the main app, so [PaletteProvider.availablePalettes] is the
+  /// same isolate as the main app, so [ThemeProvider.availableThemes] is the
   /// source of truth. Falls back to the brightness-appropriate neostation
-  /// palette for 'system' mode or an unknown/absent name.
-  ThemeData _resolvePalette(String? themeName) {
-    final palettes = PaletteProvider.availablePalettes;
-    final direct = themeName != null ? palettes[themeName] : null;
+  /// theme for 'system' mode or an unknown/absent name.
+  ThemeData _resolveTheme(String? themeName) {
+    final themes = ThemeProvider.availableThemes;
+    final direct = themeName != null ? themes[themeName] : null;
     if (direct != null) return direct;
     final brightness =
         WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    return brightness == Brightness.dark
-        ? palettes['nsdark']!
-        : palettes['nslight']!;
+    return brightness == Brightness.dark ? themes['dark']! : themes['light']!;
   }
 
   /// WCAG contrast ratio between two opaque colors (1.0 = identical, 21.0 =
@@ -1267,11 +1265,11 @@ class _SecondaryScreenState extends State<SecondaryScreen> {
 
   /// Builds the effective color scheme for the Now Playing panel. Text colors
   /// are derived from the *actual* painted background luminance (not the
-  /// palette's own on-colors, which can mismatch the pushed background and
-  /// collapse contrast on light themes), while the palette's primary accent is
+  /// theme's own on-colors, which can mismatch the pushed background and
+  /// collapse contrast on light themes), while the theme's primary accent is
   /// preserved as long as it stays legible on that background.
   ColorScheme _panelScheme(SecondaryDisplayStateData value) {
-    final base = _resolvePalette(value.themeName).colorScheme;
+    final base = _resolveTheme(value.themeName).colorScheme;
     final bg = value.backgroundColor != null
         ? Color(value.backgroundColor!)
         : base.surface;

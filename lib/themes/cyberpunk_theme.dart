@@ -1,43 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:neostation/themes/corner_radii.dart';
 
-const Color _primaryColor = Color(0xFF82AAFF);
-const Color _onPrimaryColor = Color(0xFF292D3E);
-const Color _secondaryColor = Color(0xFFC3E88D);
-const Color _onSecondaryColor = Color(0xFF292D3E);
-const Color _tertiaryColor = Color(0xFF89DDFF);
-const Color _onTertiaryColor = Color(0xFF292D3E);
-const Color _surfaceColor = Color(0xFF32374D);
-const Color _onSurfaceColor = Color(0xFFA6ACCD);
-const Color _errorColor = Color(0xFFF07178);
-const Color _onErrorColor = Color(0xFF292D3E);
-const Color _outlineColor = Color(0xFF4B5263);
-const Color _shadowColor = Color(0xFF000000);
+const Color _primaryColor = Color(0xFFff6596);
+const Color _onPrimaryColor = Color(0xFF180408);
+const Color _secondaryColor = Color(0xFF00e8ff);
+const Color _onSecondaryColor = Color(0xFF001316);
+const Color _tertiaryColor = Color(0xFFce74ff);
+const Color _onTertiaryColor = Color(0xFF0f0517);
+const Color _tertiaryFixedColor = Color(0xFF111a3b);
+const Color _onTertiaryFixedColor = Color(0xFFfff248);
+const Color _surfaceColor = Color(0xFFfff248);
+const Color _onSurfaceColor = Color(0xFF000000);
 
-const Color _backgroundColor = Color(0xFF292D3E);
+const Color _outlineColor = Color(0xFFFFF564);
+const Color _shadowColor = Color(0xFF111a3b);
 
-const Color _batteryFull = Color(0xFFC3E88D);
-const Color _batteryMedium = Color(0xFFFFCB6B);
-const Color _batteryLow = Color(0xFFF07178);
-const Color _batteryPower = Color(0xFF82AAFF);
+const Color _backgroundColor = Color(0xFFe3d40e);
 
-const Color _warningColor = Color(0xFFFFCB6B);
-const Color _onWarningColor = Color(0xFF292D3E);
-const Color _successColor = Color(0xFFC3E88D);
-const Color _onSuccessColor = Color(0xFF292D3E);
-const Color _infoColor = Color(0xFF82AAFF);
-const Color _onInfoColor = Color(0xFF292D3E);
+const Color _batteryFull = Color(0xFF00a96e);
+const Color _batteryMedium = Color(0xFFffbe00);
+const Color _batteryLow = Color(0xFFff5861);
+const Color _batteryPower = Color(0xFF00b5ff);
 
-final ThemeData palenightPalette = ThemeData(
+const Color _errorColor = Color(0xFFff5861);
+const Color _onErrorColor = Color(0xFF000000);
+const Color _warningColor = Color(0xFFffbe00);
+const Color _onWarningColor = Color(0xFF000000);
+const Color _successColor = Color(0xFF00a96e);
+const Color _onSuccessColor = Color(0xFF000000);
+const Color _infoColor = Color(0xFF00b5ff);
+const Color _onInfoColor = Color(0xFF000000);
+
+final ThemeData cyberpunkTheme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.dark(
     primary: _primaryColor,
     secondary: _secondaryColor,
     tertiary: _tertiaryColor,
+    tertiaryFixed: _tertiaryFixedColor,
     surface: _surfaceColor,
 
     onPrimary: _onPrimaryColor,
     onSecondary: _onSecondaryColor,
     onTertiary: _onTertiaryColor,
+    onTertiaryFixed: _onTertiaryFixedColor,
     onSurface: _onSurfaceColor,
 
     error: _errorColor,
@@ -48,6 +54,7 @@ final ThemeData palenightPalette = ThemeData(
 
   cardColor: _backgroundColor,
   scaffoldBackgroundColor: _backgroundColor,
+  extensions: [CornerRadii.zero()],
 
   textTheme: TextTheme(
     displayLarge: TextStyle(
@@ -78,7 +85,7 @@ final ThemeData palenightPalette = ThemeData(
   ),
 );
 
-class PalenightCustomColors {
+class CyberpunkCustomColors {
   Color get batteryFull => _batteryFull;
   Color get batteryMedium => _batteryMedium;
   Color get batteryLow => _batteryLow;
@@ -86,13 +93,10 @@ class PalenightCustomColors {
 
   Color get errorColor => _errorColor;
   Color get onErrorColor => _onErrorColor;
-
   Color get successColor => _successColor;
   Color get onSuccessColor => _onSuccessColor;
-
   Color get infoColor => _infoColor;
   Color get onInfoColor => _onInfoColor;
-
   Color get warningColor => _warningColor;
   Color get onWarningColor => _onWarningColor;
 }

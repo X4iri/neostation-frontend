@@ -166,7 +166,7 @@ lib/
 ├── repositories/       # Data access abstraction layer
 ├── screens/            # Application pages
 ├── services/           # Business logic and external APIs
-├── themes/             # App themes and palettes
+├── themes/             # App themes
 ├── utils/              # Helpers and utilities
 ├── widgets/            # Reusable UI components
 ├── main.dart           # Entry point

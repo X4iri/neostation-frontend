@@ -297,6 +297,9 @@ class SqliteMigrations {
       case 97:
         await _migrateToVersion97(db);
         break;
+      case 98:
+        await _migrateToVersion98(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4276,23 +4279,23 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v81: Rename theme_name column to palette_name in user_config.
+  /// Migration v81: Rename theme_name column to theme_name in user_config.
   static Future<void> _migrateToVersion81(Database db) async {
-    _log.i('Migration v81: Rename theme_name to palette_name in user_config');
+    _log.i('Migration v81: Rename palette_name to theme_name in user_config');
     try {
       final tableInfo = db.select('PRAGMA table_info(user_config)');
       final columns = tableInfo.map((c) => c['name'].toString()).toList();
 
-      if (columns.contains('theme_name') && !columns.contains('palette_name')) {
+      if (columns.contains('palette_name') && !columns.contains('theme_name')) {
         db.execute(
-          'ALTER TABLE user_config RENAME COLUMN theme_name TO palette_name',
+          'ALTER TABLE user_config RENAME COLUMN palette_name TO theme_name',
         );
-        _log.i('Column theme_name renamed to palette_name in user_config');
-      } else if (!columns.contains('palette_name')) {
+        _log.i('Column palette_name renamed to theme_name in user_config');
+      } else if (!columns.contains('theme_name')) {
         db.execute(
-          "ALTER TABLE user_config ADD COLUMN palette_name TEXT DEFAULT 'system'",
+          "ALTER TABLE user_config ADD COLUMN theme_name TEXT DEFAULT 'system'",
         );
-        _log.i('Column palette_name added to user_config');
+        _log.i('Column theme_name added to user_config');
       }
 
       _log.i('Migration v81 completed');
@@ -4701,10 +4704,37 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v96: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
+  /// Migration v96: Rename palette_name column to theme_name in user_config.
   static Future<void> _migrateToVersion96(Database db) async {
-    _log.i('Migration v96: Creating user_romm_config table');
+    _log.i('Migration v96: Rename palette_name to theme_name in user_config');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+
+      if (columns.contains('palette_name') && !columns.contains('theme_name')) {
+        db.execute(
+          'ALTER TABLE user_config RENAME COLUMN palette_name TO theme_name',
+        );
+        _log.i('Column palette_name renamed to theme_name in user_config');
+      } else if (!columns.contains('theme_name')) {
+        db.execute(
+          "ALTER TABLE user_config ADD COLUMN theme_name TEXT DEFAULT 'system'",
+        );
+        _log.i('Column theme_name added to user_config');
+      }
+
+      _log.i('Migration v96 completed');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v96: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v97: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  static Future<void> _migrateToVersion97(Database db) async {
+    _log.i('Migration v97: Creating user_romm_config table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS user_romm_config (
@@ -4719,19 +4749,19 @@ class SqliteMigrations {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
       ''');
-      _log.i('Table user_romm_config created via v96');
+      _log.i('Table user_romm_config created via v97');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v96: $e');
+      _log.e('Error in migration v97: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }
   }
 
-  /// Migration v97: Adds the [app_romm_rom_map] table, which links a local game
+  /// Migration v98: Adds the [app_romm_rom_map] table, which links a local game
   /// (romname + system folder) to its RomM ROM id so save/state sync can target
   /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
-  static Future<void> _migrateToVersion97(Database db) async {
-    _log.i('Migration v97: Creating app_romm_rom_map table');
+  static Future<void> _migrateToVersion98(Database db) async {
+    _log.i('Migration v98: Creating app_romm_rom_map table');
     try {
       db.execute('''
         CREATE TABLE IF NOT EXISTS app_romm_rom_map (
@@ -4747,9 +4777,9 @@ class SqliteMigrations {
         CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
         ON app_romm_rom_map(romm_rom_id);
       ''');
-      _log.i('Table app_romm_rom_map created via v97');
+      _log.i('Table app_romm_rom_map created via v98');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v97: $e');
+      _log.e('Error in migration v98: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

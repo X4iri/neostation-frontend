@@ -543,7 +543,9 @@ class GameDetailsSettingsTabState extends State<GameDetailsSettingsTab> {
                                         !_isResettingPlayTime;
                                     final theme = Theme.of(context);
                                     return GestureDetector(
-                                      onTap: canReset ? _confirmResetPlayTime : null,
+                                      onTap: canReset
+                                          ? _confirmResetPlayTime
+                                          : null,
                                       child: Container(
                                         padding: EdgeInsets.symmetric(
                                           horizontal: 8.r,

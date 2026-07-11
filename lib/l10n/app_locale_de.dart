@@ -35,18 +35,18 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.general: 'Allgemein',
   AppLocale.secondaryDisplay: 'Zweitbildschirm',
   AppLocale.directories: 'Verzeichnisse',
-  AppLocale.palettes: 'Paletten',
-  AppLocale.neoThemes: 'Themes',
-  AppLocale.neoThemesSubtitle:
+  AppLocale.themes: 'Themes',
+  AppLocale.systemArt: 'System Art',
+  AppLocale.systemArtSubtitle:
       'Passe Hintergründe und Logos der Systemkarten an',
-  AppLocale.neoThemesNone: 'Keins',
-  AppLocale.neoThemesNoneSubtitle: 'Standarddarstellung',
-  AppLocale.neoThemesLoading: 'Themes laden...',
-  AppLocale.neoThemesError: 'Themes konnten nicht geladen werden',
-  AppLocale.neoThemesApplyTitle: 'Theme anwenden?',
-  AppLocale.neoThemesApplyBody:
+  AppLocale.systemArtNone: 'Keins',
+  AppLocale.systemArtNoneSubtitle: 'Standarddarstellung',
+  AppLocale.systemArtLoading: 'Themes laden...',
+  AppLocale.systemArtError: 'Themes konnten nicht geladen werden',
+  AppLocale.systemArtApplyTitle: 'Theme anwenden?',
+  AppLocale.systemArtApplyBody:
       'Die Theme-Ressourcen werden für alle Systeme heruntergeladen. Dies kann einen Moment dauern.',
-  AppLocale.neoThemesDownloading: 'Theme-Ressourcen werden heruntergeladen...',
+  AppLocale.systemArtDownloading: 'Theme-Ressourcen werden heruntergeladen...',
   AppLocale.about: 'Über',
   AppLocale.exit: 'Beenden',
   AppLocale.launcher: 'Launcher',
@@ -58,7 +58,7 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.hideRecentCard: 'Zuletzt gespielt',
   AppLocale.hideRecentCardSubtitle:
       'Karte der zuletzt gespielten Spiele im Raster anzeigen',
-  AppLocale.palettesSubtitle: 'Personalisiere das Design von NeoStation',
+  AppLocale.themesSubtitle: 'Personalisiere das Design von NeoStation',
   AppLocale.systemTheme: 'Systemdesign',
 
   AppLocale.generalSettings: 'Allgemeine Einstellungen',

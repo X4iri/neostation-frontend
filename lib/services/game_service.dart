@@ -1664,11 +1664,17 @@ class GameService {
       final packageName = emulator['android_package_name']?.toString();
       final activityName = emulator['android_activity_name']?.toString();
 
-      if (packageName == null || activityName == null) {
-        _log.e('Missing Android package/activity for standalone emulator');
+      if (packageName == null || packageName.isEmpty) {
+        _log.e('Missing Android package for standalone emulator');
         return GameLaunchResult.failure(
           AppLocale.emulatorNotConfigured.getString(context),
-          'Missing Android package or activity name for ${emulator['name']}',
+          'Missing Android package name for ${emulator['name']}',
+        );
+      }
+
+      if (activityName == null || activityName.isEmpty) {
+        _log.w(
+          'Standalone emulator ${emulator['name']} has no activity; falling back to package launcher',
         );
       }
 
@@ -1676,10 +1682,19 @@ class GameService {
       GamepadNavigationManager.reactivate();
       await platform.invokeMethod('setGamepadBlock', {'block': true});
 
-      final result = await platform.invokeMethod('launchStandaloneEmulator', {
-        'packageName': packageName,
-        'activityName': activityName,
-        'romPath': game.romPath!,
+      final romPath = game.romPath!;
+      final dataUri =
+          romPath.startsWith('content://') || romPath.startsWith('file://')
+          ? romPath
+          : Uri.file(romPath).toString();
+
+      final result = await platform.invokeMethod('launchGenericIntent', {
+        'package': packageName,
+        'activity': activityName,
+        'action': 'android.intent.action.VIEW',
+        'data': dataUri,
+        'activity_flags': <String>[],
+        'keep_saf_uri': false,
       });
 
       if (result == true) {

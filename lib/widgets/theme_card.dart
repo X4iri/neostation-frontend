@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:neostation/services/sfx_service.dart';
-import 'package:neostation/themes/app_palettes.dart';
+import 'package:neostation/themes/app_themes.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ThemeCard extends StatefulWidget {
@@ -9,7 +9,6 @@ class ThemeCard extends StatefulWidget {
     super.key,
     required this.themeName,
     required this.displayName,
-    required this.logoPath,
     this.onTap,
     this.isSelected = false,
     this.isFocused = false,
@@ -17,7 +16,6 @@ class ThemeCard extends StatefulWidget {
 
   final String themeName;
   final String displayName;
-  final String logoPath;
   final VoidCallback? onTap;
   final bool isSelected;
   final bool isFocused;
@@ -85,13 +83,11 @@ class _ThemeCardState extends State<ThemeCard> {
                               .instance
                               .platformDispatcher
                               .platformBrightness;
-                          themeData = AppPalettes.getPaletteDataByName(
-                            brightness == Brightness.dark
-                                ? 'nsdark'
-                                : 'nslight',
+                          themeData = AppThemes.getThemeDataByName(
+                            brightness == Brightness.dark ? 'dark' : 'light',
                           );
                         } else {
-                          themeData = AppPalettes.getPaletteDataByName(
+                          themeData = AppThemes.getThemeDataByName(
                             widget.themeName,
                           );
                         }
