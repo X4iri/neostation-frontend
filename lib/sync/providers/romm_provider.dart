@@ -37,6 +37,12 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
   /// Tolerance (ms) for local-vs-recorded mtime comparisons, matching NeoSync.
   static const int _mtimeToleranceMs = 2000;
 
+  /// Marker prefix we stamp onto RomM's `emulator` field when we hijack it to
+  /// carry a save's per-core subfolder. Lets download distinguish our own
+  /// uploads (subfolder to restore) from assets uploaded elsewhere, whose
+  /// `emulator` holds a real emulator label that must NOT become a subfolder.
+  static const String _subfolderMarker = 'neostation:';
+
   static final _log = LoggerService.instance;
 
   /// Authenticated RomM connection, shared with the library browser.
@@ -199,8 +205,11 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
 
       final remoteChanged = match.updatedAtMs > recordedCloudMs;
 
-      if (remoteChanged && (!localChanged || downloadOnly)) {
-        // Remote is newer (and local untouched, or we only pull right now).
+      if (remoteChanged && !localChanged) {
+        // Remote is newer and local is untouched → safe to pull. A locally
+        // changed save is never overwritten here, even in a download-only
+        // (pre-launch) pass — its upload is simply deferred to the next
+        // upload-capable sync, so un-synced local progress is never lost.
         if (await _download(game, match)) downloaded++;
       } else if (localChanged && !downloadOnly) {
         // Local newer (or both changed → prefer local).
@@ -240,7 +249,9 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
       final file = File(local.filePath);
       if (!await file.exists()) return false;
       final sub = _subfolderOf(local);
-      final emulator = sub.isEmpty ? null : sub;
+      // Stamp our marker so download knows this subfolder is ours to restore,
+      // rather than a real emulator label set by another RomM client.
+      final emulator = sub.isEmpty ? null : '$_subfolderMarker$sub';
       final asset = isState
           ? await _svc.uploadState(romId, file, emulator: emulator)
           : await _svc.uploadSave(romId, file, emulator: emulator);
@@ -261,11 +272,16 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
 
   Future<bool> _download(GameModel game, RommAsset asset) async {
     try {
-      // Rebuild the per-core subfolder (carried in the emulator field at upload)
-      // so the file lands where the emulator actually reads it.
+      // Rebuild the per-core subfolder only when the emulator field carries our
+      // marker (i.e. we uploaded it). Assets uploaded by other RomM clients put
+      // a real emulator label here, which must NOT be treated as a subfolder or
+      // the file lands somewhere the emulator never reads it.
       final prefix = asset.isState ? 'states' : 'saves';
-      final sub = asset.emulator;
-      final relativeName = (sub != null && sub.isNotEmpty)
+      final rawEmu = asset.emulator;
+      final sub = (rawEmu != null && rawEmu.startsWith(_subfolderMarker))
+          ? rawEmu.substring(_subfolderMarker.length)
+          : '';
+      final relativeName = sub.isNotEmpty
           ? '$prefix/$sub/${asset.fileName}'
           : '$prefix/${asset.fileName}';
       final targets = await _neoSync.resolveLocalTargetPaths(
@@ -289,8 +305,20 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
         return false;
       }
 
+      var wroteAny = false;
       for (final target in targets) {
         final f = File(target);
+        // Per-target guard (mirrors NeoSync): never overwrite a copy that is
+        // newer than the remote asset. resolveLocalTargetPaths can return
+        // several folders and the higher-level decision only inspected one, so
+        // a different folder may hold newer local progress we must not clobber.
+        if (await f.exists()) {
+          final localMs = (await f.stat()).modified.millisecondsSinceEpoch;
+          if (localMs > asset.updatedAtMs + _mtimeToleranceMs) {
+            _log.i('RomM download: skip $target (local newer than remote)');
+            continue;
+          }
+        }
         await f.parent.create(recursive: true);
         await f.writeAsBytes(bytes, flush: true);
         final stat = await f.stat();
@@ -301,8 +329,9 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
           bytes.length,
           fileHash: asset.contentHash,
         );
+        wroteAny = true;
       }
-      return true;
+      return wroteAny;
     } catch (e) {
       _log.e('RomM download failed (${asset.fileName}): $e');
       return false;
