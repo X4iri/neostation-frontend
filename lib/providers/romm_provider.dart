@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
@@ -630,9 +632,11 @@ class RommProvider extends ChangeNotifier {
       return tracker;
     }
 
-    // Multi-file ROMs are served by RomM as a single zip archive; the logical
-    // fsName carries no (or the wrong) extension, so the scan/emulator would
-    // not recognise the download. Give it a .zip so it's handled as an archive.
+    // Multi-file (multi-disc) ROMs are served by RomM as a single zip archive
+    // whose logical fsName carries no (or the wrong) extension. We stream it to
+    // a .zip first, then unpack it into the native scan layout below. A plain
+    // .zip neither scans (most disc systems omit it from their extension list)
+    // nor launches (the emulator boots the playlist/disc, not the archive).
     final needsZip =
         rom.isMultiFile && !rom.fsName.toLowerCase().endsWith('.zip');
     final destPath = p.join(destDir, needsZip ? '${rom.fsName}.zip' : rom.fsName);
@@ -669,21 +673,40 @@ class RommProvider extends ChangeNotifier {
       return tracker;
     }
 
+    // The name the library scan will index for this download. For a single-file
+    // ROM that's the fsName as-downloaded; for an unpacked multi-disc archive it
+    // becomes the playlist (.m3u) we write below. Save-sync and metadata both
+    // key on this, so it must match what the scan records as GameModel.romname.
+    var indexedName = p.basename(destPath);
+    if (needsZip) {
+      final exts = await SystemRepository.getExtensionsForSystem(
+        system.id ?? '',
+      );
+      // Only unpack for systems that drive multi-disc games via .m3u playlists
+      // (PS1, Saturn, Dreamcast, SegaCD, PCE-CD, 3DO, the m3u home computers…).
+      // Others (e.g. single-disc DVD systems) keep the archive untouched.
+      if (exts.contains('m3u')) {
+        final m3uName = await extractMultiDiscZip(destPath, destDir, rom.fsName);
+        if (m3uName != null) indexedName = m3uName;
+      }
+    }
+
     // Best-effort metadata + cover import from RomM (never fails the download).
     if (fileProvider != null) {
-      await _importMetadata(rom, system, fileProvider);
+      await _importMetadata(rom, system, fileProvider, indexedName);
     }
 
     tracker.status = RommDownloadStatus.completed;
     _downloadedSystems[system.folderName] = system;
     // Record the rom_id ↔ local game mapping so save sync can target this ROM.
-    // rom.fsName is the on-disk filename the library scan later indexes as
-    // GameModel.romname, so the key matches at sync time.
+    // [indexedName] is the on-disk filename the library scan indexes as
+    // GameModel.romname (the .m3u for unpacked multi-disc ROMs), so the key
+    // matches at sync time.
     await RommSaveMapRepository.putMapping(
-      romname: rom.fsName,
+      romname: indexedName,
       systemFolder: system.folderName,
       rommRomId: rom.id,
-      fsName: rom.fsName,
+      fsName: indexedName,
     );
     notifyListeners();
     // Arm the debounced rescan so this ROM (and any others finishing around the
@@ -693,14 +716,115 @@ class RommProvider extends ChangeNotifier {
     return tracker;
   }
 
+  /// Unpacks a downloaded multi-disc zip ([zipPath]) into NeoStation's native
+  /// multi-disc layout under [destDir]: the `.m3u` playlist sits in the ROM
+  /// folder root (so the library scan indexes a single entry that launches with
+  /// disc-switching) while the disc images move into a `.hidden/` subfolder,
+  /// matching the convention the scan's playlist filter already expects.
+  ///
+  /// Disc content is streamed entry-by-entry straight to disk, so a multi-GB
+  /// archive never lands wholly in memory. When RomM bundles its own `.m3u` its
+  /// disc ordering is preserved; otherwise a playlist is synthesised from the
+  /// disc files in stable name order, using [fallbackBaseName].
+  ///
+  /// Returns the on-disk `.m3u` filename on success (the name the scan indexes
+  /// and save-sync/metadata key on), or null if the archive holds nothing
+  /// disc-like or extraction fails — in which case the caller leaves the zip
+  /// in place untouched.
+  @visibleForTesting
+  static Future<String?> extractMultiDiscZip(
+    String zipPath,
+    String destDir,
+    String fallbackBaseName,
+  ) async {
+    InputFileStream? input;
+    try {
+      input = InputFileStream(zipPath);
+      final archive = ZipDecoder().decodeStream(input);
+
+      ArchiveFile? m3uEntry;
+      final discEntries = <ArchiveFile>[];
+      for (final f in archive.files) {
+        if (!f.isFile) continue;
+        final base = p.basename(f.name);
+        if (base.isEmpty) continue;
+        if (p.extension(base).toLowerCase() == '.m3u') {
+          m3uEntry ??= f;
+        } else {
+          discEntries.add(f);
+        }
+      }
+      if (discEntries.isEmpty) return null;
+
+      final hiddenDir = Directory(p.join(destDir, '.hidden'));
+      await hiddenDir.create(recursive: true);
+
+      final extractedDiscs = <String>[];
+      for (final f in discEntries) {
+        final base = p.basename(f.name);
+        final out = OutputFileStream(p.join(hiddenDir.path, base));
+        f.writeContent(out);
+        out.closeSync();
+        extractedDiscs.add(base);
+      }
+
+      // Preserve the bundled playlist's disc order when present; otherwise fall
+      // back to a stable alphabetical order (disc 1, disc 2, …).
+      final String m3uName;
+      List<String> ordered;
+      if (m3uEntry != null) {
+        m3uName = p.basename(m3uEntry.name);
+        final referenced = <String>[];
+        for (final line in utf8.decode(m3uEntry.content).split('\n')) {
+          final t = line.trim();
+          if (t.isEmpty || t.startsWith('#')) continue;
+          final b = p.basename(t);
+          if (extractedDiscs.contains(b)) referenced.add(b);
+        }
+        ordered = referenced.isNotEmpty
+            ? referenced
+            : (extractedDiscs..sort());
+      } else {
+        m3uName = '$fallbackBaseName.m3u';
+        ordered = extractedDiscs..sort();
+      }
+
+      // Reference discs by their hidden-subfolder path so the scan's basename
+      // filter hides them and only the .m3u surfaces as a game entry.
+      final playlist = ordered.map((b) => '.hidden/$b').join('\n');
+      await File(
+        p.join(destDir, m3uName),
+      ).writeAsString('$playlist\n', flush: true);
+
+      await input.close();
+      input = null;
+      await File(zipPath).delete();
+      return m3uName;
+    } catch (e, st) {
+      _log.e(
+        'RomM multi-disc extract failed for $zipPath',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    } finally {
+      await input?.close();
+    }
+  }
+
   /// Imports RomM's metadata + cover art for [rom] into the same tables/media
   /// folders the ScreenScraper integration uses, so the library shows game info
   /// and box art without a separate scrape. Keyed by filename + system id, so
   /// it links up when the scan later creates the user_roms row.
+  ///
+  /// [indexedName] is the on-disk filename the scan will record (the playlist
+  /// for an unpacked multi-disc ROM, otherwise the fsName). The metadata row is
+  /// matched to the scanned game by exact filename, so it must use this name.
   Future<void> _importMetadata(
     RommRom rom,
     SystemModel system,
     FileProvider fileProvider,
+    String indexedName,
   ) async {
     try {
       final detail = await _service.getRomDetail(rom.id);
@@ -709,7 +833,7 @@ class RommProvider extends ChangeNotifier {
           (detail['metadatum'] as Map?)?.cast<String, dynamic>() ?? const {};
 
       final metadata = <String, dynamic>{
-        'filename': rom.fsName,
+        'filename': indexedName,
         'real_name': rom.name,
       };
       final summary = detail['summary']?.toString();
@@ -776,7 +900,7 @@ class RommProvider extends ChangeNotifier {
           final dest = fileProvider.getMediaPath(
             system.folderName,
             'fanarts',
-            rom.fsName,
+            indexedName,
             ext,
           );
           final destFile = File(dest);
@@ -789,7 +913,7 @@ class RommProvider extends ChangeNotifier {
               fileProvider.getMediaPath(
                 system.folderName,
                 'fanarts',
-                rom.fsName,
+                indexedName,
                 other,
               ),
             );
