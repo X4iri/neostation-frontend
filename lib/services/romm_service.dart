@@ -600,8 +600,14 @@ class RommService {
       throw RommException('Cannot reach server: ${e.message}');
     }
 
-    if (resp.statusCode == 401) {
-      await _refreshAccessToken();
+    // 401 → token expired (refresh); 403 → stale-scope token minted before
+    // the current scope set (full re-auth), mirroring _authedGetWithScopeRetry.
+    if (resp.statusCode == 401 || resp.statusCode == 403) {
+      if (resp.statusCode == 403) {
+        await authenticate();
+      } else {
+        await _refreshAccessToken();
+      }
       final retry = http.Request('GET', _uri(endpoint))
         ..headers.addAll(_authHeaders);
       resp = await _httpClient.send(retry);

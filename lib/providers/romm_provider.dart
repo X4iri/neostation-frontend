@@ -630,7 +630,12 @@ class RommProvider extends ChangeNotifier {
       return tracker;
     }
 
-    final destPath = p.join(destDir, rom.fsName);
+    // Multi-file ROMs are served by RomM as a single zip archive; the logical
+    // fsName carries no (or the wrong) extension, so the scan/emulator would
+    // not recognise the download. Give it a .zip so it's handled as an archive.
+    final needsZip =
+        rom.isMultiFile && !rom.fsName.toLowerCase().endsWith('.zip');
+    final destPath = p.join(destDir, needsZip ? '${rom.fsName}.zip' : rom.fsName);
     try {
       await _service.downloadRom(
         rom,

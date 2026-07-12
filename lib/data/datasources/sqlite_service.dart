@@ -1322,8 +1322,14 @@ class SqliteService {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
       ''');
-    } catch (e) {
-      _log.e('Minor fix ensuring user_romm_config table failed: $e');
+    } catch (e, st) {
+      // Not minor: without this table every RommRepository call throws
+      // 'no such table: user_romm_config', breaking the entire RomM feature.
+      _log.e(
+        'Failed to ensure user_romm_config table',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
