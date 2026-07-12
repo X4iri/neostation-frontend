@@ -276,7 +276,15 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     if (_inRomGrid) {
       final roms = _rommProvider.roms;
       if (roms.isEmpty || _romIndex >= roms.length) return;
-      _startDownload(roms[_romIndex]);
+      final rom = roms[_romIndex];
+      // A second confirm on an in-flight download cancels it, mirroring the
+      // on-tile close button, rather than kicking off a duplicate download.
+      final active = _rommProvider.downloadFor(rom.id);
+      if (active != null && active.status == RommDownloadStatus.downloading) {
+        _rommProvider.cancelDownload(rom.id);
+      } else {
+        _startDownload(rom);
+      }
       return;
     }
     switch (_view) {
@@ -1017,33 +1025,79 @@ class _RomCardState extends State<_RomCard> {
   }
 
   Widget _buildOverlay(ThemeData theme, RommDownload? download) {
-    // Active download: progress + cancel.
+    // Active download: prominent, unambiguous progress + cancel affordance.
     if (download != null && download.status == RommDownloadStatus.downloading) {
-      return Container(
-        color: Colors.black.withValues(alpha: 0.55),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 28.r,
-                height: 28.r,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5.r,
-                  value: download.fraction,
-                  color: theme.colorScheme.primary,
+      final fraction = download.fraction;
+      final pctLabel = fraction != null
+          ? '${(fraction * 100).clamp(0, 100).round()}%'
+          : null;
+      return GestureDetector(
+        onTap: widget.onCancel,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.72),
+          padding: EdgeInsets.symmetric(horizontal: 4.r),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Spinner with the live percentage stacked in its centre.
+                SizedBox(
+                  width: 34.r,
+                  height: 34.r,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3.r,
+                          value: fraction,
+                          color: theme.colorScheme.primary,
+                          backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      if (pctLabel != null)
+                        Text(
+                          pctLabel,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 6.r),
-              GestureDetector(
-                onTap: widget.onCancel,
-                child: Icon(
-                  Symbols.close_rounded,
-                  size: 18.r,
-                  color: Colors.white,
+                SizedBox(height: 6.r),
+                Text(
+                  AppLocale.rommDownloading.getString(context),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 5.r),
+                // Explicit cancel chip so it's obvious a press stops the download.
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.r, vertical: 2.r),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    AppLocale.cancel.getString(context),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

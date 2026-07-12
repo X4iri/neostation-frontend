@@ -125,6 +125,20 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
     if (index < 0) return;
     NewSettingsScreen._pendingSectionKey = null;
     _onMenuItemSelected(index);
+
+    // Drop focus straight into the section's content so the cursor lands on
+    // its first option, rather than parking on the left category menu. The
+    // content isn't mounted until the setState above rebuilds, so defer the
+    // focus move and scroll until the next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_getContentItemCount() <= 0) return;
+      setState(() {
+        _focusOnMenu = false;
+        _selectedContentIndex = 0;
+      });
+      _triggerContentScroll();
+    });
   }
 
   @override
