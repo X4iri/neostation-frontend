@@ -59,12 +59,15 @@ Future<void> launchGameWithDialog({
   // Pull newer cloud saves before the emulator starts, alongside the UX settle
   // delay so the two waits don't stack. The download is best-effort: a sync
   // failure, timeout, or unsupported provider must never block the launch.
+  // Saves are small, so a reachable server resolves this in well under a
+  // second; the timeout only bites on a slow/half-reachable server, where we
+  // bound the launch-blocking wait at 8s and start the game on the local save.
   await Future.wait([
     Future.delayed(const Duration(seconds: 2)),
     syncProvider
         .syncGameSavesBeforeLaunch(game)
         .timeout(
-          const Duration(seconds: 20),
+          const Duration(seconds: 8),
           onTimeout: () => SyncResult.fail(SyncError.networkError),
         )
         .catchError((_) => SyncResult.fail(SyncError.unknown)),
