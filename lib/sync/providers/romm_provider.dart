@@ -161,9 +161,13 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
 
     final List<RommAsset> remote;
     try {
-      final saves = await _svc.listSaves(romId: romId);
-      final states = await _svc.listStates(romId: romId);
-      remote = [...saves, ...states];
+      // The two listings are independent GETs; fetch them concurrently so the
+      // launch-blocking sync pays one round-trip, not two serial ones.
+      final results = await Future.wait([
+        _svc.listSaves(romId: romId),
+        _svc.listStates(romId: romId),
+      ]);
+      remote = [...results[0], ...results[1]];
     } catch (e) {
       _log.e('RomM listSaves/listStates failed for ${game.romname}: $e');
       return GameSyncStatus.error;
@@ -430,10 +434,12 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
     final romId = gameId == null ? null : int.tryParse(gameId);
     if (romId == null) return const [];
     try {
-      final assets = [
-        ...await _svc.listSaves(romId: romId),
-        ...await _svc.listStates(romId: romId),
-      ];
+      // Independent GETs → fetch concurrently rather than serially.
+      final results = await Future.wait([
+        _svc.listSaves(romId: romId),
+        _svc.listStates(romId: romId),
+      ]);
+      final assets = [...results[0], ...results[1]];
       return assets
           .map(
             (a) => SyncFile(

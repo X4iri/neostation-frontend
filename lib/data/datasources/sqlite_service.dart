@@ -1288,40 +1288,16 @@ class SqliteService {
       ON app_neo_sync_state(file_path);
     ''');
 
-    // FIX: Ensure app_romm_rom_map exists (RomM save-sync mapping, v92).
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS app_romm_rom_map (
-        romname TEXT NOT NULL,
-        system_folder TEXT NOT NULL,
-        romm_rom_id INTEGER NOT NULL,
-        romm_fs_name TEXT,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (romname, system_folder)
-      );
-    ''');
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
-      ON app_romm_rom_map(romm_rom_id);
-    ''');
+    // FIX: Ensure app_romm_rom_map exists (RomM save-sync mapping, v98).
+    await db.execute(SqliteMigrations.createAppRommRomMapTableSql);
+    await db.execute(SqliteMigrations.createAppRommRomMapIndexSql);
   }
 
   /// Ensures the singleton user_romm_config table exists (RomM library
   /// browse/download credentials). Safe on fresh installs via IF NOT EXISTS.
   Future<void> _ensureRommConfigTable(DatabaseAdapter db) async {
     try {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS user_romm_config (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          server_url TEXT,
-          username TEXT,
-          password TEXT,
-          access_token TEXT,
-          refresh_token TEXT,
-          token_expires INTEGER,
-          last_verified TEXT,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      ''');
+      await db.execute(SqliteMigrations.createUserRommConfigTableSql);
     } catch (e, st) {
       // Not minor: without this table every RommRepository call throws
       // 'no such table: user_romm_config', breaking the entire RomM feature.
@@ -1792,19 +1768,7 @@ class SqliteService {
         UNIQUE(app_system_id)
       );
       ''',
-      '''
-      CREATE TABLE IF NOT EXISTS user_romm_config (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        server_url TEXT,
-        username TEXT,
-        password TEXT,
-        access_token TEXT,
-        refresh_token TEXT,
-        token_expires INTEGER,
-        last_verified TEXT,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-      ''',
+      SqliteMigrations.createUserRommConfigTableSql,
       '''
       CREATE TABLE IF NOT EXISTS user_screenscraper_metadata (
         app_system_id TEXT NOT NULL,
@@ -1862,16 +1826,7 @@ class SqliteService {
         file_hash TEXT
       );
       ''',
-      '''
-      CREATE TABLE IF NOT EXISTS app_romm_rom_map (
-        romname TEXT NOT NULL,
-        system_folder TEXT NOT NULL,
-        romm_rom_id INTEGER NOT NULL,
-        romm_fs_name TEXT,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (romname, system_folder)
-      );
-      ''',
+      SqliteMigrations.createAppRommRomMapTableSql,
     ];
 
     for (final sql in tables) {
@@ -1943,7 +1898,7 @@ class SqliteService {
       // 6. Index for app_neo_sync_state
       'CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path ON app_neo_sync_state(file_path);',
       // 7. Index for app_romm_rom_map (RomM save-sync mapping)
-      'CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id ON app_romm_rom_map(romm_rom_id);',
+      SqliteMigrations.createAppRommRomMapIndexSql,
     ];
 
     for (final sql in indexes) {

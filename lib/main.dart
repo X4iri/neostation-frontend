@@ -361,8 +361,26 @@ void main() async {
         await sqliteConfigProvider.rescanSystemSilent(system);
       }
     }
+    // Refresh against the detected set *after* the scan. scanSystems can no-op
+    // when a scan is already in flight (its _isScanning guard), so a genuinely
+    // new system may not be registered yet; refreshing it would load an empty
+    // list and silently drop the freshly downloaded games. Refresh only systems
+    // now known, and log any that didn't register so the gap is diagnosable
+    // rather than silent (the user can force a manual rescan).
+    final registered = sqliteConfigProvider.config.detectedSystems.toSet();
     for (final system in systems) {
-      await sqliteDatabaseProvider.refreshSystem(system.folderName);
+      final isKnown =
+          registered.contains(system.folderName) ||
+          system.folders.any(registered.contains);
+      if (isKnown) {
+        await sqliteDatabaseProvider.refreshSystem(system.folderName);
+      } else {
+        debugPrint(
+          'RomM: downloaded ROMs for "${system.folderName}" but it is not '
+          'registered after scan (scan likely skipped); a manual rescan is '
+          'needed for them to appear.',
+        );
+      }
     }
   };
   SyncManager.instance.register(

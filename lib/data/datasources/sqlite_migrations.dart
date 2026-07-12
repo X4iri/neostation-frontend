@@ -13,6 +13,44 @@ import 'package:neostation/services/logger_service.dart';
 class SqliteMigrations {
   static final _log = LoggerService.instance;
 
+  // ── RomM schema — single source of truth ──────────────────────────────────
+  // Referenced by the versioned migrations (v97/v98), the fresh-install table
+  // list, and the on-launch "even if migrations were skipped" safety net, so a
+  // future column change is made in exactly one place.
+
+  /// CREATE for the singleton RomM credentials/token table (v97).
+  static const String createUserRommConfigTableSql = '''
+    CREATE TABLE IF NOT EXISTS user_romm_config (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      server_url TEXT,
+      username TEXT,
+      password TEXT,
+      access_token TEXT,
+      refresh_token TEXT,
+      token_expires INTEGER,
+      last_verified TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  ''';
+
+  /// CREATE for the local-game → RomM rom_id save-sync map (v98).
+  static const String createAppRommRomMapTableSql = '''
+    CREATE TABLE IF NOT EXISTS app_romm_rom_map (
+      romname TEXT NOT NULL,
+      system_folder TEXT NOT NULL,
+      romm_rom_id INTEGER NOT NULL,
+      romm_fs_name TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (romname, system_folder)
+    );
+  ''';
+
+  /// Lookup index for [createAppRommRomMapTableSql] (v98).
+  static const String createAppRommRomMapIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
+    ON app_romm_rom_map(romm_rom_id);
+  ''';
+
   /// Routes a specific version upgrade request to its corresponding migration logic.
   ///
   /// [db] is the active SQLite database connection.
@@ -4736,19 +4774,7 @@ class SqliteMigrations {
   static Future<void> _migrateToVersion97(Database db) async {
     _log.i('Migration v97: Creating user_romm_config table');
     try {
-      db.execute('''
-        CREATE TABLE IF NOT EXISTS user_romm_config (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          server_url TEXT,
-          username TEXT,
-          password TEXT,
-          access_token TEXT,
-          refresh_token TEXT,
-          token_expires INTEGER,
-          last_verified TEXT,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      ''');
+      db.execute(createUserRommConfigTableSql);
       _log.i('Table user_romm_config created via v97');
     } catch (e, stackTrace) {
       _log.e('Error in migration v97: $e');
@@ -4763,20 +4789,8 @@ class SqliteMigrations {
   static Future<void> _migrateToVersion98(Database db) async {
     _log.i('Migration v98: Creating app_romm_rom_map table');
     try {
-      db.execute('''
-        CREATE TABLE IF NOT EXISTS app_romm_rom_map (
-          romname TEXT NOT NULL,
-          system_folder TEXT NOT NULL,
-          romm_rom_id INTEGER NOT NULL,
-          romm_fs_name TEXT,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          PRIMARY KEY (romname, system_folder)
-        );
-      ''');
-      db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
-        ON app_romm_rom_map(romm_rom_id);
-      ''');
+      db.execute(createAppRommRomMapTableSql);
+      db.execute(createAppRommRomMapIndexSql);
       _log.i('Table app_romm_rom_map created via v98');
     } catch (e, stackTrace) {
       _log.e('Error in migration v98: $e');
