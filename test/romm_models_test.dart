@@ -79,6 +79,22 @@ void main() {
       expect(rom.isMultiFile, isTrue);
     });
 
+    test('flags isMultiFile from has_multiple_files when files is empty', () {
+      // The list endpoint (/api/roms) returns files: [] but sets the
+      // has_multiple_files boolean — this is what the browse/download flow
+      // consumes, so isMultiFile must honour the flag, not just files.length.
+      final rom = RommRom.fromJson({
+        'id': 7665,
+        'name': 'The Secret of Monkey Island',
+        'fs_name': 'The Secret of Monkey Island',
+        'has_multiple_files': true,
+        'files': const [],
+      });
+      expect(rom.files, isEmpty);
+      expect(rom.hasMultipleFiles, isTrue);
+      expect(rom.isMultiFile, isTrue);
+    });
+
     test('a single file is not multi-file', () {
       final rom = RommRom.fromJson({
         'id': 5,

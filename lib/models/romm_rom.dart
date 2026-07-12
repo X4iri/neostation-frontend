@@ -49,8 +49,15 @@ class RommRom {
   final int fsSizeBytes;
 
   /// Constituent files; length > 1 indicates a multi-disc/multi-part ROM
-  /// that RomM serves as a zip archive.
+  /// that RomM serves as a zip archive. NOTE: RomM only populates this on the
+  /// detail endpoint (`/api/roms/{id}`); the list endpoint returns it empty, so
+  /// prefer [hasMultipleFiles] for the multi-file decision.
   final List<RommRomFile> files;
+
+  /// RomM's own `has_multiple_files` flag, present on BOTH the list and detail
+  /// endpoints. This is the reliable multi-file signal because [files] is empty
+  /// in list responses (which is what the browse/download flow uses).
+  final bool hasMultipleFiles;
 
   /// Relative or absolute cover URL (may need the server base URL + auth).
   final String? urlCover;
@@ -76,13 +83,16 @@ class RommRom {
     required this.fsExtension,
     this.fsSizeBytes = 0,
     this.files = const [],
+    this.hasMultipleFiles = false,
     this.urlCover,
     this.raId,
     this.raTotalAchievements = 0,
   });
 
-  /// True when RomM serves this ROM as a multi-file zip archive.
-  bool get isMultiFile => files.length > 1;
+  /// True when RomM serves this ROM as a multi-file zip archive. Uses RomM's
+  /// `has_multiple_files` flag (reliable on both endpoints) and falls back to
+  /// the [files] list, which is only populated on the detail endpoint.
+  bool get isMultiFile => hasMultipleFiles || files.length > 1;
 
   /// True when this ROM has a RetroAchievements set (per RomM metadata).
   bool get hasRetroAchievements => raId != null && raTotalAchievements > 0;
@@ -109,6 +119,7 @@ class RommRom {
       fsExtension: json['fs_extension']?.toString() ?? '',
       fsSizeBytes: (json['fs_size_bytes'] as num?)?.toInt() ?? 0,
       files: files,
+      hasMultipleFiles: json['has_multiple_files'] == true,
       urlCover: json['url_cover']?.toString(),
       raId: (json['ra_id'] as num?)?.toInt(),
       raTotalAchievements: _parseRaTotal(json),
