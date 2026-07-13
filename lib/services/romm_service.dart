@@ -699,14 +699,10 @@ class RommService {
   /// Downloads an asset's bytes from its server-relative [downloadPath]
   /// (`/api/raw/assets/{file_path}/{file_name}?timestamp=...`). This is the
   /// canonical route for BOTH saves and states — states have no `/content`
-  /// endpoint. [downloadPath] may contain spaces (file names, the timestamp),
-  /// so it is run through [Uri.encodeFull] before parsing.
+  /// endpoint.
   Future<Uint8List> downloadAssetByPath(String downloadPath) async {
     await _ensureToken();
-    final full = downloadPath.startsWith('http')
-        ? downloadPath
-        : '$_baseUrl${downloadPath.startsWith('/') ? '' : '/'}$downloadPath';
-    final uri = Uri.parse(Uri.encodeFull(full));
+    final uri = _assetUri(downloadPath);
 
     Future<http.Response> get() => _httpClient
         .get(uri, headers: _authHeaders)
@@ -734,6 +730,47 @@ class RommService {
       );
     }
     return resp.bodyBytes;
+  }
+
+  /// Builds the request URI for a server-supplied asset [downloadPath].
+  ///
+  /// RomM emits this path **un-encoded** — raw file names and a raw timestamp
+  /// — so it must be percent-encoded before use. [Uri.encodeFull] is wrong
+  /// here: it leaves `#`/`?`/`&` intact (a save named `Zelda #1.srm` would lose
+  /// its `#…` tail to a URL fragment → 404) and would double-escape any literal
+  /// `%`. Instead the scheme/host is preserved verbatim while each path segment
+  /// and query key/value is encoded individually, so plain-ASCII names come out
+  /// byte-identical to the un-encoded input.
+  Uri _assetUri(String downloadPath) {
+    final String origin;
+    final String rest; // path[?query], server-relative, still un-encoded
+    if (downloadPath.startsWith('http')) {
+      // Absolute URL: peel off scheme://authority (no raw specials live there),
+      // keeping the raw path+query for manual encoding below.
+      final slash = downloadPath.indexOf('/', downloadPath.indexOf('://') + 3);
+      origin = slash == -1 ? downloadPath : downloadPath.substring(0, slash);
+      rest = slash == -1 ? '' : downloadPath.substring(slash);
+    } else {
+      origin = _baseUrl;
+      rest = downloadPath.startsWith('/') ? downloadPath : '/$downloadPath';
+    }
+
+    final q = rest.indexOf('?');
+    final rawPath = q == -1 ? rest : rest.substring(0, q);
+    final rawQuery = q == -1 ? null : rest.substring(q + 1);
+
+    final encodedPath = rawPath.split('/').map(Uri.encodeComponent).join('/');
+    final encodedQuery = rawQuery == null
+        ? ''
+        : '?${rawQuery.split('&').map((pair) {
+            final eq = pair.indexOf('=');
+            if (eq == -1) return Uri.encodeQueryComponent(pair);
+            final k = Uri.encodeQueryComponent(pair.substring(0, eq));
+            final v = Uri.encodeQueryComponent(pair.substring(eq + 1));
+            return '$k=$v';
+          }).join('&')}';
+
+    return Uri.parse('$origin$encodedPath$encodedQuery');
   }
 
   /// Uploads [file] as a save for [romId] (`POST /api/saves`, field `saveFile`).

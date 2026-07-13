@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 98;
+  static const int _databaseVersion = 99;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -1272,21 +1272,11 @@ class SqliteService {
       }
     }
 
-    // FIX: Ensure app_neo_sync_state exists (legacy support for v58).
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS app_neo_sync_state (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        local_modified_at INTEGER NOT NULL,
-        cloud_updated_at INTEGER NOT NULL,
-        file_size INTEGER NOT NULL,
-        file_hash TEXT
-      );
-    ''');
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path
-      ON app_neo_sync_state(file_path);
-    ''');
+    // FIX: Ensure app_neo_sync_state exists (legacy support for v58). New
+    // installs get the provider-scoped schema (v99); pre-existing tables are
+    // upgraded by migration v99, so IF NOT EXISTS here never masks that.
+    await db.execute(SqliteMigrations.createAppNeoSyncStateTableSql);
+    await db.execute(SqliteMigrations.createAppNeoSyncStateIndexSql);
 
     // FIX: Ensure app_romm_rom_map exists (RomM save-sync mapping, v98).
     await db.execute(SqliteMigrations.createAppRommRomMapTableSql);
@@ -1816,16 +1806,7 @@ class SqliteService {
         UNIQUE(app_system_id)
       );
       ''',
-      '''
-      CREATE TABLE IF NOT EXISTS app_neo_sync_state (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        local_modified_at INTEGER NOT NULL,
-        cloud_updated_at INTEGER NOT NULL,
-        file_size INTEGER NOT NULL,
-        file_hash TEXT
-      );
-      ''',
+      SqliteMigrations.createAppNeoSyncStateTableSql,
       SqliteMigrations.createAppRommRomMapTableSql,
     ];
 
@@ -1895,8 +1876,8 @@ class SqliteService {
       // 5. Index for user_emulator_config
       'CREATE INDEX IF NOT EXISTS idx_user_emulator_config_is_user_default ON user_emulator_config(is_user_default);',
 
-      // 6. Index for app_neo_sync_state
-      'CREATE INDEX IF NOT EXISTS idx_neo_sync_state_file_path ON app_neo_sync_state(file_path);',
+      // 6. Index for app_neo_sync_state (provider-scoped)
+      SqliteMigrations.createAppNeoSyncStateIndexSql,
       // 7. Index for app_romm_rom_map (RomM save-sync mapping)
       SqliteMigrations.createAppRommRomMapIndexSql,
     ];
@@ -4164,6 +4145,7 @@ class SqliteService {
   /// This is used to track modifications and versioning for cloud sync, bypassing
   /// filesystem limitations on Android (e.g., restricted 'lastModified' modification).
   static Future<void> saveSyncState(
+    String provider,
     String filePath,
     int localModifiedAt,
     int cloudUpdatedAt,
@@ -4172,7 +4154,10 @@ class SqliteService {
   }) async {
     try {
       final db = await instance.database;
+      // Keyed on (provider, file_path): each sync provider owns its own row for
+      // a given file so RomM and NeoSync timestamps never overwrite each other.
       await db.insert('app_neo_sync_state', {
+        'provider': provider,
         'file_path': filePath,
         'local_modified_at': localModifiedAt,
         'cloud_updated_at': cloudUpdatedAt,
@@ -4185,13 +4170,16 @@ class SqliteService {
   }
 
   /// Retrieves the recorded synchronization state for a specific file path.
-  static Future<Map<String, dynamic>?> getSyncState(String filePath) async {
+  static Future<Map<String, dynamic>?> getSyncState(
+    String provider,
+    String filePath,
+  ) async {
     try {
       final db = await instance.database;
       final results = await db.query(
         'app_neo_sync_state',
-        where: 'file_path = ?',
-        whereArgs: [filePath],
+        where: 'provider = ? AND file_path = ?',
+        whereArgs: [provider, filePath],
         limit: 1,
       );
       if (results.isNotEmpty) {

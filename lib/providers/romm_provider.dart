@@ -577,10 +577,32 @@ class RommProvider extends ChangeNotifier {
       if (base == null) continue;
       for (final name in _systemFolderNames(system)) {
         final dir = p.join(base, name);
-        if (await File(p.join(dir, rom.fsName)).exists()) return dir;
+        for (final candidate in _existingRomNames(rom)) {
+          if (await File(p.join(dir, candidate)).exists()) return dir;
+        }
       }
     }
     return null;
+  }
+
+  /// On-disk names that mark [rom] as already downloaded in a folder.
+  ///
+  /// A single-file ROM lands as its [RommRom.fsName]. A multi-disc ROM is
+  /// served as a zip that [extractMultiDiscZip] unpacks into disc files plus a
+  /// `.m3u` playlist and then deletes — so the fsName itself never exists on
+  /// disk; only the playlist does. We match the playlist names that extraction
+  /// would produce: the synthesised fallback (`<fsName>.m3u`) and, defensively,
+  /// the extension-replaced variant. (A bundled playlist keeps its own basename
+  /// which we can't predict here, so those re-download; the common synthesised
+  /// case is covered.)
+  List<String> _existingRomNames(RommRom rom) {
+    final names = <String>[rom.fsName];
+    if (rom.isMultiFile) {
+      names.add('${rom.fsName}.m3u');
+      final stem = p.basenameWithoutExtension(rom.fsName);
+      if (stem.isNotEmpty && stem != rom.fsName) names.add('$stem.m3u');
+    }
+    return names;
   }
 
   /// True when a file named after [rom] already exists in a configured folder.
@@ -633,13 +655,17 @@ class RommProvider extends ChangeNotifier {
     }
 
     // Multi-file (multi-disc) ROMs are served by RomM as a single zip archive
-    // whose logical fsName carries no (or the wrong) extension. We stream it to
-    // a .zip first, then unpack it into the native scan layout below. A plain
-    // .zip neither scans (most disc systems omit it from their extension list)
-    // nor launches (the emulator boots the playlist/disc, not the archive).
-    final needsZip =
-        rom.isMultiFile && !rom.fsName.toLowerCase().endsWith('.zip');
-    final destPath = p.join(destDir, needsZip ? '${rom.fsName}.zip' : rom.fsName);
+    // whose logical fsName may or may not already carry a .zip extension. We
+    // stream it to a .zip first, then always unpack it into the native scan
+    // layout below. A plain .zip neither scans (most disc systems omit it from
+    // their extension list) nor launches (the emulator boots the playlist/disc,
+    // not the archive), so a multi-file ROM must always go through extraction.
+    final isArchive = rom.isMultiFile;
+    // Only append .zip when fsName doesn't already end in it (avoid foo.zip.zip).
+    final appendZipExt =
+        isArchive && !rom.fsName.toLowerCase().endsWith('.zip');
+    final destPath =
+        p.join(destDir, appendZipExt ? '${rom.fsName}.zip' : rom.fsName);
     try {
       await _service.downloadRom(
         rom,
@@ -678,7 +704,7 @@ class RommProvider extends ChangeNotifier {
     // becomes the playlist (.m3u) we write below. Save-sync and metadata both
     // key on this, so it must match what the scan records as GameModel.romname.
     var indexedName = p.basename(destPath);
-    if (needsZip) {
+    if (isArchive) {
       final exts = await SystemRepository.getExtensionsForSystem(
         system.id ?? '',
       );

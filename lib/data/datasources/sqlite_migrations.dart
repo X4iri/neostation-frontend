@@ -51,6 +51,31 @@ class SqliteMigrations {
     ON app_romm_rom_map(romm_rom_id);
   ''';
 
+  /// CREATE for the provider-scoped save-sync state table (v99).
+  ///
+  /// Keyed on (provider, file_path) so each sync provider (NeoSync, RomM, …)
+  /// owns its own row for a given local file — a foreign provider's cloud
+  /// timestamp can no longer poison another provider's newer/older decision.
+  /// The `provider` column defaults to 'neosync' for backward compatibility.
+  static const String createAppNeoSyncStateTableSql = '''
+    CREATE TABLE IF NOT EXISTS app_neo_sync_state (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL DEFAULT 'neosync',
+      file_path TEXT NOT NULL,
+      local_modified_at INTEGER NOT NULL,
+      cloud_updated_at INTEGER NOT NULL,
+      file_size INTEGER NOT NULL,
+      file_hash TEXT,
+      UNIQUE(provider, file_path)
+    );
+  ''';
+
+  /// Lookup index for [createAppNeoSyncStateTableSql] (v99).
+  static const String createAppNeoSyncStateIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_neo_sync_state_provider_file_path
+    ON app_neo_sync_state(provider, file_path);
+  ''';
+
   /// Routes a specific version upgrade request to its corresponding migration logic.
   ///
   /// [db] is the active SQLite database connection.
@@ -337,6 +362,9 @@ class SqliteMigrations {
         break;
       case 98:
         await _migrateToVersion98(db);
+        break;
+      case 99:
+        await _migrateToVersion99(db);
         break;
       default:
         _log.w('No migration defined for version $version');
@@ -4794,6 +4822,70 @@ class SqliteMigrations {
       _log.i('Table app_romm_rom_map created via v98');
     } catch (e, stackTrace) {
       _log.e('Error in migration v98: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v99: Makes `app_neo_sync_state` provider-scoped so RomM and
+  /// NeoSync no longer corrupt each other's recorded cloud timestamps.
+  ///
+  /// The legacy table keyed on `file_path` alone (`file_path ... UNIQUE`), so a
+  /// row written by one provider was read/overwritten by the other. SQLite
+  /// can't drop that column-level UNIQUE in place, so we rebuild the table with
+  /// a composite `UNIQUE(provider, file_path)` and backfill every existing row
+  /// to 'neosync' — the only provider that wrote these rows historically.
+  static Future<void> _migrateToVersion99(Database db) async {
+    _log.i('Migration v99: Adding provider column to app_neo_sync_state');
+    try {
+      final tableExists = db
+          .select(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='app_neo_sync_state' LIMIT 1",
+          )
+          .isNotEmpty;
+
+      if (!tableExists) {
+        // Fresh/absent table → just create the new provider-scoped schema.
+        db.execute(createAppNeoSyncStateTableSql);
+        db.execute(createAppNeoSyncStateIndexSql);
+        _log.i('app_neo_sync_state created with provider column (v99)');
+        return;
+      }
+
+      final alreadyMigrated = await _columnExists(
+        db,
+        'app_neo_sync_state',
+        'provider',
+      );
+      if (alreadyMigrated) {
+        _log.i('app_neo_sync_state already provider-scoped, skipping v99');
+        return;
+      }
+
+      db.execute('BEGIN TRANSACTION');
+      try {
+        db.execute(
+          'ALTER TABLE app_neo_sync_state RENAME TO app_neo_sync_state_old',
+        );
+        db.execute(createAppNeoSyncStateTableSql);
+        // Existing rows were all written by NeoSync → attribute them to it.
+        db.execute('''
+          INSERT INTO app_neo_sync_state
+            (id, provider, file_path, local_modified_at, cloud_updated_at, file_size, file_hash)
+          SELECT id, 'neosync', file_path, local_modified_at, cloud_updated_at, file_size, file_hash
+          FROM app_neo_sync_state_old
+        ''');
+        db.execute('DROP TABLE app_neo_sync_state_old');
+        db.execute('DROP INDEX IF EXISTS idx_neo_sync_state_file_path');
+        db.execute(createAppNeoSyncStateIndexSql);
+        db.execute('COMMIT');
+      } catch (e) {
+        db.execute('ROLLBACK');
+        rethrow;
+      }
+      _log.i('app_neo_sync_state migrated to (provider, file_path) via v99');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v99: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

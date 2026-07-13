@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'package:neostation/data/datasources/sqlite_migrations.dart';
 import 'package:neostation/data/datasources/sqlite_service.dart';
 
 /// Helper for setting up an in-memory SQLite database for repository tests.
@@ -258,15 +259,7 @@ class DatabaseTestHelper {
       )
     ''');
 
-    await db.execute('''
-      CREATE TABLE app_neo_sync_state (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        local_modified_at INTEGER NOT NULL,
-        cloud_updated_at INTEGER NOT NULL,
-        file_size INTEGER NOT NULL,
-        file_hash TEXT
-      )
-    ''');
+    await db.execute(SqliteMigrations.createAppNeoSyncStateTableSql);
+    await db.execute(SqliteMigrations.createAppNeoSyncStateIndexSql);
   }
 }

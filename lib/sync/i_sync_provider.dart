@@ -92,7 +92,16 @@ abstract class ISyncProvider {
 
   /// Performs pre-launch synchronization (e.g. download cloud saves before
   /// starting the game).
-  Future<SyncResult> syncGameSavesBeforeLaunch(GameModel game) async =>
+  ///
+  /// [deadline] cooperatively bounds the work: the launch caller also applies a
+  /// hard [Future.timeout], but that cannot cancel an in-flight download, so
+  /// implementations must check [SyncDeadline.isExpired] after each network
+  /// fetch and abandon the write (without touching save files or sync state)
+  /// once it expires. See [SyncDeadline].
+  Future<SyncResult> syncGameSavesBeforeLaunch(
+    GameModel game, {
+    SyncDeadline? deadline,
+  }) async =>
       SyncResult.fail(
         SyncError.unknown,
         message: 'syncGameSavesBeforeLaunch not supported by $providerId',

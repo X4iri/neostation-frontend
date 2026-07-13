@@ -1090,7 +1090,10 @@ extension NeoSyncCore on NeoSyncProvider {
       }
 
       // 2. Si los hashes NO coinciden (contenido diferente), evaluar el estado guardado.
-      final syncState = await SyncRepository.getSyncState(localSave.filePath);
+      final syncState = await SyncRepository.getSyncState(
+        NeoSyncProvider.kSyncProviderId,
+        localSave.filePath,
+      );
 
       final cloudTime = cloudSave.fileModifiedAtTimestamp ?? 0;
       final localTime = localSave.lastModified.millisecondsSinceEpoch;
@@ -1212,10 +1215,16 @@ extension NeoSyncCore on NeoSyncProvider {
 
   /// Helper to calculate relative path for sync, with special handling for Dreamcast
   /// Sincroniza saves antes de iniciar un juego (al estilo Steam)
-  Future<void> syncGameSavesBeforeLaunch(GameModel game) async {
+  Future<void> syncGameSavesBeforeLaunch(
+    GameModel game, {
+    SyncDeadline? deadline,
+  }) async {
     if (!isNeoSyncAuthenticated) return;
     if (game.cloudSyncEnabled != true) return;
 
+    // Expose the deadline to the shared download path (_downloadCloudFile) so a
+    // late download abandons its write once the launch has proceeded.
+    _launchDeadline = deadline;
     try {
       // Detectar saves actuales
       await detectGameSaveFiles(game);
@@ -1271,6 +1280,8 @@ extension NeoSyncCore on NeoSyncProvider {
       );
     } catch (e) {
       NeoSyncProvider._log.w('Error in pre-launch sync for ${game.name}: $e');
+    } finally {
+      _launchDeadline = null;
     }
   }
 

@@ -224,6 +224,7 @@ extension NeoSyncDownload on NeoSyncProvider {
       try {
         final stat = await localFile.stat();
         await SyncRepository.saveSyncState(
+          NeoSyncProvider.kSyncProviderId,
           localFile.path,
           stat.modified.millisecondsSinceEpoch,
           cloudFile.fileModifiedAtTimestamp ?? 0,

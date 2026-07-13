@@ -148,6 +148,7 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
   Future<GameSyncStatus> _syncGame(
     GameModel game, {
     required bool downloadOnly,
+    SyncDeadline? deadline,
   }) async {
     if (!_browse.isConnected) return GameSyncStatus.error;
     if (game.cloudSyncEnabled == false) return GameSyncStatus.disabled;
@@ -192,7 +193,10 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
       if (match != null) matchedRemote.add(match.id);
 
       final localMs = local.lastModified.millisecondsSinceEpoch;
-      final recorded = await SyncRepository.getSyncState(local.filePath);
+      final recorded = await SyncRepository.getSyncState(
+        kProviderId,
+        local.filePath,
+      );
       final recordedLocalMs = (recorded?['local_modified_at'] as int?) ?? 0;
       final recordedCloudMs = (recorded?['cloud_updated_at'] as int?) ?? 0;
 
@@ -214,7 +218,7 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
         // changed save is never overwritten here, even in a download-only
         // (pre-launch) pass — its upload is simply deferred to the next
         // upload-capable sync, so un-synced local progress is never lost.
-        if (await _download(game, match)) downloaded++;
+        if (await _download(game, match, deadline: deadline)) downloaded++;
       } else if (localChanged && !downloadOnly) {
         // Local newer (or both changed → prefer local).
         if (await _upload(romId, local, isState)) uploaded++;
@@ -224,7 +228,7 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
     // 2) Remote-only files → download.
     for (final a in remote) {
       if (matchedRemote.contains(a.id)) continue;
-      if (await _download(game, a)) downloaded++;
+      if (await _download(game, a, deadline: deadline)) downloaded++;
     }
 
     _log.i(
@@ -261,6 +265,7 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
           : await _svc.uploadSave(romId, file, emulator: emulator);
       final stat = await file.stat();
       await SyncRepository.saveSyncState(
+        kProviderId,
         local.filePath,
         stat.modified.millisecondsSinceEpoch,
         asset.updatedAtMs,
@@ -274,7 +279,11 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
     }
   }
 
-  Future<bool> _download(GameModel game, RommAsset asset) async {
+  Future<bool> _download(
+    GameModel game,
+    RommAsset asset, {
+    SyncDeadline? deadline,
+  }) async {
     try {
       // Rebuild the per-core subfolder only when the emulator field carries our
       // marker (i.e. we uploaded it). Assets uploaded by other RomM clients put
@@ -309,6 +318,15 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
         return false;
       }
 
+      // Pre-launch deadline guard: the network fetch is done, but if the
+      // launch-blocking wait has already elapsed the game is running on the
+      // local save. Abandon here — before any write — so we never clobber the
+      // .srm the emulator now has open or record bogus sync state.
+      if (deadline?.isExpired ?? false) {
+        _log.i('RomM download: abandon ${asset.fileName} (launch deadline passed)');
+        return false;
+      }
+
       var wroteAny = false;
       for (final target in targets) {
         final f = File(target);
@@ -327,6 +345,7 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
         await f.writeAsBytes(bytes, flush: true);
         final stat = await f.stat();
         await SyncRepository.saveSyncState(
+          kProviderId,
           target,
           stat.modified.millisecondsSinceEpoch,
           asset.updatedAtMs,
@@ -366,9 +385,12 @@ class RomMSyncProvider extends ChangeNotifier implements ISyncProvider {
   GameSyncState? getGameSyncState(String gameId) => _gameSyncStates[gameId];
 
   @override
-  Future<SyncResult> syncGameSavesBeforeLaunch(GameModel game) async {
+  Future<SyncResult> syncGameSavesBeforeLaunch(
+    GameModel game, {
+    SyncDeadline? deadline,
+  }) async {
     try {
-      await _syncGame(game, downloadOnly: true);
+      await _syncGame(game, downloadOnly: true, deadline: deadline);
       return SyncResult.ok();
     } catch (e) {
       return SyncResult.fail(SyncError.unknown, message: e.toString());
