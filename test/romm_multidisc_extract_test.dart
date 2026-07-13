@@ -27,7 +27,7 @@ void main() {
       if (await dir.exists()) await dir.delete(recursive: true);
     });
 
-    test('bundled m3u: discs go to .hidden, playlist rewritten, zip removed',
+    test('bundled m3u: discs sit alongside m3u, playlist rewritten, zip removed',
         () async {
       final zipPath = p.join(dir.path, 'Alone in the Dark.zip');
       _writeZip(zipPath, {
@@ -47,29 +47,24 @@ void main() {
       expect(m3uName, 'Alone in the Dark.m3u');
       // Zip is consumed.
       expect(File(zipPath).existsSync(), isFalse);
-      // Discs relocated under .hidden/.
-      expect(
-        File(p.join(dir.path, '.hidden', 'Alone in the Dark (Disc 1).chd'))
-            .existsSync(),
-        isTrue,
-      );
-      expect(
-        File(p.join(dir.path, '.hidden', 'Alone in the Dark (Disc 2).chd'))
-            .existsSync(),
-        isTrue,
-      );
-      // Discs are NOT left in the root.
+      // Discs extracted alongside the m3u in the ROM folder root.
       expect(
         File(p.join(dir.path, 'Alone in the Dark (Disc 1).chd')).existsSync(),
-        isFalse,
+        isTrue,
       );
-      // Playlist sits in root and references discs by their hidden path, in the
+      expect(
+        File(p.join(dir.path, 'Alone in the Dark (Disc 2).chd')).existsSync(),
+        isTrue,
+      );
+      // No .hidden subfolder is created.
+      expect(Directory(p.join(dir.path, '.hidden')).existsSync(), isFalse);
+      // Playlist sits in root and references discs by bare basename, in the
       // bundled order.
       final playlist =
           File(p.join(dir.path, 'Alone in the Dark.m3u')).readAsLinesSync();
       expect(playlist, [
-        '.hidden/Alone in the Dark (Disc 1).chd',
-        '.hidden/Alone in the Dark (Disc 2).chd',
+        'Alone in the Dark (Disc 1).chd',
+        'Alone in the Dark (Disc 2).chd',
       ]);
     });
 
@@ -85,7 +80,7 @@ void main() {
       await RommProvider.extractMultiDiscZip(zipPath, dir.path, 'g');
 
       final playlist = File(p.join(dir.path, 'g.m3u')).readAsLinesSync();
-      expect(playlist, ['.hidden/g (Disc 2).chd', '.hidden/g (Disc 1).chd']);
+      expect(playlist, ['g (Disc 2).chd', 'g (Disc 1).chd']);
     });
 
     test('synthesises a playlist in name order when the zip has no m3u',
@@ -104,7 +99,7 @@ void main() {
 
       expect(m3uName, 'Game.m3u');
       final playlist = File(p.join(dir.path, 'Game.m3u')).readAsLinesSync();
-      expect(playlist, ['.hidden/Game (Disc 1).chd', '.hidden/Game (Disc 2).chd']);
+      expect(playlist, ['Game (Disc 1).chd', 'Game (Disc 2).chd']);
     });
 
     test('returns null and leaves the zip when it holds only an m3u', () async {

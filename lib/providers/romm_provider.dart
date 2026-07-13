@@ -717,10 +717,10 @@ class RommProvider extends ChangeNotifier {
   }
 
   /// Unpacks a downloaded multi-disc zip ([zipPath]) into NeoStation's native
-  /// multi-disc layout under [destDir]: the `.m3u` playlist sits in the ROM
-  /// folder root (so the library scan indexes a single entry that launches with
-  /// disc-switching) while the disc images move into a `.hidden/` subfolder,
-  /// matching the convention the scan's playlist filter already expects.
+  /// multi-disc layout under [destDir]: the `.m3u` playlist and the disc images
+  /// all sit together in the ROM folder root (so the library scan indexes a
+  /// single entry that launches with disc-switching, while the playlist filter
+  /// hides the referenced disc files by basename).
   ///
   /// Disc content is streamed entry-by-entry straight to disk, so a multi-GB
   /// archive never lands wholly in memory. When RomM bundles its own `.m3u` its
@@ -756,13 +756,10 @@ class RommProvider extends ChangeNotifier {
       }
       if (discEntries.isEmpty) return null;
 
-      final hiddenDir = Directory(p.join(destDir, '.hidden'));
-      await hiddenDir.create(recursive: true);
-
       final extractedDiscs = <String>[];
       for (final f in discEntries) {
         final base = p.basename(f.name);
-        final out = OutputFileStream(p.join(hiddenDir.path, base));
+        final out = OutputFileStream(p.join(destDir, base));
         f.writeContent(out);
         out.closeSync();
         extractedDiscs.add(base);
@@ -789,9 +786,10 @@ class RommProvider extends ChangeNotifier {
         ordered = extractedDiscs..sort();
       }
 
-      // Reference discs by their hidden-subfolder path so the scan's basename
-      // filter hides them and only the .m3u surfaces as a game entry.
-      final playlist = ordered.map((b) => '.hidden/$b').join('\n');
+      // Reference discs by bare basename: they sit alongside the .m3u in the
+      // ROM folder, and the scan's basename filter hides them so only the .m3u
+      // surfaces as a game entry.
+      final playlist = ordered.join('\n');
       await File(
         p.join(destDir, m3uName),
       ).writeAsString('$playlist\n', flush: true);
