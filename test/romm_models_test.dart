@@ -268,6 +268,47 @@ void main() {
       expect(a.slot, 3);
     });
 
+    test('parses an offset-less (naive) timestamp as UTC, not device-local', () {
+      // RomM (SQLAlchemy) emits naive UTC timestamps with no zone designator.
+      // These must be read as UTC so cross-device newer/older comparisons don't
+      // skew by the device's UTC offset and silently drop a newer remote save.
+      final a = RommAsset.fromJson({
+        'id': 1,
+        'file_name': 'g.srm',
+        'updated_at': '2026-07-13T10:00:00.123456',
+      }, isState: false);
+      expect(a.updatedAt!.isUtc, isTrue);
+      expect(
+        a.updatedAtMs,
+        DateTime.utc(2026, 7, 13, 10, 0, 0, 123, 456).millisecondsSinceEpoch,
+      );
+    });
+
+    test('honours an explicit UTC (Z) offset', () {
+      final a = RommAsset.fromJson({
+        'id': 1,
+        'file_name': 'g.srm',
+        'updated_at': '2026-07-13T10:00:00.000Z',
+      }, isState: false);
+      expect(
+        a.updatedAtMs,
+        DateTime.utc(2026, 7, 13, 10, 0, 0).millisecondsSinceEpoch,
+      );
+    });
+
+    test('honours an explicit non-UTC offset', () {
+      // +02:00 means the instant is 08:00Z.
+      final a = RommAsset.fromJson({
+        'id': 1,
+        'file_name': 'g.srm',
+        'updated_at': '2026-07-13T10:00:00+02:00',
+      }, isState: false);
+      expect(
+        a.updatedAtMs,
+        DateTime.utc(2026, 7, 13, 8, 0, 0).millisecondsSinceEpoch,
+      );
+    });
+
     test('defaults and null-safe parsing for sparse payloads', () {
       final a = RommAsset.fromJson({}, isState: false);
       expect(a.id, 0);

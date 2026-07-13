@@ -212,5 +212,35 @@ void main() {
       expect(rows, hasLength(1));
       expect(await RommSaveMapRepository.getRommRomId('game.bin', 'snes'), 2);
     });
+
+    test('getIndexedNameForRomId returns null when the rom id is unmapped',
+        () async {
+      expect(
+        await RommSaveMapRepository.getIndexedNameForRomId(42, 'psx'),
+        isNull,
+      );
+    });
+
+    test(
+        'getIndexedNameForRomId recovers the recorded on-disk name by rom id '
+        '(bundled multi-disc playlist detection)', () async {
+      // A bundled-playlist multi-disc download records its arbitrary .m3u
+      // basename as the indexed romname; detection reverse-looks it up by id.
+      await RommSaveMapRepository.putMapping(
+        romname: 'Final Fantasy VII (Disc set).m3u',
+        systemFolder: 'psx',
+        rommRomId: 7,
+        fsName: 'Final Fantasy VII (Disc set).m3u',
+      );
+      expect(
+        await RommSaveMapRepository.getIndexedNameForRomId(7, 'psx'),
+        'Final Fantasy VII (Disc set).m3u',
+      );
+      // Scoped by system folder: a different folder must not match.
+      expect(
+        await RommSaveMapRepository.getIndexedNameForRomId(7, 'snes'),
+        isNull,
+      );
+    });
   });
 }

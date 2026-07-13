@@ -16,6 +16,7 @@ import '../repositories/scraper_repository.dart';
 import '../repositories/system_repository.dart';
 import '../services/logger_service.dart';
 import '../services/romm_service.dart';
+import '../services/user_data_location_service.dart';
 import 'file_provider.dart';
 
 /// High-level connection state for the RomM integration.
@@ -101,6 +102,14 @@ class RommProvider extends ChangeNotifier {
   /// Systems that received at least one successful download this session, keyed
   /// by folder name. Used to refresh the library when the browse screen closes.
   final Map<String, SystemModel> _downloadedSystems = {};
+
+  /// Cache of RomM platform id → resolved local [SystemModel] (null = no match).
+  /// Every browse-grid tile resolves its system to render the download badge;
+  /// without this, each tile ran up to ~5 sequential SystemRepository queries,
+  /// re-run on every GridView recycle — hundreds of redundant SQLite reads that
+  /// janked scrolling. All ROMs on a platform resolve identically, so one lookup
+  /// per platform suffices. Cleared on [disconnect].
+  final Map<int, SystemModel?> _systemByPlatformId = {};
 
   // ── Getters ────────────────────────────────────────────────────────────────
   RommConnectionStatus get status => _status;
@@ -226,6 +235,9 @@ class RommProvider extends ChangeNotifier {
         refreshToken: config['refresh_token'] as String?,
         tokenExpiresMs: config['token_expires'] as int?,
       );
+      // These tokens came straight from the DB; mark them as persisted so the
+      // first browse call doesn't re-write an identical row.
+      _lastPersistedAccessToken = config['access_token'] as String?;
       _status = RommConnectionStatus.connected;
       notifyListeners();
     } catch (e) {
@@ -294,6 +306,7 @@ class RommProvider extends ChangeNotifier {
       refreshToken: _service.refreshToken,
       tokenExpires: _service.tokenExpiresMs,
     );
+    _lastPersistedAccessToken = _service.accessToken;
 
     _serverUrl = _service.baseUrl;
     _username = username;
@@ -320,6 +333,8 @@ class RommProvider extends ChangeNotifier {
     _downloads.clear();
     _raEarnedByGameId = {};
     _downloadedSystems.clear();
+    _systemByPlatformId.clear();
+    _lastPersistedAccessToken = null;
     notifyListeners();
   }
 
@@ -337,7 +352,9 @@ class RommProvider extends ChangeNotifier {
       // Persist any refreshed token so it survives restarts.
       await _persistRefreshedTokens();
       // RA progress is supplementary; never let it block platform browsing.
-      await _loadRaProgression();
+      // Fetch it in the background and repaint (achievement badges) when it
+      // lands, rather than awaiting a second /api/users/me round-trip here.
+      unawaited(_loadRaProgression().then((_) => notifyListeners()));
     } on RommException catch (e) {
       _lastError = e.message;
     } catch (e) {
@@ -468,7 +485,19 @@ class RommProvider extends ChangeNotifier {
   // ── System mapping / destination ────────────────────────────────────────────
 
   /// Resolves the local [SystemModel] for a RomM ROM, or null if none matches.
+  ///
+  /// Memoized per platform id (see [_systemByPlatformId]) so the browse grid
+  /// resolves each platform once instead of per tile.
   Future<SystemModel?> resolveSystem(RommRom rom) async {
+    if (_systemByPlatformId.containsKey(rom.platformId)) {
+      return _systemByPlatformId[rom.platformId];
+    }
+    final resolved = await _resolveSystemUncached(rom);
+    _systemByPlatformId[rom.platformId] = resolved;
+    return resolved;
+  }
+
+  Future<SystemModel?> _resolveSystemUncached(RommRom rom) async {
     final candidates = <String>[
       rom.platformSlug,
       _slugAliases[rom.platformSlug] ?? '',
@@ -498,27 +527,13 @@ class RommProvider extends ChangeNotifier {
   /// Resolves a configured ROM folder to a real filesystem base path.
   ///
   /// Plain paths are returned as-is. Android's folder picker stores folders as
-  /// SAF `content://` tree URIs even for real directories; for the standard
-  /// external-storage provider these map deterministically onto `/storage/...`,
-  /// so we can read/write them directly when the app holds broad storage
-  /// access (All Files Access). Returns null for URIs we can't map.
+  /// SAF `content://` tree URIs even for real directories; the shared
+  /// [UserDataLocationService.safUriToRealPath] maps those onto `/storage/...`
+  /// (primary + removable volumes) so we can read/write them directly when the
+  /// app holds broad storage access. Returns null for URIs it can't map.
   String? _folderToRealBase(String folder) {
     if (!folder.startsWith('content://')) return folder;
-    const prefix = 'content://com.android.externalstorage.documents/tree/';
-    if (!folder.startsWith(prefix)) return null;
-    var docPart = folder.substring(prefix.length);
-    // A picker URI may carry a `/document/<id>` suffix; the tree id is enough.
-    final docIdx = docPart.indexOf('/document/');
-    if (docIdx >= 0) docPart = docPart.substring(0, docIdx);
-    final decoded = Uri.decodeComponent(docPart); // e.g. "primary:emu/roms"
-    final colon = decoded.indexOf(':');
-    if (colon < 0) return null;
-    final volume = decoded.substring(0, colon);
-    final relative = decoded.substring(colon + 1);
-    final root = volume == 'primary'
-        ? '/storage/emulated/0'
-        : '/storage/$volume';
-    return relative.isEmpty ? root : '$root/$relative';
+    return UserDataLocationService.safUriToRealPath(folder);
   }
 
   /// Picks a writable destination directory `<romFolder>/<system>` for [system].
@@ -572,12 +587,24 @@ class RommProvider extends ChangeNotifier {
     RommRom rom,
     List<String> romFolders,
   ) async {
+    final candidates = _existingRomNames(rom);
+    // A bundled multi-disc playlist keeps its own arbitrary basename, which the
+    // name heuristics above can't reconstruct. If this ROM was downloaded here
+    // before, the map recorded the exact on-disk indexed name (the .m3u) — use
+    // it so the game is recognised as downloaded instead of re-fetched.
+    final recorded = await RommSaveMapRepository.getIndexedNameForRomId(
+      rom.id,
+      system.folderName,
+    );
+    if (recorded != null && !candidates.contains(recorded)) {
+      candidates.add(recorded);
+    }
     for (final folder in romFolders) {
       final base = _folderToRealBase(folder);
       if (base == null) continue;
       for (final name in _systemFolderNames(system)) {
         final dir = p.join(base, name);
-        for (final candidate in _existingRomNames(rom)) {
+        for (final candidate in candidates) {
           if (await File(p.join(dir, candidate)).exists()) return dir;
         }
       }
@@ -679,15 +706,17 @@ class RommProvider extends ChangeNotifier {
         shouldCancel: () => tracker.cancelRequested,
       );
       await _persistRefreshedTokens();
+    } on RommCancelledException {
+      // User-cancelled: a distinct type (not a message-string match) keeps this
+      // from being reported as a network failure if the message ever changes.
+      tracker.status = RommDownloadStatus.cancelled;
+      notifyListeners();
+      return tracker;
     } on RommException catch (e) {
-      tracker.status = e.message == 'Download cancelled'
-          ? RommDownloadStatus.cancelled
-          : RommDownloadStatus.failed;
-      if (tracker.status == RommDownloadStatus.failed) {
-        tracker
-          ..error = RommDownloadError.network
-          ..errorDetail = e.message;
-      }
+      tracker
+        ..status = RommDownloadStatus.failed
+        ..error = RommDownloadError.network
+        ..errorDetail = e.message;
       notifyListeners();
       return tracker;
     } catch (e) {
@@ -967,14 +996,23 @@ class RommProvider extends ChangeNotifier {
 
   // ── Internal ────────────────────────────────────────────────────────────────
 
-  /// Persists tokens after a call that may have transparently refreshed them.
+  /// Last access token written to the DB, so repeated page loads that didn't
+  /// refresh the token don't fire a redundant SQLite UPDATE each time.
+  String? _lastPersistedAccessToken;
+
+  /// Persists tokens after a call that may have transparently refreshed them —
+  /// but only when the access token actually changed. Browsing calls this after
+  /// every platform/collection/ROM page and every download; without the guard
+  /// each 50-ROM page cost a needless UPDATE on the hot path.
   Future<void> _persistRefreshedTokens() async {
-    if (_service.accessToken == null) return;
+    final token = _service.accessToken;
+    if (token == null || token == _lastPersistedAccessToken) return;
     await RommRepository.saveTokens(
-      accessToken: _service.accessToken!,
+      accessToken: token,
       refreshToken: _service.refreshToken,
       tokenExpires: _service.tokenExpiresMs,
     );
+    _lastPersistedAccessToken = token;
   }
 
   /// Best-effort fetch of the user's RetroAchievements progress. Failures are

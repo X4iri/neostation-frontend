@@ -1223,9 +1223,6 @@ class SqliteService {
     // FIX: Ensure user_screenscraper_config columns are up to date (v29).
     await _ensureScreenScraperConfigColumns(db);
 
-    // FIX: Ensure user_romm_config exists even if migrations were skipped (v91).
-    await _ensureRommConfigTable(db);
-
     // FIX: Resolve inconsistencies in default emulator assignments.
     if (tableNames.contains('app_systems') &&
         tableNames.contains('app_emulators')) {
@@ -1278,25 +1275,11 @@ class SqliteService {
     await db.execute(SqliteMigrations.createAppNeoSyncStateTableSql);
     await db.execute(SqliteMigrations.createAppNeoSyncStateIndexSql);
 
-    // FIX: Ensure app_romm_rom_map exists (RomM save-sync mapping, v98).
-    await db.execute(SqliteMigrations.createAppRommRomMapTableSql);
-    await db.execute(SqliteMigrations.createAppRommRomMapIndexSql);
-  }
-
-  /// Ensures the singleton user_romm_config table exists (RomM library
-  /// browse/download credentials). Safe on fresh installs via IF NOT EXISTS.
-  Future<void> _ensureRommConfigTable(DatabaseAdapter db) async {
-    try {
-      await db.execute(SqliteMigrations.createUserRommConfigTableSql);
-    } catch (e, st) {
-      // Not minor: without this table every RommRepository call throws
-      // 'no such table: user_romm_config', breaking the entire RomM feature.
-      _log.e(
-        'Failed to ensure user_romm_config table',
-        error: e,
-        stackTrace: st,
-      );
-    }
+    // RomM tables (user_romm_config v97, app_romm_rom_map v98) are created by
+    // their versioned migrations and the fresh-install table list — the only
+    // two sources, per the maintainer's versioned-migrations-only policy. No
+    // on-launch CREATE safety net here: it would only mask a failed migration
+    // as a later runtime "no such table" error instead of surfacing it.
   }
 
   /// Ensures the unique_identifier column exists in app_emulators.

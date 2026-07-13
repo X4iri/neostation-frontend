@@ -23,6 +23,14 @@ class RommException implements Exception {
   String toString() => 'RommException($statusCode): $message';
 }
 
+/// Raised when a download is aborted because the caller's `shouldCancel`
+/// callback returned true. A distinct type (rather than matching on the
+/// message string) lets callers reliably tell a user-cancelled download apart
+/// from a genuine failure, even if the message is later reworded/localized.
+class RommCancelledException extends RommException {
+  RommCancelledException([super.message = 'Download cancelled']);
+}
+
 /// HTTP client for a remote RomM server (library browse + ROM download).
 ///
 /// Holds the server base URL and JWT tokens for one connection and transparently
@@ -235,34 +243,62 @@ class RommService {
   /// and credentials are valid (used by the settings "Test" button).
   Future<void> verifyConnection() async {
     await authenticate();
-    // A successful, authorized call confirms the token works end-to-end.
-    await getPlatforms();
+    // A successful, authorized call confirms the token works end-to-end. Hit
+    // the lightweight `/api/users/me` rather than downloading the full platform
+    // list — same auth guarantee, a fraction of the payload. Error mapping is
+    // unchanged: authenticate() surfaces bad credentials as 401/403, and any
+    // other failure surfaces as the shared "Request failed"/network message.
+    await _authedGet('/api/users/me');
   }
 
   // ── Read endpoints ───────────────────────────────────────────────────────
 
-  /// Issues an authenticated GET, refreshing the token once on a 401.
-  Future<http.Response> _authedGet(String pathAndQuery) async {
+  /// Sends an authenticated request via [send] and retries it once on an auth
+  /// failure: `401` → refresh the access token, `403` → full re-authenticate
+  /// (covers a cached token minted before the current scope set). [send] must
+  /// build a *fresh* request each call so the retry picks up the new token.
+  ///
+  /// Works for both [http.Response] and [http.StreamedResponse] via [statusOf];
+  /// this is the single retry policy shared by every authenticated call site
+  /// (plain GETs, asset GETs, uploads and ROM downloads).
+  Future<T> _sendWithAuthRetry<T>(
+    Future<T> Function() send, {
+    required int Function(T resp) statusOf,
+  }) async {
     await _ensureToken();
-    http.Response resp;
+    T resp;
     try {
-      resp = await _httpClient
-          .get(_uri(pathAndQuery), headers: _authHeaders)
-          .timeout(const Duration(seconds: 30));
+      resp = await send();
     } on TimeoutException {
       throw RommException('Request timed out');
     } on SocketException catch (e) {
       throw RommException('Cannot reach server: ${e.message}');
     }
-
-    if (resp.statusCode == 401) {
-      // Token may have been revoked/expired server-side: refresh and retry once.
+    if (statusOf(resp) == 401) {
       await _refreshAccessToken();
-      resp = await _httpClient
-          .get(_uri(pathAndQuery), headers: _authHeaders)
-          .timeout(const Duration(seconds: 30));
+      resp = await send();
+    } else if (statusOf(resp) == 403) {
+      await authenticate();
+      resp = await send();
     }
+    return resp;
+  }
 
+  /// Issues an authenticated GET for a server-relative path+query, applying the
+  /// shared [_sendWithAuthRetry] policy and throwing on any non-200.
+  Future<http.Response> _authedGet(String pathAndQuery) =>
+      _authedGetUri(_uri(pathAndQuery));
+
+  /// Like [_authedGet] but for a fully-built [uri] (used where query parameters
+  /// are assembled via [Uri] or the asset path needs bespoke encoding).
+  Future<http.Response> _authedGetUri(
+    Uri uri, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final resp = await _sendWithAuthRetry<http.Response>(
+      () => _httpClient.get(uri, headers: _authHeaders).timeout(timeout),
+      statusOf: (r) => r.statusCode,
+    );
     if (resp.statusCode != 200) {
       throw RommException(
         'Request failed (${resp.statusCode})',
@@ -270,6 +306,17 @@ class RommService {
       );
     }
     return resp;
+  }
+
+  /// Extracts the item list from a RomM list response, tolerating both a bare
+  /// JSON array and a paginated `{items: [...]}` envelope. Any other shape
+  /// (including `{}`) yields an empty list.
+  static List<dynamic> _itemsOf(dynamic decoded) {
+    if (decoded is List) return decoded;
+    if (decoded is Map && decoded['items'] is List) {
+      return decoded['items'] as List;
+    }
+    return const [];
   }
 
   /// Returns all platforms (consoles/systems) on the server.
@@ -338,16 +385,7 @@ class RommService {
     String body, {
     required bool isVirtual,
   }) {
-    final decoded = jsonDecode(body);
-    final List items;
-    if (decoded is List) {
-      items = decoded;
-    } else if (decoded is Map && decoded['items'] is List) {
-      items = decoded['items'] as List;
-    } else {
-      items = const [];
-    }
-    return items
+    return _itemsOf(jsonDecode(body))
         .whereType<Map<String, dynamic>>()
         .map((j) => RommCollection.fromJson(j, isVirtual: isVirtual))
         .toList();
@@ -383,24 +421,11 @@ class RommService {
     if (search != null && search.trim().isNotEmpty) {
       params['search_term'] = search.trim();
     }
-    final query = params.entries
-        .map(
-          (e) =>
-              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
-        )
-        .join('&');
-    final resp = await _authedGet('/api/roms?$query');
-    final decoded = jsonDecode(resp.body);
+    final resp = await _authedGetUri(
+      Uri.parse('$_baseUrl/api/roms').replace(queryParameters: params),
+    );
     // RomM may return either a bare list or a paginated `{items: [...]}` object.
-    final List items;
-    if (decoded is List) {
-      items = decoded;
-    } else if (decoded is Map && decoded['items'] is List) {
-      items = decoded['items'] as List;
-    } else {
-      items = const [];
-    }
-    return items
+    return _itemsOf(jsonDecode(resp.body))
         .whereType<Map<String, dynamic>>()
         .map(RommRom.fromJson)
         .toList();
@@ -577,8 +602,6 @@ class RommService {
     void Function(int received, int? total)? onProgress,
     bool Function()? shouldCancel,
   }) async {
-    await _ensureToken();
-
     final fileName = rom.fsName.isNotEmpty ? rom.fsName : '${rom.id}';
     final endpoint =
         '/api/roms/${rom.id}/content/${Uri.encodeComponent(fileName)}';
@@ -590,28 +613,14 @@ class RommService {
     }
     await Directory(path.dirname(destFilePath)).create(recursive: true);
 
-    final request = http.Request('GET', _uri(endpoint));
-    request.headers.addAll(_authHeaders);
-
-    http.StreamedResponse resp;
-    try {
-      resp = await _httpClient.send(request);
-    } on SocketException catch (e) {
-      throw RommException('Cannot reach server: ${e.message}');
-    }
-
-    // 401 → token expired (refresh); 403 → stale-scope token minted before
-    // the current scope set (full re-auth), mirroring _authedGetWithScopeRetry.
-    if (resp.statusCode == 401 || resp.statusCode == 403) {
-      if (resp.statusCode == 403) {
-        await authenticate();
-      } else {
-        await _refreshAccessToken();
-      }
-      final retry = http.Request('GET', _uri(endpoint))
-        ..headers.addAll(_authHeaders);
-      resp = await _httpClient.send(retry);
-    }
+    // Build a fresh request each attempt so the shared retry policy (401 →
+    // refresh, 403 → re-auth) picks up the new token on its second try.
+    final resp = await _sendWithAuthRetry<http.StreamedResponse>(
+      () => _httpClient.send(
+        http.Request('GET', _uri(endpoint))..headers.addAll(_authHeaders),
+      ),
+      statusOf: (r) => r.statusCode,
+    );
 
     if (resp.statusCode != 200) {
       throw RommException(
@@ -628,7 +637,7 @@ class RommService {
         if (shouldCancel?.call() ?? false) {
           await sink.close();
           await tmpFile.delete();
-          throw RommException('Download cancelled');
+          throw RommCancelledException();
         }
         sink.add(chunk);
         received += chunk.length;
@@ -671,17 +680,8 @@ class RommService {
     required int romId,
     required bool isState,
   }) async {
-    final resp = await _authedGetWithScopeRetry('$basePath?rom_id=$romId');
-    final decoded = jsonDecode(resp.body);
-    final List items;
-    if (decoded is List) {
-      items = decoded;
-    } else if (decoded is Map && decoded['items'] is List) {
-      items = decoded['items'] as List;
-    } else {
-      items = const [];
-    }
-    return items
+    final resp = await _authedGet('$basePath?rom_id=$romId');
+    return _itemsOf(jsonDecode(resp.body))
         .whereType<Map<String, dynamic>>()
         .map((j) => RommAsset.fromJson(j, isState: isState))
         .toList();
@@ -692,7 +692,7 @@ class RommService {
   /// which only has the asset id. For per-game sync prefer [downloadAssetByPath]
   /// (works for states too).
   Future<Uint8List> downloadSaveContent(int assetId) async {
-    final resp = await _authedGetWithScopeRetry('/api/saves/$assetId/content');
+    final resp = await _authedGet('/api/saves/$assetId/content');
     return resp.bodyBytes;
   }
 
@@ -701,34 +701,12 @@ class RommService {
   /// canonical route for BOTH saves and states — states have no `/content`
   /// endpoint.
   Future<Uint8List> downloadAssetByPath(String downloadPath) async {
-    await _ensureToken();
-    final uri = _assetUri(downloadPath);
-
-    Future<http.Response> get() => _httpClient
-        .get(uri, headers: _authHeaders)
-        .timeout(const Duration(seconds: 60));
-
-    http.Response resp;
-    try {
-      resp = await get();
-    } on TimeoutException {
-      throw RommException('Request timed out');
-    } on SocketException catch (e) {
-      throw RommException('Cannot reach server: ${e.message}');
-    }
-    if (resp.statusCode == 401) {
-      await _refreshAccessToken();
-      resp = await get();
-    } else if (resp.statusCode == 403) {
-      await authenticate();
-      resp = await get();
-    }
-    if (resp.statusCode != 200) {
-      throw RommException(
-        'Request failed (${resp.statusCode})',
-        statusCode: resp.statusCode,
-      );
-    }
+    // Asset content can be large, so allow a longer per-attempt timeout than a
+    // plain metadata GET.
+    final resp = await _authedGetUri(
+      _assetUri(downloadPath),
+      timeout: const Duration(seconds: 60),
+    );
     return resp.bodyBytes;
   }
 
@@ -825,8 +803,6 @@ class RommService {
     required bool overwrite,
     required bool isState,
   }) async {
-    await _ensureToken();
-
     final params = <String, String>{
       'rom_id': '$romId',
       'overwrite': '$overwrite',
@@ -834,16 +810,12 @@ class RommService {
     if (emulator != null && emulator.isNotEmpty) params['emulator'] = emulator;
     if (slot != null) params['slot'] = '$slot';
     if (deviceId != null && deviceId.isNotEmpty) params['device_id'] = deviceId;
-    final query = params.entries
-        .map(
-          (e) =>
-              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
-        )
-        .join('&');
-    final endpoint = '$basePath?$query';
+    final uri = Uri.parse(
+      '$_baseUrl$basePath',
+    ).replace(queryParameters: params);
 
     Future<http.StreamedResponse> send() async {
-      final req = http.MultipartRequest('POST', _uri(endpoint))
+      final req = http.MultipartRequest('POST', uri)
         ..headers.addAll(_authHeaders)
         ..files.add(
           await http.MultipartFile.fromPath(
@@ -855,20 +827,12 @@ class RommService {
       return _httpClient.send(req);
     }
 
-    http.StreamedResponse resp;
-    try {
-      resp = await send();
-    } on SocketException catch (e) {
-      throw RommException('Cannot reach server: ${e.message}');
-    }
-    if (resp.statusCode == 401) {
-      await _refreshAccessToken();
-      resp = await send();
-    } else if (resp.statusCode == 403) {
-      // Cached token may predate the assets.write scope: re-auth and retry once.
-      await authenticate();
-      resp = await send();
-    }
+    // Shared retry policy: 401 → refresh, 403 → re-auth (cached token may
+    // predate the assets.write scope).
+    final resp = await _sendWithAuthRetry<http.StreamedResponse>(
+      send,
+      statusOf: (r) => r.statusCode,
+    );
 
     final body = await resp.stream.bytesToString();
     if (resp.statusCode != 200 && resp.statusCode != 201) {
@@ -882,40 +846,5 @@ class RommService {
       decoded as Map<String, dynamic>,
       isState: isState,
     );
-  }
-
-  /// Like [_authedGet] but also retries once on a 403 by re-authenticating —
-  /// existing users may hold a cached token minted before the `assets.write`
-  /// scope was requested.
-  Future<http.Response> _authedGetWithScopeRetry(String pathAndQuery) async {
-    await _ensureToken();
-    Future<http.Response> get() => _httpClient
-        .get(_uri(pathAndQuery), headers: _authHeaders)
-        .timeout(const Duration(seconds: 30));
-
-    http.Response resp;
-    try {
-      resp = await get();
-    } on TimeoutException {
-      throw RommException('Request timed out');
-    } on SocketException catch (e) {
-      throw RommException('Cannot reach server: ${e.message}');
-    }
-
-    if (resp.statusCode == 401) {
-      await _refreshAccessToken();
-      resp = await get();
-    } else if (resp.statusCode == 403) {
-      await authenticate();
-      resp = await get();
-    }
-
-    if (resp.statusCode != 200) {
-      throw RommException(
-        'Request failed (${resp.statusCode})',
-        statusCode: resp.statusCode,
-      );
-    }
-    return resp;
   }
 }

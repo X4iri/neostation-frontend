@@ -58,10 +58,6 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
   // Column count of the ROM grid, recomputed each layout so GridNavUtils math
   // matches what's actually on screen.
   int _romColumns = 1;
-  // Per-item keys so the selected tile can be scrolled into view.
-  final Map<int, GlobalKey> _platformKeys = {};
-  final Map<int, GlobalKey> _collectionKeys = {};
-  final Map<int, GlobalKey> _romKeys = {};
 
   // The platform list is rebuilt from scratch each time we drill out of a
   // platform, so its scroll offset is restored explicitly via this controller.
@@ -476,25 +472,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     final isCollections = target == _BrowseView.collections;
     return Container(
       margin: EdgeInsets.symmetric(vertical: 4.r),
-      decoration: BoxDecoration(
-        color: isFocused
-            ? scheme.primary.withValues(alpha: 0.18)
-            : scheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isFocused ? scheme.primary : Colors.transparent,
-          width: 2.r,
-        ),
-        boxShadow: isFocused
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.3),
-                  blurRadius: 8.r,
-                  spreadRadius: 1.r,
-                ),
-              ]
-            : null,
-      ),
+      decoration: _rommFocusDecoration(scheme, isFocused),
       child: ListTile(
         leading: Icon(
           isCollections
@@ -548,27 +526,8 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         final collection = provider.collections[index];
         final isFocused = _collectionIndex == index;
         return Container(
-          key: _collectionKeys.putIfAbsent(index, GlobalKey.new),
           margin: EdgeInsets.symmetric(vertical: 4.r),
-          decoration: BoxDecoration(
-            color: isFocused
-                ? scheme.primary.withValues(alpha: 0.18)
-                : scheme.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: isFocused ? scheme.primary : Colors.transparent,
-              width: 2.r,
-            ),
-            boxShadow: isFocused
-                ? [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.3),
-                      blurRadius: 8.r,
-                      spreadRadius: 1.r,
-                    ),
-                  ]
-                : null,
-          ),
+          decoration: _rommFocusDecoration(scheme, isFocused),
           child: ListTile(
             leading: Container(
               width: 40.r,
@@ -664,27 +623,8 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
         final platform = provider.platforms[index];
         final isFocused = _platformIndex == index;
         return Container(
-          key: _platformKeys.putIfAbsent(index, GlobalKey.new),
           margin: EdgeInsets.symmetric(vertical: 4.r),
-          decoration: BoxDecoration(
-            color: isFocused
-                ? scheme.primary.withValues(alpha: 0.18)
-                : scheme.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: isFocused ? scheme.primary : Colors.transparent,
-              width: 2.r,
-            ),
-            boxShadow: isFocused
-                ? [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.3),
-                      blurRadius: 8.r,
-                      spreadRadius: 1.r,
-                    ),
-                  ]
-                : null,
-          ),
+          decoration: _rommFocusDecoration(scheme, isFocused),
           child: ListTile(
             leading: _PlatformIcon(
               platform: platform,
@@ -819,7 +759,6 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
             itemBuilder: (context, index) {
               final rom = provider.roms[index];
               return _RomCard(
-                key: _romKeys.putIfAbsent(index, GlobalKey.new),
                 rom: rom,
                 provider: provider,
                 romFolders: romFolders,
@@ -847,7 +786,6 @@ class _RomCard extends StatefulWidget {
   final VoidCallback onTap;
 
   const _RomCard({
-    super.key,
     required this.rom,
     required this.provider,
     required this.romFolders,
@@ -894,21 +832,13 @@ class _RomCardState extends State<_RomCard> {
         children: [
           Expanded(
             child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(
-                  color: widget.isFocused ? scheme.primary : Colors.transparent,
-                  width: 2.r,
-                ),
-                boxShadow: widget.isFocused
-                    ? [
-                        BoxShadow(
-                          color: scheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8.r,
-                          spreadRadius: 1.r,
-                        ),
-                      ]
-                    : null,
+              // No fill: the cover art is the tile's backdrop; a smaller radius
+              // matches the artwork's rounded corners.
+              decoration: _rommFocusDecoration(
+                scheme,
+                widget.isFocused,
+                radius: 8,
+                fill: false,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6.r),
@@ -1225,4 +1155,39 @@ class _PlatformIconState extends State<_PlatformIcon> {
   Widget _frame(Widget child) {
     return SizedBox(width: 40.r, height: 40.r, child: child);
   }
+}
+
+/// Shared focus/selection decoration for RomM browse tiles: a subtle primary
+/// fill (list tiles), a primary border, and a soft primary glow when focused.
+///
+/// [radius] and [fill] are the only per-tile variations: image tiles (ROM
+/// cards) pass `fill: false` so the cover art shows through, with a tighter
+/// [radius] to match the artwork's corners.
+BoxDecoration _rommFocusDecoration(
+  ColorScheme scheme,
+  bool isFocused, {
+  double radius = 12,
+  bool fill = true,
+}) {
+  return BoxDecoration(
+    color: fill
+        ? (isFocused
+              ? scheme.primary.withValues(alpha: 0.18)
+              : scheme.surface.withValues(alpha: 0.5))
+        : null,
+    borderRadius: BorderRadius.circular(radius.r),
+    border: Border.all(
+      color: isFocused ? scheme.primary : Colors.transparent,
+      width: 2.r,
+    ),
+    boxShadow: isFocused
+        ? [
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.3),
+              blurRadius: 8.r,
+              spreadRadius: 1.r,
+            ),
+          ]
+        : null,
+  );
 }

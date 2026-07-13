@@ -31,6 +31,34 @@ class RommSaveMapRepository {
     }
   }
 
+  /// Returns the on-disk indexed name (`romname`) recorded for [rommRomId]
+  /// within [systemFolder], or null if that ROM hasn't been downloaded here.
+  ///
+  /// Used to recognise an already-downloaded multi-disc game whose bundled
+  /// playlist kept an unpredictable basename we can't reconstruct from the
+  /// ROM's fsName — the recorded name is the authoritative on-disk `.m3u`.
+  static Future<String?> getIndexedNameForRomId(
+    int rommRomId,
+    String systemFolder,
+  ) async {
+    try {
+      final db = await SqliteService.getDatabase();
+      final rows = await db.query(
+        'app_romm_rom_map',
+        columns: ['romname'],
+        where: 'romm_rom_id = ? AND system_folder = ?',
+        whereArgs: [rommRomId, systemFolder],
+        limit: 1,
+      );
+      if (rows.isEmpty) return null;
+      final name = rows.first['romname']?.toString();
+      return (name == null || name.isEmpty) ? null : name;
+    } catch (e) {
+      _log.e('Error reading RomM rom map for id $rommRomId: $e');
+      return null;
+    }
+  }
+
   /// Returns the RomM ROM id for a local game, or null if not mapped.
   static Future<int?> getRommRomId(String romname, String systemFolder) async {
     try {
