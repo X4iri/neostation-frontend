@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 99;
+  static const int _databaseVersion = 100;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -1270,12 +1270,12 @@ class SqliteService {
     }
 
     // FIX: Ensure app_neo_sync_state exists (legacy support for v58). New
-    // installs get the provider-scoped schema (v99); pre-existing tables are
-    // upgraded by migration v99, so IF NOT EXISTS here never masks that.
+    // installs get the provider-scoped schema (v100); pre-existing tables are
+    // upgraded by migration v100, so IF NOT EXISTS here never masks that.
     await db.execute(SqliteMigrations.createAppNeoSyncStateTableSql);
     await db.execute(SqliteMigrations.createAppNeoSyncStateIndexSql);
 
-    // RomM tables (user_romm_config v97, app_romm_rom_map v98) are created by
+    // RomM tables (user_romm_config v98, app_romm_rom_map v99) are created by
     // their versioned migrations and the fresh-install table list — the only
     // two sources, per the maintainer's versioned-migrations-only policy. No
     // on-launch CREATE safety net here: it would only mask a failed migration

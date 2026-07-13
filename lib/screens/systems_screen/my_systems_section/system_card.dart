@@ -27,6 +27,7 @@ class SystemCard extends StatefulWidget {
     required this.info,
     this.onTap,
     this.isSelected = false,
+    this.footerLogoHeight,
   });
 
   /// The system or game metadata resolved for this card.
@@ -37,6 +38,11 @@ class SystemCard extends StatefulWidget {
 
   /// Whether this card currently has visual focus in the grid.
   final bool isSelected;
+
+  /// Optional override for the system footer logo height. When null, the grid
+  /// default (30.r) is used. Larger values are useful for big cards such as
+  /// the system carousel.
+  final double? footerLogoHeight;
 
   @override
   State<SystemCard> createState() => _SystemCardState();
@@ -626,13 +632,18 @@ class _SystemCardState extends State<SystemCard> {
               : 'all');
     final assetLogoPath = 'assets/images/logos/$resolvedLogoFolder.webp';
 
+    final logoHeight = widget.footerLogoHeight ?? 30.r;
+    final footerHeight = widget.footerLogoHeight != null
+        ? logoHeight + 4.r
+        : 32.r;
+
     return Container(
-      height: 32.r,
+      height: footerHeight,
       padding: EdgeInsets.only(left: 0.r, right: 0.r, top: 4.r, bottom: 0.r),
       child: Center(
         child: _buildSystemLogo(
           assetLogoPath,
-          height: 30.r,
+          height: logoHeight,
           color: Theme.of(context).colorScheme.onSurface,
         ),
       ),

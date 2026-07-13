@@ -130,6 +130,12 @@ fi
 
 # Build release
 echo "Building Linux release..."
+
+# flutter_soloud bundles precompiled x86_64 ogg/opus/vorbis/flac libs.
+# On ARM64 those are not available, so force linking against the system
+# libraries installed above.
+export TRY_SYSTEM_LIBS_FIRST=1
+
 flutter build linux --release $ENV_ARG
 
 # Get version

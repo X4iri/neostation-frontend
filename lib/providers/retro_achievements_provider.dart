@@ -99,6 +99,11 @@ class RetroAchievementsProvider extends ChangeNotifier {
   bool _userAwardsLoading = false;
   String? _userAwardsError;
 
+  /// Cached filtered/sorted award lists so the dashboard build doesn't redo
+  /// the work on every frame.
+  List<UserAward> _cachedRecentMasteries = [];
+  List<UserAward> _cachedRecentCompletions = [];
+
   List<RetroAchievementRecentUnlockItem> _recentUnlocks = [];
   bool _recentUnlocksLoaded = false;
   bool _recentUnlocksLoading = false;
@@ -155,11 +160,10 @@ class RetroAchievementsProvider extends ChangeNotifier {
   }
 
   /// Recent mastery awards (hardcore) visible to the user.
-  List<UserAward> get recentMasteries => _recentAwardsForMode(hardcore: true);
+  List<UserAward> get recentMasteries => _cachedRecentMasteries;
 
   /// Recent completion awards (casual) visible to the user.
-  List<UserAward> get recentCompletions =>
-      _recentAwardsForMode(hardcore: false);
+  List<UserAward> get recentCompletions => _cachedRecentCompletions;
 
   RetroAchievementsUserAwards? get userAwards => _userAwards;
   bool get userAwardsLoaded => _userAwardsLoaded;
@@ -373,7 +377,13 @@ class RetroAchievementsProvider extends ChangeNotifier {
         apiKey: _apiKey,
       );
       if (awardsData != null) {
-        _userAwards = RetroAchievementsUserAwards.fromJson(awardsData);
+        // Parse the (potentially large) awards payload off the main thread so
+        // the dashboard doesn't jank while building.
+        _userAwards = await compute(
+          _parseRetroAchievementsUserAwards,
+          awardsData,
+        );
+        _updateRecentAwardsCache();
         _userAwardsLoaded = true;
         return true;
       }
@@ -515,6 +525,8 @@ class RetroAchievementsProvider extends ChangeNotifier {
     _userAwardsLoaded = false;
     _userAwardsLoading = false;
     _userAwardsError = null;
+    _cachedRecentMasteries = [];
+    _cachedRecentCompletions = [];
     _recentUnlocks = [];
     _recentUnlocksLoaded = false;
     _recentUnlocksLoading = false;
@@ -792,6 +804,13 @@ class RetroAchievementsProvider extends ChangeNotifier {
     return '$fallback: $error';
   }
 
+  /// Recomputes the filtered/sorted recent masteries/completions caches.
+  /// Should be called whenever [_userAwards] changes.
+  void _updateRecentAwardsCache() {
+    _cachedRecentMasteries = _recentAwardsForMode(hardcore: true);
+    _cachedRecentCompletions = _recentAwardsForMode(hardcore: false);
+  }
+
   List<UserAward> _recentAwardsForMode({required bool hardcore}) {
     final awards = _userAwards?.visibleUserAwards ?? const <UserAward>[];
     final matchingMode = hardcore ? 1 : 0;
@@ -806,4 +825,12 @@ class RetroAchievementsProvider extends ChangeNotifier {
     filtered.sort((a, b) => b.awardedAt.compareTo(a.awardedAt));
     return filtered;
   }
+}
+
+/// Top-level helper for [compute] so the large RA awards payload can be parsed
+/// off the main thread.
+RetroAchievementsUserAwards _parseRetroAchievementsUserAwards(
+  Map<String, dynamic> json,
+) {
+  return RetroAchievementsUserAwards.fromJson(json);
 }

@@ -14,11 +14,11 @@ class SqliteMigrations {
   static final _log = LoggerService.instance;
 
   // ── RomM schema — single source of truth ──────────────────────────────────
-  // Referenced by the versioned migrations (v97/v98), the fresh-install table
+  // Referenced by the versioned migrations (v98/v99/v100), the fresh-install table
   // list, and the on-launch "even if migrations were skipped" safety net, so a
   // future column change is made in exactly one place.
 
-  /// CREATE for the singleton RomM credentials/token table (v97).
+  /// CREATE for the singleton RomM credentials/token table (v98).
   static const String createUserRommConfigTableSql = '''
     CREATE TABLE IF NOT EXISTS user_romm_config (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -33,7 +33,7 @@ class SqliteMigrations {
     );
   ''';
 
-  /// CREATE for the local-game → RomM rom_id save-sync map (v98).
+  /// CREATE for the local-game → RomM rom_id save-sync map (v99).
   static const String createAppRommRomMapTableSql = '''
     CREATE TABLE IF NOT EXISTS app_romm_rom_map (
       romname TEXT NOT NULL,
@@ -45,13 +45,13 @@ class SqliteMigrations {
     );
   ''';
 
-  /// Lookup index for [createAppRommRomMapTableSql] (v98).
+  /// Lookup index for [createAppRommRomMapTableSql] (v99).
   static const String createAppRommRomMapIndexSql = '''
     CREATE INDEX IF NOT EXISTS idx_romm_rom_map_id
     ON app_romm_rom_map(romm_rom_id);
   ''';
 
-  /// CREATE for the provider-scoped save-sync state table (v99).
+  /// CREATE for the provider-scoped save-sync state table (v100).
   ///
   /// Keyed on (provider, file_path) so each sync provider (NeoSync, RomM, …)
   /// owns its own row for a given local file — a foreign provider's cloud
@@ -70,7 +70,7 @@ class SqliteMigrations {
     );
   ''';
 
-  /// Lookup index for [createAppNeoSyncStateTableSql] (v99).
+  /// Lookup index for [createAppNeoSyncStateTableSql] (v100).
   static const String createAppNeoSyncStateIndexSql = '''
     CREATE INDEX IF NOT EXISTS idx_neo_sync_state_provider_file_path
     ON app_neo_sync_state(provider, file_path);
@@ -365,6 +365,9 @@ class SqliteMigrations {
         break;
       case 99:
         await _migrateToVersion99(db);
+        break;
+      case 100:
+        await _migrateToVersion100(db);
         break;
       default:
         _log.w('No migration defined for version $version');
@@ -4797,13 +4800,26 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v97: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
+  /// Migration v97: Ensure game_carousel_card_style column exists.
+  ///
+  /// v95 originally added this column on main, but the design branch reused v95
+  /// for the palette->theme rename. Devices that ran that rename (now v96) may
+  /// be missing the column, so this migration is idempotent and adds it if
+  /// absent.
   static Future<void> _migrateToVersion97(Database db) async {
-    _log.i('Migration v97: Creating user_romm_config table');
+    _log.i('Migration v97: Ensuring game_carousel_card_style column exists');
     try {
-      db.execute(createUserRommConfigTableSql);
-      _log.i('Table user_romm_config created via v97');
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+      if (!columns.contains('game_carousel_card_style')) {
+        db.execute(
+          "ALTER TABLE user_config ADD COLUMN game_carousel_card_style TEXT DEFAULT 'fanart'",
+        );
+        _log.i('Column game_carousel_card_style added via v97');
+      } else {
+        _log.i('Column game_carousel_card_style already exists');
+      }
+      _log.i('Migration v97 completed');
     } catch (e, stackTrace) {
       _log.e('Error in migration v97: $e');
       _log.e('   StackTrace: $stackTrace');
@@ -4811,15 +4827,16 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v98: Adds the [app_romm_rom_map] table, which links a local game
-  /// (romname + system folder) to its RomM ROM id so save/state sync can target
-  /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
+  /// Migration v98: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  ///
+  /// (RomM feature originally landed as v97 on its branch; renumbered to v98
+  /// when merging main, whose own v97 adds game_carousel_card_style.)
   static Future<void> _migrateToVersion98(Database db) async {
-    _log.i('Migration v98: Creating app_romm_rom_map table');
+    _log.i('Migration v98: Creating user_romm_config table');
     try {
-      db.execute(createAppRommRomMapTableSql);
-      db.execute(createAppRommRomMapIndexSql);
-      _log.i('Table app_romm_rom_map created via v98');
+      db.execute(createUserRommConfigTableSql);
+      _log.i('Table user_romm_config created via v98');
     } catch (e, stackTrace) {
       _log.e('Error in migration v98: $e');
       _log.e('   StackTrace: $stackTrace');
@@ -4827,7 +4844,23 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v99: Makes `app_neo_sync_state` provider-scoped so RomM and
+  /// Migration v99: Adds the [app_romm_rom_map] table, which links a local game
+  /// (romname + system folder) to its RomM ROM id so save/state sync can target
+  /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
+  static Future<void> _migrateToVersion99(Database db) async {
+    _log.i('Migration v99: Creating app_romm_rom_map table');
+    try {
+      db.execute(createAppRommRomMapTableSql);
+      db.execute(createAppRommRomMapIndexSql);
+      _log.i('Table app_romm_rom_map created via v99');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v99: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v100: Makes `app_neo_sync_state` provider-scoped so RomM and
   /// NeoSync no longer corrupt each other's recorded cloud timestamps.
   ///
   /// The legacy table keyed on `file_path` alone (`file_path ... UNIQUE`), so a
@@ -4835,8 +4868,8 @@ class SqliteMigrations {
   /// can't drop that column-level UNIQUE in place, so we rebuild the table with
   /// a composite `UNIQUE(provider, file_path)` and backfill every existing row
   /// to 'neosync' — the only provider that wrote these rows historically.
-  static Future<void> _migrateToVersion99(Database db) async {
-    _log.i('Migration v99: Adding provider column to app_neo_sync_state');
+  static Future<void> _migrateToVersion100(Database db) async {
+    _log.i('Migration v100: Adding provider column to app_neo_sync_state');
     try {
       final tableExists = db
           .select(
@@ -4848,7 +4881,7 @@ class SqliteMigrations {
         // Fresh/absent table → just create the new provider-scoped schema.
         db.execute(createAppNeoSyncStateTableSql);
         db.execute(createAppNeoSyncStateIndexSql);
-        _log.i('app_neo_sync_state created with provider column (v99)');
+        _log.i('app_neo_sync_state created with provider column (v100)');
         return;
       }
 
@@ -4858,7 +4891,7 @@ class SqliteMigrations {
         'provider',
       );
       if (alreadyMigrated) {
-        _log.i('app_neo_sync_state already provider-scoped, skipping v99');
+        _log.i('app_neo_sync_state already provider-scoped, skipping v100');
         return;
       }
 
@@ -4883,9 +4916,9 @@ class SqliteMigrations {
         db.execute('ROLLBACK');
         rethrow;
       }
-      _log.i('app_neo_sync_state migrated to (provider, file_path) via v99');
+      _log.i('app_neo_sync_state migrated to (provider, file_path) via v100');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v99: $e');
+      _log.e('Error in migration v100: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

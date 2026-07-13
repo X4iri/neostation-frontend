@@ -175,9 +175,13 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
     // timeouts) left the Systems tab completely blank until they timed out. The
     // scan flips isScanning/isLoading, so the user sees a spinner then content.
     final startupScanPending = configProvider.consumeStartupScan();
+    _log.i(
+      'AppScreen: startupScanPending=$startupScanPending, mounted=$mounted',
+    );
     Future<void>? initialScan;
-    if (startupScanPending && configProvider.hasRomFolder && mounted) {
+    if (startupScanPending && mounted) {
       initialScan = configProvider.scanSystems();
+      _log.i('AppScreen: initial startup scan started');
     }
 
     unawaited(_fixRetroarchAndroidDefault());

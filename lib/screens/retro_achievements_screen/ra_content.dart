@@ -223,8 +223,10 @@ class _RAContentState extends State<RAContent> {
             ),
           ] else ...[
             Expanded(
-              child: RADashboardHub(
-                scrollController: _dashboardScrollController,
+              child: RepaintBoundary(
+                child: RADashboardHub(
+                  scrollController: _dashboardScrollController,
+                ),
               ),
             ),
           ],

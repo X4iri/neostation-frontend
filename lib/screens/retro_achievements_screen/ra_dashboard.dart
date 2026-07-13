@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -27,6 +29,10 @@ class RADashboardHub extends StatefulWidget {
 class _RADashboardHubState extends State<RADashboardHub> {
   bool _requestedInitialLoad = false;
 
+  /// Timer used to avoid starting heavy dashboard network loads when the user
+  /// is just quickly passing through this tab.
+  Timer? _dashboardLoadTimer;
+
   Future<void> _loadDashboard(RetroAchievementsProvider provider) async {
     // Load sequentially rather than with Future.wait: firing all five RA
     // endpoints at once trips the RetroAchievements API rate limiter (HTTP 429),
@@ -51,10 +57,17 @@ class _RADashboardHubState extends State<RADashboardHub> {
         !provider.completionProgressLoading &&
         !provider.gotwLoading) {
       _requestedInitialLoad = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadDashboard(provider);
+      _dashboardLoadTimer?.cancel();
+      _dashboardLoadTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) _loadDashboard(provider);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _dashboardLoadTimer?.cancel();
+    super.dispose();
   }
 
   @override
