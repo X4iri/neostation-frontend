@@ -21,7 +21,10 @@
       "amigacd32",
       "amiga500",
       "amiga4000",
-      "amigacdtv"
+      "amigacdtv",
+      "amiga-cd",
+      "amiga-cd32",
+      "commodore-cdtv"
     ],
     "colors": [
       "#E57373",

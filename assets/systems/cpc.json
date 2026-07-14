@@ -17,7 +17,9 @@
       "cpc",
       "amstradcpc",
       "Amstrad CPC",
-      "gx4000"
+      "gx4000",
+      "acpc",
+      "amstrad-gx4000"
     ],
     "colors": [
       "#42A5F5",

@@ -16,7 +16,8 @@
     "folders": [
       "cv",
       "coleco",
-      "ColecoVision"
+      "ColecoVision",
+      "colecovision"
     ],
     "colors": [
       "#424242",

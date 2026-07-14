@@ -16,7 +16,8 @@
     "folders": [
       "ast",
       "atarist",
-      "Atari ST"
+      "Atari ST",
+      "atari-st"
     ],
     "colors": [
       "#BDBDBD",
