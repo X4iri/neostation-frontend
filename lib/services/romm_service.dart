@@ -327,6 +327,9 @@ class RommService {
     return decoded
         .whereType<Map<String, dynamic>>()
         .map(RommPlatform.fromJson)
+        // RomM's /api/platforms returns every platform its DB knows about,
+        // including ones with no scanned ROMs. Hide the empties.
+        .where((p) => p.romCount > 0)
         .toList();
   }
 
