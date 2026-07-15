@@ -123,6 +123,33 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     super.dispose();
   }
 
+  /// Handles a controller confirm on a ROM tile. Mirrors the on-tile control:
+  /// an in-flight download cancels; an already-downloaded ROM (completed this
+  /// session or present on disk from a prior one) is a no-op with an info
+  /// toast rather than a duplicate download; otherwise the download starts.
+  Future<void> _confirmRom(RommRom rom) async {
+    final active = _rommProvider.downloadFor(rom.id);
+    if (active != null && active.status == RommDownloadStatus.downloading) {
+      _rommProvider.cancelDownload(rom.id);
+      return;
+    }
+
+    final romFolders = context.read<SqliteConfigProvider>().config.romFolders;
+    final alreadyDownloaded =
+        (active != null && active.status == RommDownloadStatus.completed) ||
+        await _rommProvider.isDownloaded(rom, romFolders);
+    if (!mounted) return;
+    if (alreadyDownloaded) {
+      AppNotification.showNotification(
+        context,
+        AppLocale.rommDownloaded.getString(context),
+        type: NotificationType.info,
+      );
+      return;
+    }
+    _startDownload(rom);
+  }
+
   Future<void> _startDownload(RommRom rom) async {
     final romFolders = context.read<SqliteConfigProvider>().config.romFolders;
     final result = await _rommProvider.downloadRom(
@@ -272,15 +299,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     if (_inRomGrid) {
       final roms = _rommProvider.roms;
       if (roms.isEmpty || _romIndex >= roms.length) return;
-      final rom = roms[_romIndex];
-      // A second confirm on an in-flight download cancels it, mirroring the
-      // on-tile close button, rather than kicking off a duplicate download.
-      final active = _rommProvider.downloadFor(rom.id);
-      if (active != null && active.status == RommDownloadStatus.downloading) {
-        _rommProvider.cancelDownload(rom.id);
-      } else {
-        _startDownload(rom);
-      }
+      _confirmRom(roms[_romIndex]);
       return;
     }
     switch (_view) {
