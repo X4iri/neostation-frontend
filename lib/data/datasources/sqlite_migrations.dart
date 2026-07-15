@@ -369,6 +369,18 @@ class SqliteMigrations {
       case 100:
         await _migrateToVersion100(db);
         break;
+      case 101:
+        await _migrateToVersion101(db);
+        break;
+      case 102:
+        await _migrateToVersion102(db);
+        break;
+      case 103:
+        await _migrateToVersion103(db);
+        break;
+      case 104:
+        await _migrateToVersion104(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -4827,16 +4839,38 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v98: Adds the singleton user_romm_config table used to store
-  /// RomM server credentials and tokens for remote library browse/download.
+  /// Migration v98: ES-DE import support.
   ///
-  /// (RomM feature originally landed as v97 on its branch; renumbered to v98
-  /// when merging main, whose own v97 adds game_carousel_card_style.)
+  /// Adds `esde_folder_path` to `user_config` (the ES-DE application folder the
+  /// user selected) and `esde_media_dir` to `user_system_settings` (the ES-DE
+  /// `downloaded_media` subfolder name captured for that system at import time,
+  /// used to resolve read-time fallback artwork). Idempotent.
   static Future<void> _migrateToVersion98(Database db) async {
-    _log.i('Migration v98: Creating user_romm_config table');
+    _log.i('Migration v98: Adding ES-DE import columns');
     try {
-      db.execute(createUserRommConfigTableSql);
-      _log.i('Table user_romm_config created via v98');
+      final configColumns = db
+          .select('PRAGMA table_info(user_config)')
+          .map((c) => c['name'].toString())
+          .toList();
+      if (!configColumns.contains('esde_folder_path')) {
+        db.execute(
+          "ALTER TABLE user_config ADD COLUMN esde_folder_path TEXT DEFAULT ''",
+        );
+        _log.i('Column esde_folder_path added to user_config via v98');
+      }
+
+      final settingsColumns = db
+          .select('PRAGMA table_info(user_system_settings)')
+          .map((c) => c['name'].toString())
+          .toList();
+      if (!settingsColumns.contains('esde_media_dir')) {
+        db.execute(
+          'ALTER TABLE user_system_settings ADD COLUMN esde_media_dir TEXT',
+        );
+        _log.i('Column esde_media_dir added to user_system_settings via v98');
+      }
+
+      _log.i('Migration v98 completed');
     } catch (e, stackTrace) {
       _log.e('Error in migration v98: $e');
       _log.e('   StackTrace: $stackTrace');
@@ -4844,15 +4878,23 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v99: Adds the [app_romm_rom_map] table, which links a local game
-  /// (romname + system folder) to its RomM ROM id so save/state sync can target
-  /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
   static Future<void> _migrateToVersion99(Database db) async {
-    _log.i('Migration v99: Creating app_romm_rom_map table');
+    _log.i('Migration v99: Adding ES-DE media subfolder column');
     try {
-      db.execute(createAppRommRomMapTableSql);
-      db.execute(createAppRommRomMapIndexSql);
-      _log.i('Table app_romm_rom_map created via v99');
+      final metaColumns = db
+          .select('PRAGMA table_info(user_screenscraper_metadata)')
+          .map((c) => c['name'].toString())
+          .toList();
+      if (!metaColumns.contains('esde_media_subdir')) {
+        db.execute(
+          'ALTER TABLE user_screenscraper_metadata ADD COLUMN esde_media_subdir TEXT',
+        );
+        _log.i(
+          'Column esde_media_subdir added to user_screenscraper_metadata via v99',
+        );
+      }
+
+      _log.i('Migration v99 completed');
     } catch (e, stackTrace) {
       _log.e('Error in migration v99: $e');
       _log.e('   StackTrace: $stackTrace');
@@ -4860,7 +4902,89 @@ class SqliteMigrations {
     }
   }
 
-  /// Migration v100: Makes `app_neo_sync_state` provider-scoped so RomM and
+  /// Migration v100: Adds `esde_imported` to `user_screenscraper_metadata`, a
+  /// provenance flag marking rows the ES-DE import created from scratch. Lets
+  /// the ES-DE reset target only those rows instead of every `is_fully_scraped`
+  /// = 0 row (which also includes NeoStation's own partially-scraped rows).
+  /// Idempotent.
+  static Future<void> _migrateToVersion100(Database db) async {
+    _log.i('Migration v100: Adding esde_imported column');
+    try {
+      final metaColumns = db
+          .select('PRAGMA table_info(user_screenscraper_metadata)')
+          .map((c) => c['name'].toString())
+          .toList();
+      if (!metaColumns.contains('esde_imported')) {
+        db.execute(
+          'ALTER TABLE user_screenscraper_metadata ADD COLUMN esde_imported INTEGER DEFAULT 0',
+        );
+        _log.i(
+          'Column esde_imported added to user_screenscraper_metadata via v100',
+        );
+      }
+
+      _log.i('Migration v100 completed');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v100: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v101: Store whether a platform supports multi-disc games.
+  static Future<void> _migrateToVersion101(Database db) async {
+    _log.i('Migration v101: Adding multidisc to app_systems');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(app_systems)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+      if (!columns.contains('multidisc')) {
+        db.execute(
+          'ALTER TABLE app_systems ADD COLUMN multidisc INTEGER NOT NULL DEFAULT 0',
+        );
+      }
+
+      _log.i('Migration v101 completed');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v101: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v102: Adds the singleton user_romm_config table used to store
+  /// RomM server credentials and tokens for remote library browse/download.
+  ///
+  /// (RomM feature originally landed as v97 on its branch; renumbered as main
+  /// added its own v98–v101, so the RomM migrations now start at v102.)
+  static Future<void> _migrateToVersion102(Database db) async {
+    _log.i('Migration v102: Creating user_romm_config table');
+    try {
+      db.execute(createUserRommConfigTableSql);
+      _log.i('Table user_romm_config created via v102');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v102: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v103: Adds the [app_romm_rom_map] table, which links a local game
+  /// (romname + system folder) to its RomM ROM id so save/state sync can target
+  /// the right `rom_id`. Populated when a ROM is downloaded from RomM.
+  static Future<void> _migrateToVersion103(Database db) async {
+    _log.i('Migration v103: Creating app_romm_rom_map table');
+    try {
+      db.execute(createAppRommRomMapTableSql);
+      db.execute(createAppRommRomMapIndexSql);
+      _log.i('Table app_romm_rom_map created via v103');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v103: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v104: Makes `app_neo_sync_state` provider-scoped so RomM and
   /// NeoSync no longer corrupt each other's recorded cloud timestamps.
   ///
   /// The legacy table keyed on `file_path` alone (`file_path ... UNIQUE`), so a
@@ -4868,8 +4992,8 @@ class SqliteMigrations {
   /// can't drop that column-level UNIQUE in place, so we rebuild the table with
   /// a composite `UNIQUE(provider, file_path)` and backfill every existing row
   /// to 'neosync' — the only provider that wrote these rows historically.
-  static Future<void> _migrateToVersion100(Database db) async {
-    _log.i('Migration v100: Adding provider column to app_neo_sync_state');
+  static Future<void> _migrateToVersion104(Database db) async {
+    _log.i('Migration v104: Adding provider column to app_neo_sync_state');
     try {
       final tableExists = db
           .select(
@@ -4881,7 +5005,7 @@ class SqliteMigrations {
         // Fresh/absent table → just create the new provider-scoped schema.
         db.execute(createAppNeoSyncStateTableSql);
         db.execute(createAppNeoSyncStateIndexSql);
-        _log.i('app_neo_sync_state created with provider column (v100)');
+        _log.i('app_neo_sync_state created with provider column (v104)');
         return;
       }
 
@@ -4891,7 +5015,7 @@ class SqliteMigrations {
         'provider',
       );
       if (alreadyMigrated) {
-        _log.i('app_neo_sync_state already provider-scoped, skipping v100');
+        _log.i('app_neo_sync_state already provider-scoped, skipping v104');
         return;
       }
 
@@ -4916,9 +5040,9 @@ class SqliteMigrations {
         db.execute('ROLLBACK');
         rethrow;
       }
-      _log.i('app_neo_sync_state migrated to (provider, file_path) via v100');
+      _log.i('app_neo_sync_state migrated to (provider, file_path) via v104');
     } catch (e, stackTrace) {
-      _log.e('Error in migration v100: $e');
+      _log.e('Error in migration v104: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

@@ -421,7 +421,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 100;
+  static const int _databaseVersion = 104;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -530,6 +530,7 @@ class SqliteService {
               'type': jsonSystem.type,
               'color1': jsonSystem.color1,
               'color2': jsonSystem.color2,
+              'multidisc': jsonSystem.multiDisc ? 1 : 0,
             },
             where: 'id = ?',
             whereArgs: [systemId],
@@ -549,6 +550,7 @@ class SqliteService {
             'type': jsonSystem.type,
             'color1': jsonSystem.color1,
             'color2': jsonSystem.color2,
+            'multidisc': jsonSystem.multiDisc ? 1 : 0,
             'neosync_json': json.encode(jsonSystem.neosync.toJson()),
           });
         }
@@ -1548,6 +1550,7 @@ class SqliteService {
           type TEXT,
           color1 TEXT,
           color2 TEXT,
+          multidisc INTEGER NOT NULL DEFAULT 0,
           neosync_json TEXT
       );
       ''',
@@ -1633,7 +1636,8 @@ class SqliteService {
         dock_slot_count INTEGER DEFAULT 3,
         now_playing_dim_delay INTEGER DEFAULT 3,
         now_playing_dim_level INTEGER DEFAULT 100,
-        fanart_dim_level INTEGER DEFAULT 25
+        fanart_dim_level INTEGER DEFAULT 25,
+        esde_folder_path TEXT DEFAULT ''
       );
       ''',
       '''
@@ -1761,6 +1765,8 @@ class SqliteService {
         genre TEXT,
         players TEXT,
         is_fully_scraped INTEGER DEFAULT 0,
+        esde_media_subdir TEXT,
+        esde_imported INTEGER DEFAULT 0,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (app_system_id) REFERENCES app_systems(id) ON DELETE CASCADE,
         UNIQUE(app_system_id, filename)
@@ -1784,6 +1790,7 @@ class SqliteService {
         custom_logo_path TEXT,
         hide_logo INTEGER DEFAULT 0,
         prefer_file_name INTEGER DEFAULT 0,
+        esde_media_dir TEXT,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (app_system_id) REFERENCES app_systems(id) ON DELETE CASCADE,
         UNIQUE(app_system_id)
@@ -2356,6 +2363,7 @@ class SqliteService {
     int? nowPlayingDimDelay,
     int? nowPlayingDimLevel,
     int? fanartDimLevel,
+    String? esdeFolderPath,
   }) async {
     final db = await instance.database;
 
@@ -2457,6 +2465,9 @@ class SqliteService {
     }
     if (fanartDimLevel != null) {
       newConfig['fanart_dim_level'] = fanartDimLevel;
+    }
+    if (esdeFolderPath != null) {
+      newConfig['esde_folder_path'] = esdeFolderPath;
     }
 
     await db.insert(
