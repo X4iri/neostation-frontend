@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:neostation/providers/installed_apps_provider.dart';
@@ -8,8 +7,6 @@ import 'package:neostation/services/android_service.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/utils/gamepad_nav.dart';
-import 'package:neostation/screens/app_screen.dart' show AppNavigation;
-import 'package:neostation/services/game_service.dart' show GamepadNavigationManager;
 import 'package:neostation/themes/corner_radii.dart';
 import 'widgets/app_management_modal.dart';
 
@@ -34,38 +31,17 @@ class InstalledAppsScreen extends StatefulWidget {
 class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
   int _selectedIndex = 0;
   final ScrollController _scrollController = ScrollController();
-  late GamepadNavigation _gamepadNav;
 
   @override
   void initState() {
     super.initState();
     InstalledAppsScreen._currentInstance = this;
-    _gamepadNav = GamepadNavigation(
-      onNavigateUp: _navigateUp,
-      onNavigateDown: _navigateDown,
-      onNavigateLeft: _navigateLeft,
-      onNavigateRight: _navigateRight,
-      onSelectItem: _launchSelectedApp,
-      onFavorite: _openManagementModal,
-      onPreviousTab: () => AppNavigation.previousTab(),
-      onNextTab: () => AppNavigation.nextTab(),
-      onBack: () => GamepadNavigationManager.popLayer('installed_apps_screen'),
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      GamepadNavigationManager.pushLayer(
-        'installed_apps_screen',
-        onActivate: () => _gamepadNav.activate(),
-        onDeactivate: () => _gamepadNav.deactivate(),
-      );
-    });
   }
 
   @override
   void dispose() {
     InstalledAppsScreen._currentInstance = null;
     _scrollController.dispose();
-    _gamepadNav.dispose();
     super.dispose();
   }
 
@@ -81,7 +57,6 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
-    SfxService().playNavSound();
   }
 
   void _navigateDown() {
@@ -96,7 +71,6 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
-    SfxService().playNavSound();
   }
 
   void _navigateLeft() {
@@ -111,7 +85,6 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
-    SfxService().playNavSound();
   }
 
   void _navigateRight() {
@@ -126,7 +99,6 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
-    SfxService().playNavSound();
   }
 
   int _getCrossAxisCount() {
