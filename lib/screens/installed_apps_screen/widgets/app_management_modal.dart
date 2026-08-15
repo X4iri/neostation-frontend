@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:neostation/models/installed_app_model.dart';
@@ -8,6 +7,8 @@ import 'package:neostation/services/android_service.dart';
 import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/themes/corner_radii.dart';
+import 'package:neostation/utils/gamepad_nav.dart';
+import 'package:neostation/services/game_service.dart';
 
 class AppManagementModal extends StatefulWidget {
   final InstalledAppModel app;
@@ -20,11 +21,74 @@ class AppManagementModal extends StatefulWidget {
 
 class _AppManagementModalState extends State<AppManagementModal> {
   int _selectedIndex = 0;
+  late GamepadNavigation _gamepadNav;
+
+  @override
+  void initState() {
+    super.initState();
+    _gamepadNav = GamepadNavigation(
+      onNavigateUp: _navigateUp,
+      onNavigateDown: _navigateDown,
+      onSelectItem: _handleSelect,
+      onBack: () => Navigator.pop(context),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _gamepadNav.initialize();
+      GamepadNavigationManager.pushLayer(
+        'app_management_modal',
+        modal: true,
+        onActivate: () => _gamepadNav.activate(),
+        onDeactivate: () => _gamepadNav.deactivate(),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    GamepadNavigationManager.popLayer('app_management_modal');
+    _gamepadNav.dispose();
+    super.dispose();
+  }
+
+  void _navigateUp() {
+    setState(() {
+      _selectedIndex = (_selectedIndex - 1 + 3) % 3;
+    });
+    SfxService().playNavSound();
+  }
+
+  void _navigateDown() {
+    setState(() {
+      _selectedIndex = (_selectedIndex + 1) % 3;
+    });
+    SfxService().playNavSound();
+  }
+
+  void _handleSelect() {
+    final provider = context.read<InstalledAppsProvider>();
+    SfxService().playEnterSound();
+
+    switch (_selectedIndex) {
+      case 0:
+        AndroidService.openAppInfo(widget.app.packageName);
+        Navigator.pop(context);
+        break;
+      case 1:
+        AndroidService.uninstallApp(widget.app.packageName);
+        Navigator.pop(context);
+        break;
+      case 2:
+        provider.toggleFavorite(widget.app.packageName);
+        Navigator.pop(context);
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final provider = context.read<InstalledAppsProvider>();
+    final provider = context.watch<InstalledAppsProvider>();
     final isFav = provider.isFavorite(widget.app.packageName);
 
     final favLabel = isFav 
