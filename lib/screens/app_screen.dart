@@ -18,6 +18,7 @@ import 'settings_screen/new_settings_screen.dart';
 import 'scraper_screen/new_scraper_options_screen.dart';
 import 'neo_sync_screen/login_screen/neo_sync_content.dart';
 import 'romm_screen/romm_tab.dart';
+import 'installed_apps_screen/installed_apps_screen.dart';
 import '../widgets/scraper_content.dart';
 import 'package:neostation/services/game_service.dart';
 import 'package:neostation/providers/theme_provider.dart';
@@ -45,14 +46,15 @@ class AppScreen extends StatefulWidget {
 abstract final class AppTabs {
   static const int systems = 0;
   static const int search = 1;
-  static const int sync = 2;
-  static const int achievements = 3;
-  static const int scraper = 4;
-  static const int romm = 5;
-  static const int settings = 6;
+  static const int apps = 2;
+  static const int sync = 3;
+  static const int achievements = 4;
+  static const int scraper = 5;
+  static const int romm = 6;
+  static const int settings = 7;
 
   /// Total number of tabs, used for wrap-around when cycling with the bumpers.
-  static const int count = 7;
+  static const int count = 8;
 }
 
 /// Bridge class providing static access to the main application navigation state.
@@ -137,6 +139,7 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
       onSettings: _handleSettings,
       onBack: _handleBackNavigation,
       onXButton: _handleXButton,
+      onFavorite: _handleYButton,
     );
 
     // Asynchronous initialization of navigation and update checking.
@@ -383,6 +386,10 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
       NewScraperOptionsScreen.navigateRight();
       return;
     }
+    if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.navigateRight();
+      return;
+    }
     if (_selectedTabIndex == AppTabs.settings) {
       NewSettingsScreen.navigateRight();
       return;
@@ -393,6 +400,10 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
     if (_selectedTabIndex == AppTabs.systems) return;
     if (_selectedTabIndex == AppTabs.scraper) {
       NewScraperOptionsScreen.navigateLeft();
+      return;
+    }
+    if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.navigateLeft();
       return;
     }
     if (_selectedTabIndex == AppTabs.settings) {
@@ -414,6 +425,10 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
       NewScraperOptionsScreen.navigateDown();
       return true;
     }
+    if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.navigateDown();
+      return true;
+    }
     if (_selectedTabIndex == AppTabs.settings) {
       return NewSettingsScreen.navigateDown();
     }
@@ -424,6 +439,10 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
     if (_selectedTabIndex == AppTabs.systems) return true;
     if (_selectedTabIndex == AppTabs.scraper) {
       NewScraperOptionsScreen.navigateUp();
+      return true;
+    }
+    if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.navigateUp();
       return true;
     }
     if (_selectedTabIndex == AppTabs.settings) {
@@ -455,6 +474,8 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
 
     if (_selectedTabIndex == AppTabs.scraper) {
       NewScraperOptionsScreen.selectCurrent();
+    } else if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.selectCurrent();
     } else if (_selectedTabIndex == AppTabs.settings) {
       NewSettingsScreen.selectCurrent();
     }
@@ -465,6 +486,12 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
   void _handleXButton() {
     if (_selectedTabIndex == AppTabs.settings) {
       NewSettingsScreen.deleteCurrent();
+    }
+  }
+
+  void _handleYButton() {
+    if (_selectedTabIndex == AppTabs.apps) {
+      InstalledAppsScreen.openManagement();
     }
   }
 
@@ -518,6 +545,9 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
       switch (index) {
         case AppTabs.search:
           tabName = 'Search';
+          break;
+        case AppTabs.apps:
+          tabName = 'Apps';
           break;
         case AppTabs.sync:
           tabName = 'Sync';
@@ -668,6 +698,8 @@ class AppScreenState extends State<AppScreen> with WidgetsBindingObserver {
           _gamepadNav.deactivate();
         });
         return const SearchScreen();
+      case AppTabs.apps:
+        return const InstalledAppsScreen();
       case AppTabs.sync:
         // NeoSync tab manages its own focus lifecycle due to complex login flows.
         WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -185,6 +185,9 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.showSearchTab: 'Tampilkan tab Cari',
   AppLocale.showSearchTabSubtitle:
       'Menampilkan tab pencarian di bilah navigasi',
+  AppLocale.showAppsTab: 'Tampilkan tab Aplikasi',
+  AppLocale.showAppsTabSubtitle:
+      'Tampilkan tab Aplikasi di bilah navigasi',
 
   AppLocale.configureDirectories: 'Konfigurasi Direktori',
   AppLocale.configureRomsFolder: 'Konfigurasi Folder ROM',
@@ -448,6 +451,11 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.regionUpdated: 'Prioritas wilayah diperbarui',
   AppLocale.regionError: 'Kesalahan saat memperbarui prioritas wilayah',
   AppLocale.systems: 'Sistem',
+  AppLocale.apps: 'Aplikasi',
+  AppLocale.appInfo: 'Info Aplikasi',
+  AppLocale.uninstall: 'Hapus Instalasi',
+  AppLocale.addToFavorites: 'Tambah ke favorit',
+  AppLocale.removeFromFavorites: 'Hapus dari favorit',
   AppLocale.screenscraper: 'Akun ScreenScraper',
   AppLocale.totalGames: 'Total Game',
   AppLocale.successFailed: 'Berhasil / Gagal',
@@ -540,7 +548,6 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.cannotReadFolder: 'Tidak dapat membaca folder ini',
   AppLocale.noStorageFound: 'Tidak ada penyimpanan ditemukan',
   AppLocale.lastPlayed: 'Terakhir dimainkan',
-  AppLocale.apps: 'Aplikasi',
   AppLocale.tracks: 'Lagu',
   AppLocale.games: 'Game',
   AppLocale.enter: 'Masuk',

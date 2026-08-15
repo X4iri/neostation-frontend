@@ -138,6 +138,7 @@ class DatabaseTestHelper {
         hide_tab_scraper INTEGER DEFAULT 0,
         hide_tab_romm INTEGER DEFAULT 0,
         hide_tab_search INTEGER DEFAULT 0,
+        hide_tab_apps INTEGER DEFAULT 0,
         game_grid_columns TEXT DEFAULT 'M',
         game_carousel_card_style TEXT DEFAULT 'fanart',
         dock_apps TEXT,
@@ -308,5 +309,11 @@ class DatabaseTestHelper {
 
     await db.execute(SqliteMigrations.createAppNeoSyncStateTableSql);
     await db.execute(SqliteMigrations.createAppNeoSyncStateIndexSql);
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_app_favorites (
+        package_name TEXT PRIMARY KEY
+      )
+    ''');
   }
 }

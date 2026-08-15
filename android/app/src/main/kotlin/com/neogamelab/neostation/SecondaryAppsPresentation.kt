@@ -48,7 +48,8 @@ class SecondaryAppsPresentation(
                 when (call.method) {
                     "getInstalledApps" -> {
                         val includeSystem = call.argument<Boolean>("includeSystemApps") ?: false
-                        activity.getInstalledApps(includeSystem, result)
+                        val includeIcons = call.argument<Boolean>("includeIcons") ?: false
+                        activity.getInstalledApps(includeSystem, includeIcons, result)
                     }
                     "getAppIcon" -> {
                         val pkg = call.argument<String>("packageName")

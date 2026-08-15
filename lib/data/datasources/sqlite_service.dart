@@ -422,7 +422,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 122;
+  static const int _databaseVersion = 123;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -794,7 +794,7 @@ class SqliteService {
           final args = platformData['args'];
           if (args != null) {
             final match = RegExp(
-              r'-L\s+(?:cores\\|cores/)?([\w_\-\.]+)',
+              r'-L\s+(?:cores\\|cores/)?([\w_\-.]+)',
             ).firstMatch(args);
             if (match != null) {
               coreFilename = match.group(1);
@@ -809,7 +809,7 @@ class SqliteService {
           final args = platformData['args'];
           if (args != null) {
             final match = RegExp(
-              r'-L\s+(?:cores\\|cores/)?([\w_\-\.]+)',
+              r'-L\s+(?:cores\\|cores/)?([\w_\-.]+)',
             ).firstMatch(args);
             if (match != null) {
               coreFilename = match.group(1);
@@ -2628,6 +2628,7 @@ class SqliteService {
     int? hideTabScraper,
     int? hideTabRomm,
     int? hideTabSearch,
+    int? hideTabApps,
     String? activeSyncProvider,
     String? systemsVersion,
     String? neostationAppVersion,
@@ -2722,6 +2723,9 @@ class SqliteService {
     }
     if (hideTabSearch != null) {
       updates['hide_tab_search'] = hideTabSearch;
+    }
+    if (hideTabApps != null) {
+      updates['hide_tab_apps'] = hideTabApps;
     }
     if (activeSyncProvider != null) {
       updates['active_sync_provider'] = activeSyncProvider;
@@ -4831,7 +4835,47 @@ class SqliteService {
       await txn.delete('user_detected_systems');
       await txn.delete('user_retroarch_cores');
       await txn.delete('user_retroarch_paths');
+      await txn.delete('user_app_favorites');
     });
+  }
+
+  // ==========================================
+  // ANDROID APP FAVORITES
+  // ==========================================
+
+  /// Retrieves all favorited Android app package names.
+  static Future<Set<String>> getAppFavorites() async {
+    final db = await instance.database;
+    final results = await db.query('user_app_favorites');
+    return results.map((r) => r['package_name'].toString()).toSet();
+  }
+
+  /// Sets an Android app's favorite status.
+  static Future<void> setAppFavorite(String packageName, bool favorite) async {
+    final db = await instance.database;
+    if (favorite) {
+      await db.insert('user_app_favorites', {
+        'package_name': packageName,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    } else {
+      await db.delete(
+        'user_app_favorites',
+        where: 'package_name = ?',
+        whereArgs: [packageName],
+      );
+    }
+  }
+
+  /// Checks if an Android app is favorited.
+  static Future<bool> isAppFavorite(String packageName) async {
+    final db = await instance.database;
+    final results = await db.query(
+      'user_app_favorites',
+      where: 'package_name = ?',
+      whereArgs: [packageName],
+      limit: 1,
+    );
+    return results.isNotEmpty;
   }
 
   /// Retrieves a map of all emulators available in the database schema.

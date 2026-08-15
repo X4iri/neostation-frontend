@@ -291,7 +291,8 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
 
                 "getInstalledApps" -> {
                     val includeSystemApps = call.argument<Boolean>("includeSystemApps") ?: false
-                    getInstalledApps(includeSystemApps, result)
+                    val includeIcons = call.argument<Boolean>("includeIcons") ?: false
+                    getInstalledApps(includeSystemApps, includeIcons, result)
                 }
                 "launchPackage" -> {
                     val packageName = call.argument<String>("packageName")
@@ -305,6 +306,22 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
                     val packageName = call.argument<String>("packageName")
                     if (packageName != null) {
                         getAppIcon(packageName, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Package name is required", null)
+                    }
+                }
+                "openAppInfo" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName != null) {
+                        openAppInfo(packageName, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Package name is required", null)
+                    }
+                }
+                "uninstallApp" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName != null) {
+                        uninstallApp(packageName, result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "Package name is required", null)
                     }
@@ -928,6 +945,30 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
         }
     }
 
+    private fun openAppInfo(packageName: String, result: MethodChannel.Result) {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = Uri.parse("package:$packageName")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            result.success(true)
+        } catch (e: Exception) {
+            result.error("OPEN_FAILED", e.message, null)
+        }
+    }
+
+    private fun uninstallApp(packageName: String, result: MethodChannel.Result) {
+        try {
+            val intent = Intent(Intent.ACTION_DELETE)
+            intent.data = Uri.parse("package:$packageName")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            result.success(true)
+        } catch (e: Exception) {
+            result.error("UNINSTALL_FAILED", e.message, null)
+        }
+    }
+
     override fun registerInputDeviceListener(
         listener: InputManager.InputDeviceListener,
         handler: Handler?
@@ -953,7 +994,7 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
 
     // --- NEW ANDROID APPS/GAMES LOGIC (SCAN EVERYTHING) ---
 
-    internal fun getInstalledApps(includeSystemApps: Boolean, result: MethodChannel.Result) {
+    internal fun getInstalledApps(includeSystemApps: Boolean, includeIcons: Boolean, result: MethodChannel.Result) {
         Thread {
             try {
                 val pm = packageManager
@@ -983,23 +1024,42 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
                     val appInfo = activityInfo.applicationInfo 
                     val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
                     
+                    if (!includeSystemApps && isSystemApp) continue
+
                     // All Android apps are now treated the same
                     val isGame = false
 
                     val label = resolveInfo.loadLabel(pm).toString()
 
-                    // Only name+package are consumed by the dock/picker on the
-                    // Dart side, so we deliberately skip the extra per-app
-                    // pm.getPackageInfo() round-trip that used to fetch
-                    // firstInstallTime/versionName here — on a device with many
-                    // installed apps that second PackageManager hit per app was
-                    // the bulk of the "app drawer takes seconds to wake up" lag.
-                    apps.add(mapOf(
+                    val appMap = mutableMapOf<String, Any>(
                         "name" to label,
                         "package" to packageName,
                         "isSystemApp" to isSystemApp,
                         "isGame" to isGame
-                    ))
+                    )
+
+                    if (includeIcons) {
+                        try {
+                            val iconDrawable = resolveInfo.loadIcon(pm)
+                            val targetPx = (ICON_TARGET_DP * resources.displayMetrics.density).toInt()
+                            val bitmap = android.graphics.Bitmap.createBitmap(
+                                targetPx,
+                                targetPx,
+                                android.graphics.Bitmap.Config.ARGB_8888
+                            )
+                            val canvas = android.graphics.Canvas(bitmap)
+                            iconDrawable.setBounds(0, 0, targetPx, targetPx)
+                            iconDrawable.draw(canvas)
+
+                            val stream = ByteArrayOutputStream()
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                            appMap["icon"] = stream.toByteArray()
+                        } catch (e: Exception) {
+                            // Icon failed, continue without it
+                        }
+                    }
+
+                    apps.add(appMap)
                 }
                 
                 // Sort by name

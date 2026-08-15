@@ -475,6 +475,9 @@ class SqliteMigrations {
       case 122:
         await _migrateToVersion122(db);
         break;
+      case 123:
+        await _migrateToVersion123(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -5891,6 +5894,37 @@ class SqliteMigrations {
       _log.i('Migration v118 completed');
     } catch (e, stackTrace) {
       _log.e('Error in migration v118: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v123: Adds `user_config.hide_tab_apps` and `user_app_favorites` table.
+  static Future<void> _migrateToVersion123(Database db) async {
+    _log.i('Migration v123: Adding hide_tab_apps and user_app_favorites');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toList();
+
+      if (!columns.contains('hide_tab_apps')) {
+        db.execute(
+          'ALTER TABLE user_config ADD COLUMN hide_tab_apps INTEGER DEFAULT 0',
+        );
+        _log.i('Column hide_tab_apps added via v123');
+      } else {
+        _log.i('Column hide_tab_apps already exists');
+      }
+
+      db.execute('''
+        CREATE TABLE IF NOT EXISTS user_app_favorites (
+          package_name TEXT PRIMARY KEY
+        )
+      ''');
+      _log.i('Table user_app_favorites created via v123');
+
+      _log.i('Migration v123 completed');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v123: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

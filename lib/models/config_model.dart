@@ -129,6 +129,9 @@ class ConfigModel {
   /// Whether the Search navigation tab is hidden. See [hideTabSync].
   final bool hideTabSearch;
 
+  /// Whether the Apps navigation tab is hidden. See [hideTabSync].
+  final bool hideTabApps;
+
   /// Seconds of inactivity before the secondary "Now Playing" panel dims, or `0`
   /// to never dim. Only meaningful when a secondary display is active.
   final int nowPlayingDimDelay;
@@ -204,6 +207,7 @@ class ConfigModel {
     this.hideTabScraper = false,
     this.hideTabRomm = false,
     this.hideTabSearch = false,
+    this.hideTabApps = false,
     this.activeSyncProvider = 'neosync',
     this.autoUpdateApp = true,
     this.autoUpdateSystems = true,
@@ -336,6 +340,10 @@ class ConfigModel {
           (json['hideTabSearch'] ?? json['hide_tab_search'] ?? 0).toString() ==
               '1' ||
           (json['hideTabSearch'] ?? false).toString().toLowerCase() == 'true',
+      hideTabApps:
+          (json['hideTabApps'] ?? json['hide_tab_apps'] ?? 0).toString() ==
+              '1' ||
+          (json['hideTabApps'] ?? false).toString().toLowerCase() == 'true',
       activeSyncProvider:
           (json['activeSyncProvider'] ??
                   json['active_sync_provider'] ??
@@ -431,6 +439,7 @@ class ConfigModel {
       'hideTabScraper': hideTabScraper,
       'hideTabRomm': hideTabRomm,
       'hideTabSearch': hideTabSearch,
+      'hideTabApps': hideTabApps,
       'activeSyncProvider': activeSyncProvider,
       'autoUpdateApp': autoUpdateApp,
       'autoUpdateSystems': autoUpdateSystems,
@@ -476,6 +485,7 @@ class ConfigModel {
     bool? hideTabScraper,
     bool? hideTabRomm,
     bool? hideTabSearch,
+    bool? hideTabApps,
     String? activeSyncProvider,
     bool? autoUpdateApp,
     bool? autoUpdateSystems,
@@ -518,6 +528,7 @@ class ConfigModel {
       hideTabScraper: hideTabScraper ?? this.hideTabScraper,
       hideTabRomm: hideTabRomm ?? this.hideTabRomm,
       hideTabSearch: hideTabSearch ?? this.hideTabSearch,
+      hideTabApps: hideTabApps ?? this.hideTabApps,
       activeSyncProvider: activeSyncProvider ?? this.activeSyncProvider,
       autoUpdateApp: autoUpdateApp ?? this.autoUpdateApp,
       autoUpdateSystems: autoUpdateSystems ?? this.autoUpdateSystems,

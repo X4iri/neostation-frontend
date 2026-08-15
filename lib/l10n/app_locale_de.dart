@@ -191,6 +191,9 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.showSearchTab: 'Suche-Tab anzeigen',
   AppLocale.showSearchTabSubtitle:
       'Zeigt den Suche-Tab in der Navigationsleiste an',
+  AppLocale.showAppsTab: 'Apps-Tab anzeigen',
+  AppLocale.showAppsTabSubtitle:
+      'Zeigt den Apps-Tab in der Navigationsleiste an',
 
   AppLocale.configureDirectories: 'Verzeichnisse konfigurieren',
   AppLocale.configureRomsFolder: 'ROM-Ordner konfigurieren',
@@ -468,6 +471,11 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.regionUpdated: 'Regionpriorität aktualisiert',
   AppLocale.regionError: 'Fehler beim Aktualisieren der Regionpriorität',
   AppLocale.systems: 'Systeme',
+  AppLocale.apps: 'Apps',
+  AppLocale.appInfo: 'App-Info',
+  AppLocale.uninstall: 'Deinstallieren',
+  AppLocale.addToFavorites: 'Zu Favoriten hinzufügen',
+  AppLocale.removeFromFavorites: 'Aus Favoriten entfernen',
   AppLocale.screenscraper: 'ScreenScraper-Konto',
   AppLocale.totalGames: 'Gesamtzahl Spiele',
   AppLocale.successFailed: 'Erfolg / Fehlgeschlagen',
@@ -561,7 +569,6 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.cannotReadFolder: 'Ordner konnte nicht gelesen werden',
   AppLocale.noStorageFound: 'Kein Speicher gefunden',
   AppLocale.lastPlayed: 'Zuletzt gespielt',
-  AppLocale.apps: 'Apps',
   AppLocale.tracks: 'Titel',
   AppLocale.games: 'Spiele',
   AppLocale.enter: 'Betreten',

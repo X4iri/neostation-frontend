@@ -17,13 +17,18 @@ class AndroidService {
   ///
   /// Returns a list of maps containing app metadata (label, package name, etc.).
   /// The [includeSystemApps] flag determines if system-provided apps should be returned.
+  /// The [includeIcons] flag determines if icon bytes should be included.
   static Future<List<Map<String, dynamic>>> getInstalledApps({
     bool includeSystemApps = false,
+    bool includeIcons = false,
   }) async {
     try {
       final List<dynamic> apps = await _channel.invokeMethod(
         'getInstalledApps',
-        {'includeSystemApps': includeSystemApps},
+        {
+          'includeSystemApps': includeSystemApps,
+          'includeIcons': includeIcons,
+        },
       );
 
       return apps.map((dynamic item) {
@@ -47,6 +52,32 @@ class AndroidService {
       return result;
     } on PlatformException catch (e) {
       _log.e("Failed to launch package: '${e.message}'.");
+      return false;
+    }
+  }
+
+  /// Opens the system application details settings for the given [packageName].
+  static Future<bool> openAppInfo(String packageName) async {
+    try {
+      final bool result = await _channel.invokeMethod('openAppInfo', {
+        'packageName': packageName,
+      });
+      return result;
+    } on PlatformException catch (e) {
+      _log.e("Failed to open app info: '${e.message}'.");
+      return false;
+    }
+  }
+
+  /// Triggers the system uninstallation flow for the given [packageName].
+  static Future<bool> uninstallApp(String packageName) async {
+    try {
+      final bool result = await _channel.invokeMethod('uninstallApp', {
+        'packageName': packageName,
+      });
+      return result;
+    } on PlatformException catch (e) {
+      _log.e("Failed to uninstall app: '${e.message}'.");
       return false;
     }
   }

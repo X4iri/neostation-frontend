@@ -7,6 +7,7 @@ import 'package:neostation/providers/scraping_provider.dart';
 import 'package:neostation/providers/retro_achievements_provider.dart';
 import 'package:neostation/providers/romm_provider.dart';
 import 'package:neostation/providers/neo_sync_provider.dart';
+import 'package:neostation/providers/installed_apps_provider.dart';
 import 'package:neostation/screens/main_screen.dart';
 import 'package:neostation/services/neosync/auth_service.dart';
 import 'package:neostation/services/neosync/neo_sync_service.dart';
@@ -902,6 +903,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: SyncManager.instance),
         ChangeNotifierProvider(create: (context) => BillingService()),
         ChangeNotifierProvider(create: (context) => NotificationService()),
+        ChangeNotifierProvider(create: (context) => InstalledAppsProvider()),
         ChangeNotifierProvider.value(value: widget.themeProvider),
         ChangeNotifierProvider(create: (context) => ScrapingProvider()),
         ChangeNotifierProvider(

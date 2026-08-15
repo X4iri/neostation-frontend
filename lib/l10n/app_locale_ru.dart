@@ -190,6 +190,9 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.showSearchTab: 'Показывать вкладку поиска',
   AppLocale.showSearchTabSubtitle:
       'Отображает вкладку поиска на панели навигации',
+  AppLocale.showAppsTab: 'Показывать вкладку приложений',
+  AppLocale.showAppsTabSubtitle:
+      'Отображать вкладку приложений в панели навигации',
 
   AppLocale.configureDirectories: 'Директории',
   AppLocale.configureRomsFolder: 'Настроить папку ROM',
@@ -457,6 +460,11 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.regionUpdated: 'Приоритет регионов обновлён',
   AppLocale.regionError: 'Ошибка обновления приоритета регионов',
   AppLocale.systems: 'Системы',
+  AppLocale.apps: 'Приложения',
+  AppLocale.appInfo: 'О приложении',
+  AppLocale.uninstall: 'Удалить',
+  AppLocale.addToFavorites: 'Добавить в избранное',
+  AppLocale.removeFromFavorites: 'Удалить из избранного',
   AppLocale.screenscraper: 'Аккаунт ScreenScraper',
   AppLocale.totalGames: 'Всего игр',
   AppLocale.successFailed: 'Успешно / Ошибка',
@@ -549,7 +557,6 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.cannotReadFolder: 'Не удалось прочитать папку',
   AppLocale.noStorageFound: 'Хранилище не найдено',
   AppLocale.lastPlayed: 'Последний запуск',
-  AppLocale.apps: 'Приложения',
   AppLocale.tracks: 'Треки',
   AppLocale.games: 'Игры',
   AppLocale.enter: 'Войти',

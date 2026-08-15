@@ -1,6 +1,9 @@
 /// All string keys used throughout the app.
 /// Usage: AppLocale.play.getString(context)
-library;
+
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+export 'package:flutter_localization/flutter_localization.dart';
 
 part 'app_locale_en.dart';
 part 'app_locale_es.dart';
@@ -22,6 +25,11 @@ mixin AppLocale {
   static const String navigate = 'navigate';
   static const String select = 'select';
   static const String back = 'back';
+  static const String apps = 'apps';
+  static const String appInfo = 'app_info';
+  static const String uninstall = 'uninstall';
+  static const String addToFavorites = 'add_to_favorites';
+  static const String removeFromFavorites = 'remove_from_favorites';
   static const String close = 'close';
   static const String cancel = 'cancel';
   static const String ok = 'ok';
@@ -174,8 +182,10 @@ mixin AppLocale {
   static const String permissionDisabled = 'permission_disabled';
   static const String allFilesAccessSubtitle = 'all_files_access_subtitle';
   static const String defaultLauncherSubtitle = 'default_launcher_subtitle';
+  static const String defaultLauncher = 'default_launcher';
   static const String isDefaultLauncher = 'is_default_launcher';
   static const String setAsDefaultLauncher = 'set_as_default_launcher';
+  static const String lastPlayed = 'last_played';
   static const String disableSecondaryScreen = 'disable_secondary_screen';
   static const String disableSecondaryScreenSub =
       'disable_secondary_screen_sub';
@@ -192,6 +202,13 @@ mixin AppLocale {
   static const String showRommTabSubtitle = 'show_romm_tab_subtitle';
   static const String showSearchTab = 'show_search_tab';
   static const String showSearchTabSubtitle = 'show_search_tab_subtitle';
+  static const String showAppsTab = 'show_apps_tab';
+  static const String showAppsTabSubtitle = 'show_apps_tab_subtitle';
+
+  // ---------------------------------------------------------------------------
+  // Android Apps
+  // ---------------------------------------------------------------------------
+  static const String systems = 'systems';
 
   // ---------------------------------------------------------------------------
   // Directories
@@ -479,7 +496,6 @@ mixin AppLocale {
   static const String regionPrioritySub = 'region_priority_sub';
   static const String regionUpdated = 'region_updated';
   static const String regionError = 'region_error';
-  static const String systems = 'systems';
   static const String screenscraper = 'screenscraper';
   static const String totalGames = 'total_games';
   static const String successFailed = 'success_failed';
@@ -542,9 +558,6 @@ mixin AppLocale {
   static const String gold = 'gold';
   static const String developer = 'developer';
   static const String member = 'member';
-  static const String defaultLauncher = 'default_launcher';
-  static const String lastPlayed = 'last_played';
-  static const String apps = 'apps';
   static const String tracks = 'tracks';
   static const String games = 'games';
   static const String enter = 'enter';
@@ -1182,4 +1195,8 @@ mixin AppLocale {
     'ja': '日本語',
     'ko': '한국어',
   };
+}
+
+extension AppLocaleExtension on String {
+  String tr(BuildContext context) => getString(context);
 }
