@@ -8,9 +8,12 @@ import 'package:neostation/services/android_service.dart';
 import 'package:neostation/services/sfx_service.dart';
 import 'package:neostation/l10n/app_locale.dart';
 import 'package:neostation/utils/gamepad_nav.dart';
+import 'package:neostation/screens/app_screen.dart' show AppNavigation;
 import 'package:neostation/services/game_service.dart' show GamepadNavigationManager;
 import 'package:neostation/themes/corner_radii.dart';
 import 'widgets/app_management_modal.dart';
+
+import 'package:neostation/responsive.dart';
 
 class InstalledAppsScreen extends StatefulWidget {
   const InstalledAppsScreen({super.key});
@@ -44,6 +47,8 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       onNavigateRight: _navigateRight,
       onSelectItem: _launchSelectedApp,
       onFavorite: _openManagementModal,
+      onPreviousTab: () => AppNavigation.previousTab(),
+      onNextTab: () => AppNavigation.nextTab(),
       onBack: () => GamepadNavigationManager.popLayer('installed_apps_screen'),
     );
 
@@ -58,6 +63,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
 
   @override
   void dispose() {
+    InstalledAppsScreen._currentInstance = null;
     _scrollController.dispose();
     _gamepadNav.dispose();
     super.dispose();
@@ -75,6 +81,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
+    SfxService().playNavSound();
   }
 
   void _navigateDown() {
@@ -89,6 +96,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
+    SfxService().playNavSound();
   }
 
   void _navigateLeft() {
@@ -103,6 +111,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
+    SfxService().playNavSound();
   }
 
   void _navigateRight() {
@@ -117,27 +126,39 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
       );
     });
     _scrollToSelected();
+    SfxService().playNavSound();
   }
 
   int _getCrossAxisCount() {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1200) return 8;
-    if (width > 900) return 6;
-    if (width > 600) return 4;
-    return 3;
+    return Responsive.getAndroidAppsCrossAxisCount(context);
   }
 
   void _scrollToSelected() {
-    // Basic implementation of scroll-into-view
+    if (!_scrollController.hasClients) return;
+    
     final cols = _getCrossAxisCount();
     final row = _selectedIndex ~/ cols;
-    final itemHeight = 100.r; // Estimated height
-    final targetOffset = row * itemHeight;
+    final itemWidth = (MediaQuery.of(context).size.width - 32.r - (cols - 1) * 16.r) / cols;
+    final itemHeight = itemWidth / 1.0; // childAspectRatio
+    final verticalSpacing = 16.r;
     
-    if (targetOffset < _scrollController.offset) {
-      _scrollController.animateTo(targetOffset, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-    } else if (targetOffset + itemHeight > _scrollController.offset + MediaQuery.of(context).size.height - 150.r) {
-      _scrollController.animateTo(targetOffset - MediaQuery.of(context).size.height + 250.r, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+    final targetOffset = row * (itemHeight + verticalSpacing);
+    
+    final viewportHeight = MediaQuery.of(context).size.height - 150.r; // Estimated height for header/footer
+    final currentOffset = _scrollController.offset;
+
+    if (targetOffset < currentOffset) {
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    } else if (targetOffset + itemHeight > currentOffset + viewportHeight) {
+      _scrollController.animateTo(
+        targetOffset + itemHeight - viewportHeight,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -165,7 +186,6 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final provider = context.watch<InstalledAppsProvider>();
     final apps = provider.apps;
 
@@ -188,7 +208,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
                           crossAxisCount: _getCrossAxisCount(),
                           crossAxisSpacing: 16.r,
                           mainAxisSpacing: 16.r,
-                          childAspectRatio: 0.9,
+                          childAspectRatio: 1.0,
                         ),
                         itemCount: apps.length,
                         itemBuilder: (context, index) {
@@ -230,69 +250,67 @@ class _AppCard extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          borderRadius: Theme.of(context).extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
-          border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-            width: 2.r,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 8.r,
-                    spreadRadius: 2.r,
-                  )
-                ]
-              : null,
-        ),
-        child: ClipRRect(
-          borderRadius: Theme.of(context).extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
-          child: Stack(
-            children: [
-              Container(
-                color: theme.cardColor.withValues(alpha: 0.5),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.all(12.r),
-                        child: app.icon != null
-                            ? Image.memory(app.icon!, fit: BoxFit.contain)
-                            : Icon(Icons.android, size: 48.r),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.r, vertical: 4.r),
-                      child: Text(
-                        app.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 10.r,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Focus Ring with glow (outside the card)
+          if (isSelected)
+            Positioned.fill(
+              left: -4.r,
+              top: -4.r,
+              right: -4.r,
+              bottom: -4.r,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: (theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r)).add(BorderRadius.circular(4.r)),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.8),
+                    width: 2.r,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                      blurRadius: 10.r,
+                      spreadRadius: 2.r,
+                    )
                   ],
                 ),
               ),
-              if (app.isFavorite)
-                Positioned(
-                  top: 4.r,
-                  right: 4.r,
-                  child: Icon(
-                    Icons.star_rounded,
-                    color: Colors.amber,
-                    size: 18.r,
+            ),
+          
+          // Actual Card
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
+              color: theme.cardColor.withValues(alpha: 0.5),
+            ),
+            child: ClipRRect(
+              borderRadius: theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12.r),
+                      child: app.icon != null
+                          ? Image.memory(app.icon!, fit: BoxFit.contain)
+                          : Icon(Icons.android, size: 48.r),
+                    ),
                   ),
-                ),
-            ],
+                  if (app.isFavorite)
+                    Positioned(
+                      top: 4.r,
+                      right: 4.r,
+                      child: Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 18.r,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
