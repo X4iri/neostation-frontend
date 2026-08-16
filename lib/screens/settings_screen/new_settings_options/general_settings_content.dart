@@ -221,6 +221,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
 
   /// Selection Dispatcher: Executes the action associated with the specified setting index.
   void selectItem(int index) {
+    SfxService().playNavSound();
     int currentItemIndex = 0;
     final configProvider = context.read<SqliteConfigProvider>();
 
@@ -425,6 +426,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
@@ -447,6 +449,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -472,6 +475,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -497,6 +501,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -522,6 +527,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -547,6 +553,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -574,18 +581,14 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     opacity: config.sfxEnabled ? 1.0 : 0.4,
                     child: SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
                       title: AppLocale.sfxVolume.getString(context),
                       subtitle: AppLocale.sfxVolumeSubtitle.getString(context),
-                      trailing: GestureDetector(
-                        onTap: config.sfxEnabled
-                            ? () => _cycleSfxVolume(provider)
-                            : null,
-                        child: SettingValueChip(
-                          text: _sfxVolumeLabel(context, config.sfxVolume),
-                        ),
+                      trailing: SettingValueChip(
+                        text: _sfxVolumeLabel(context, config.sfxVolume),
                       ),
                     ),
                   );
@@ -597,6 +600,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
@@ -627,6 +631,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final hidden = spec.hidden?.call(config) ?? false;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
@@ -653,20 +658,16 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                   final index = currentItemIdx++;
                   return SettingRow(
                     key: _itemKeys[index],
+                    onTap: () => selectItem(index),
                     focused:
                         widget.isContentFocused &&
                         widget.selectedContentIndex == index,
                     title: AppLocale.language.getString(context),
                     subtitle: AppLocale.languageSub.getString(context),
-                    trailing: GestureDetector(
-                      onTap: () =>
-                          _showLanguagePicker(context, _itemKeys[index]),
-                      child: SettingValueChip(
-                        text:
-                            AppLocale.supportedLanguages[config.appLanguage] ??
-                            config.appLanguage,
-                        trailingIcon: Symbols.arrow_drop_down_rounded,
-                      ),
+                    trailing: SettingValueChip(
+                      text: AppLocale.supportedLanguages[config.appLanguage] ??
+                          config.appLanguage,
+                      trailingIcon: Symbols.arrow_drop_down_rounded,
                     ),
                   );
                 }(),
@@ -681,6 +682,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       expandTitle: false,
                       focused:
                           widget.isContentFocused &&
@@ -705,6 +707,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
@@ -752,6 +755,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
@@ -775,6 +779,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
@@ -806,6 +811,7 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     final index = currentItemIdx++;
                     return SettingRow(
                       key: _itemKeys[index],
+                      onTap: () => selectItem(index),
                       focused:
                           widget.isContentFocused &&
                           widget.selectedContentIndex == index,
