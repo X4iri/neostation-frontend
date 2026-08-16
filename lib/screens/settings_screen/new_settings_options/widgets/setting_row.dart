@@ -97,8 +97,12 @@ class SettingRow extends StatelessWidget {
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
           child: Padding(
-            padding:
-                EdgeInsets.only(left: 12.r, right: 12.r, top: 6.r, bottom: 6.r),
+            padding: EdgeInsets.only(
+              left: 12.r,
+              right: 12.r,
+              top: 6.r,
+              bottom: 6.r,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

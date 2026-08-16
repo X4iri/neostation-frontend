@@ -125,7 +125,8 @@ const Map<String, dynamic> appLocaleFr = {
   AppLocale.errorConfiguringRetroArchPath:
       'Erreur lors de la configuration du chemin RetroArch : {error}',
   AppLocale.androidSystemSettings: 'Paramètres du Système',
-  AppLocale.androidSystemSettingsSubtitle: 'Ouvrir les paramètres système Android',
+  AppLocale.androidSystemSettingsSubtitle:
+      'Ouvrir les paramètres système Android',
   AppLocale.scanOnStartup: 'Analyser les dossiers au démarrage',
   AppLocale.nowPlayingDimAfter: 'Atténuer Now Playing après',
   AppLocale.nowPlayingDimAfterSubtitle:

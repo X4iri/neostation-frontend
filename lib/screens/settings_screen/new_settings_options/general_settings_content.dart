@@ -436,8 +436,9 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                       trailing: Icon(
                         Symbols.open_in_new_rounded,
                         size: 18.r,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     );
                   }(),
@@ -665,7 +666,8 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                     title: AppLocale.language.getString(context),
                     subtitle: AppLocale.languageSub.getString(context),
                     trailing: SettingValueChip(
-                      text: AppLocale.supportedLanguages[config.appLanguage] ??
+                      text:
+                          AppLocale.supportedLanguages[config.appLanguage] ??
                           config.appLanguage,
                       trailingIcon: Symbols.arrow_drop_down_rounded,
                     ),
