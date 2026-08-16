@@ -118,6 +118,8 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.retroArchPathConfigured: 'Jalur RetroArch berhasil dikonfigurasi',
   AppLocale.errorConfiguringRetroArchPath:
       'Kesalahan saat mengonfigurasi jalur RetroArch: {error}',
+  AppLocale.androidSystemSettings: 'Pengaturan Sistem',
+  AppLocale.androidSystemSettingsSubtitle: 'Buka pengaturan sistem Android',
   AppLocale.scanOnStartup: 'Pindai folder saat mulai',
   AppLocale.nowPlayingDimAfter: 'Redupkan Now Playing setelah',
   AppLocale.nowPlayingDimAfterSubtitle:

@@ -543,6 +543,10 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
                 "openLauncherSettings" -> {
                     openLauncherSettings(result)
                 }
+                "openSystemSettings" -> {
+                    openSystemSettings()
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }
@@ -787,6 +791,16 @@ class MainActivity: MultiDisplayFlutterActivity(), GamepadsCompatibleActivity {
             } catch (fallbackException: Exception) {
                 result.error("OPEN_FAILED", fallbackException.message, null)
             }
+        }
+    }
+
+    private fun openSystemSettings() {
+        try {
+            val intent = Intent(android.provider.Settings.ACTION_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            println("Error opening system settings: ${e.message}")
         }
     }
 

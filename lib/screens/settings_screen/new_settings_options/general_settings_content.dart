@@ -177,9 +177,24 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
     }
   }
 
+  /// Platform: Android - Triggers the native system settings activity.
+  Future<void> _openSystemSettings() async {
+    if (Platform.isAndroid) {
+      try {
+        const platform = MethodChannel('com.neogamelab.neostation/launcher');
+        await platform.invokeMethod('openSystemSettings');
+      } catch (e) {
+        _log.e('System settings activity could not be resolved: $e');
+      }
+    }
+  }
+
   /// Dynamic Item Resolution: Calculates the total setting items available for the current platform/configuration.
   int getItemCount() {
     int count = 0;
+    if (Platform.isAndroid) {
+      count++; // System Settings
+    }
     count++; // Scan on Startup
     count++; // Ignore hidden files in scan
     count++; // Auto-update App
@@ -208,6 +223,15 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
   void selectItem(int index) {
     int currentItemIndex = 0;
     final configProvider = context.read<SqliteConfigProvider>();
+
+    // Protocol: Native Android Settings.
+    if (Platform.isAndroid) {
+      if (index == currentItemIndex) {
+        _openSystemSettings();
+        return;
+      }
+      currentItemIndex++;
+    }
 
     // Protocol: Background ROM Scanning.
     if (index == currentItemIndex) {
@@ -395,6 +419,29 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Setting: System Settings (Android only).
+                if (Platform.isAndroid) ...[
+                  () {
+                    final index = currentItemIdx++;
+                    return SettingRow(
+                      key: _itemKeys[index],
+                      focused:
+                          widget.isContentFocused &&
+                          widget.selectedContentIndex == index,
+                      title: AppLocale.androidSystemSettings.getString(context),
+                      subtitle: AppLocale.androidSystemSettingsSubtitle
+                          .getString(context),
+                      trailing: Icon(
+                        Symbols.open_in_new_rounded,
+                        size: 18.r,
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    );
+                  }(),
+                  SizedBox(height: 12.r),
+                ],
+
                 // Setting: Scan on Startup.
                 () {
                   final index = currentItemIdx++;

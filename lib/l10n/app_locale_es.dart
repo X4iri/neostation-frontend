@@ -120,6 +120,8 @@ const Map<String, dynamic> appLocaleEs = {
       'Ruta de RetroArch configurada correctamente',
   AppLocale.errorConfiguringRetroArchPath:
       'Error al configurar la ruta de RetroArch: {error}',
+  AppLocale.androidSystemSettings: 'Ajustes del Sistema',
+  AppLocale.androidSystemSettingsSubtitle: 'Abrir ajustes del sistema Android',
   AppLocale.scanOnStartup: 'Escanear al Iniciar',
   AppLocale.nowPlayingDimAfter: 'Atenuar «Reproduciendo» tras',
   AppLocale.nowPlayingDimAfterSubtitle:

@@ -105,6 +105,8 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.retroArchPathConfigured: 'RetroArchのパスが正常に設定されました',
   AppLocale.errorConfiguringRetroArchPath:
       'RetroArchのパス設定中にエラーが発生しました: {error}',
+  AppLocale.androidSystemSettings: 'システム設定',
+  AppLocale.androidSystemSettingsSubtitle: 'Androidのシステム設定を開く',
   AppLocale.scanOnStartup: '起動時にフォルダをスキャン',
   AppLocale.nowPlayingDimAfter: 'Now Playingを暗くするまでの時間',
   AppLocale.nowPlayingDimAfterSubtitle: 'セカンダリ画面でパネルが暗くなるまでの操作なしの時間',

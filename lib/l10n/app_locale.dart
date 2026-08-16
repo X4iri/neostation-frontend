@@ -131,6 +131,9 @@ mixin AppLocale {
   static const String retroArchPathConfigured = 'retroarch_path_configured';
   static const String errorConfiguringRetroArchPath =
       'error_configuring_retroarch_path';
+  static const String androidSystemSettings = 'android_system_settings';
+  static const String androidSystemSettingsSubtitle =
+      'android_system_settings_subtitle';
   static const String scanOnStartup = 'scan_on_startup';
   static const String scanOnStartupSubtitle = 'scan_on_startup_subtitle';
   static const String nowPlayingDimAfter = 'now_playing_dim_after';

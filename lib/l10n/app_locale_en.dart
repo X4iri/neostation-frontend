@@ -114,6 +114,8 @@ const Map<String, dynamic> appLocaleEn = {
   AppLocale.retroArchPathConfigured: 'RetroArch path configured successfully',
   AppLocale.errorConfiguringRetroArchPath:
       'Error configuring RetroArch path: {error}',
+  AppLocale.androidSystemSettings: 'System Settings',
+  AppLocale.androidSystemSettingsSubtitle: 'Open android system settings',
   AppLocale.scanOnStartup: 'Scan folders on Startup',
   AppLocale.nowPlayingDimAfter: 'Dim Now Playing after',
   AppLocale.nowPlayingDimAfterSubtitle:
