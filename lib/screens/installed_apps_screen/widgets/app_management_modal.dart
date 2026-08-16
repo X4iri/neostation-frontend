@@ -1,3 +1,4 @@
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -91,8 +92,8 @@ class _AppManagementModalState extends State<AppManagementModal> {
     final provider = context.watch<InstalledAppsProvider>();
     final isFav = provider.isFavorite(widget.app.packageName);
 
-    final favLabel = isFav 
-        ? AppLocale.removeFromFavorites.getString(context) 
+    final favLabel = isFav
+        ? AppLocale.removeFromFavorites.getString(context)
         : AppLocale.addToFavorites.getString(context);
 
     final actions = [
@@ -129,8 +130,12 @@ class _AppManagementModalState extends State<AppManagementModal> {
         width: 300.r,
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
-          borderRadius: theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(24.r),
-          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+          borderRadius:
+              theme.extension<CornerRadii>()?.radiusExternal ??
+              BorderRadius.circular(24.r),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -146,7 +151,9 @@ class _AppManagementModalState extends State<AppManagementModal> {
                   SizedBox(height: 16.r),
                   Text(
                     widget.app.name,
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -167,11 +174,19 @@ class _AppManagementModalState extends State<AppManagementModal> {
                   if (hovering) setState(() => _selectedIndex = index);
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24.r, vertical: 16.r),
-                  color: isFocused ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.r,
+                    vertical: 16.r,
+                  ),
+                  color: isFocused
+                      ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                      : null,
                   child: Row(
                     children: [
-                      Icon(action.icon, color: isFocused ? theme.colorScheme.primary : null),
+                      Icon(
+                        action.icon,
+                        color: isFocused ? theme.colorScheme.primary : null,
+                      ),
                       SizedBox(width: 16.r),
                       Text(
                         action.label,
@@ -198,9 +213,5 @@ class _ModalAction {
   final String label;
   final VoidCallback onTap;
 
-  _ModalAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  _ModalAction({required this.icon, required this.label, required this.onTap});
 }

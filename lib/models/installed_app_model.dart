@@ -18,7 +18,10 @@ class InstalledAppModel {
     this.isFavorite = false,
   });
 
-  factory InstalledAppModel.fromMap(Map<String, dynamic> map, {bool isFavorite = false}) {
+  factory InstalledAppModel.fromMap(
+    Map<String, dynamic> map, {
+    bool isFavorite = false,
+  }) {
     return InstalledAppModel(
       name: map['name']?.toString() ?? '',
       packageName: map['package']?.toString() ?? '',
@@ -48,5 +51,6 @@ class InstalledAppModel {
   }
 
   @override
-  String toString() => 'InstalledAppModel(name: $name, package: $packageName, isFavorite: $isFavorite)';
+  String toString() =>
+      'InstalledAppModel(name: $name, package: $packageName, isFavorite: $isFavorite)';
 }

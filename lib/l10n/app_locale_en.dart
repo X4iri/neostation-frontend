@@ -186,8 +186,7 @@ const Map<String, dynamic> appLocaleEn = {
   AppLocale.showSearchTabSubtitle:
       'Display the Search tab in the navigation bar',
   AppLocale.showAppsTab: 'Show Apps tab',
-  AppLocale.showAppsTabSubtitle:
-      'Display the Apps tab in the navigation bar',
+  AppLocale.showAppsTabSubtitle: 'Display the Apps tab in the navigation bar',
 
   AppLocale.configureDirectories: 'Directories',
   AppLocale.configureRomsFolder: 'Configure ROMs folder',

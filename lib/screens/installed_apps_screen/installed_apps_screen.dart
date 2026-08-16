@@ -1,3 +1,4 @@
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -107,16 +108,19 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
 
   void _scrollToSelected() {
     if (!_scrollController.hasClients) return;
-    
+
     final cols = _getCrossAxisCount();
     final row = _selectedIndex ~/ cols;
-    final itemWidth = (MediaQuery.of(context).size.width - 32.r - (cols - 1) * 16.r) / cols;
+    final itemWidth =
+        (MediaQuery.of(context).size.width - 32.r - (cols - 1) * 16.r) / cols;
     final itemHeight = itemWidth / 1.0; // childAspectRatio
     final verticalSpacing = 16.r;
-    
+
     final targetOffset = row * (itemHeight + verticalSpacing);
-    
-    final viewportHeight = MediaQuery.of(context).size.height - 150.r; // Estimated height for header/footer
+
+    final viewportHeight =
+        MediaQuery.of(context).size.height -
+        150.r; // Estimated height for header/footer
     final currentOffset = _scrollController.offset;
 
     if (targetOffset < currentOffset) {
@@ -137,7 +141,7 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
   Future<void> _launchSelectedApp() async {
     final apps = context.read<InstalledAppsProvider>().apps;
     if (apps.isEmpty || _selectedIndex >= apps.length) return;
-    
+
     final app = apps[_selectedIndex];
     SfxService().playEnterSound();
     await AndroidService.launchPackage(app.packageName);
@@ -146,10 +150,10 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
   void _openManagementModal() {
     final apps = context.read<InstalledAppsProvider>().apps;
     if (apps.isEmpty || _selectedIndex >= apps.length) return;
-    
+
     final app = apps[_selectedIndex];
     SfxService().playNavSound();
-    
+
     showDialog(
       context: context,
       builder: (context) => AppManagementModal(app: app),
@@ -170,32 +174,32 @@ class _InstalledAppsScreenState extends State<InstalledAppsScreen> {
             child: provider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : apps.isEmpty
-                    ? Center(
-                        child: Text(AppLocale.searchNoResults.getString(context)),
-                      )
-                    : GridView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.all(16.r),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: _getCrossAxisCount(),
-                          crossAxisSpacing: 16.r,
-                          mainAxisSpacing: 16.r,
-                          childAspectRatio: 1.0,
-                        ),
-                        itemCount: apps.length,
-                        itemBuilder: (context, index) {
-                          final app = apps[index];
-                          final isSelected = index == _selectedIndex;
-                          return _AppCard(
-                            app: app,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setState(() => _selectedIndex = index);
-                              _launchSelectedApp();
-                            },
-                          );
+                ? Center(
+                    child: Text(AppLocale.searchNoResults.getString(context)),
+                  )
+                : GridView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.all(16.r),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(),
+                      crossAxisSpacing: 16.r,
+                      mainAxisSpacing: 16.r,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: apps.length,
+                    itemBuilder: (context, index) {
+                      final app = apps[index];
+                      final isSelected = index == _selectedIndex;
+                      return _AppCard(
+                        app: app,
+                        isSelected: isSelected,
+                        onTap: () {
+                          setState(() => _selectedIndex = index);
+                          _launchSelectedApp();
                         },
-                      ),
+                      );
+                    },
+                  ),
           ),
           if (apps.isNotEmpty && _selectedIndex < apps.length)
             _AppsFooter(app: apps[_selectedIndex]),
@@ -219,7 +223,7 @@ class _AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Stack(
@@ -234,7 +238,10 @@ class _AppCard extends StatelessWidget {
               bottom: -4.r,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: (theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r)).add(BorderRadius.circular(4.r)),
+                  borderRadius:
+                      (theme.extension<CornerRadii>()?.radiusExternal ??
+                              BorderRadius.circular(14.r))
+                          .add(BorderRadius.circular(4.r)),
                   border: Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.8),
                     width: 2.r,
@@ -244,20 +251,24 @@ class _AppCard extends StatelessWidget {
                       color: theme.colorScheme.primary.withValues(alpha: 0.4),
                       blurRadius: 10.r,
                       spreadRadius: 2.r,
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
-          
+
           // Actual Card
           Container(
             decoration: BoxDecoration(
-              borderRadius: theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
+              borderRadius:
+                  theme.extension<CornerRadii>()?.radiusExternal ??
+                  BorderRadius.circular(14.r),
               color: theme.cardColor.withValues(alpha: 0.5),
             ),
             child: ClipRRect(
-              borderRadius: theme.extension<CornerRadii>()?.radiusExternal ?? BorderRadius.circular(14.r),
+              borderRadius:
+                  theme.extension<CornerRadii>()?.radiusExternal ??
+                  BorderRadius.circular(14.r),
               child: Stack(
                 children: [
                   Center(
@@ -296,12 +307,14 @@ class _AppsFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24.r, vertical: 8.r),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor.withValues(alpha: 0.9),
-        border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
+        border: Border(
+          top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
+        ),
       ),
       child: Row(
         children: [
@@ -379,10 +392,7 @@ class _FooterAction extends StatelessWidget {
           SizedBox(width: 8.r),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12.r,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 12.r, fontWeight: FontWeight.w600),
           ),
         ],
       ),

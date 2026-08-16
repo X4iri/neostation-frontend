@@ -1,9 +1,9 @@
 /// All string keys used throughout the app.
 /// Usage: AppLocale.play.getString(context)
+library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-export 'package:flutter_localization/flutter_localization.dart';
 
 part 'app_locale_en.dart';
 part 'app_locale_es.dart';

@@ -9,7 +9,16 @@ import 'package:neostation/models/config_model.dart';
 /// (`_selectedTabIndex`, `_buildCurrentTabContent`, the secondary-display tab
 /// names). Append new tabs at the end — inserting one renumbers every existing
 /// tab and silently repoints all of that dispatch.
-enum NavTab { systems, search, apps, sync, achievements, scraper, romm, settings }
+enum NavTab {
+  systems,
+  search,
+  apps,
+  sync,
+  achievements,
+  scraper,
+  romm,
+  settings,
+}
 
 /// Static description of one navigation tab: how it is drawn, whether the user
 /// may hide it, and how that preference is read and written.

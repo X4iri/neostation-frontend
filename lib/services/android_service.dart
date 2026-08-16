@@ -25,10 +25,7 @@ class AndroidService {
     try {
       final List<dynamic> apps = await _channel.invokeMethod(
         'getInstalledApps',
-        {
-          'includeSystemApps': includeSystemApps,
-          'includeIcons': includeIcons,
-        },
+        {'includeSystemApps': includeSystemApps, 'includeIcons': includeIcons},
       );
 
       return apps.map((dynamic item) {

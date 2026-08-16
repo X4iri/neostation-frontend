@@ -186,8 +186,7 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.showSearchTabSubtitle:
       'Menampilkan tab pencarian di bilah navigasi',
   AppLocale.showAppsTab: 'Tampilkan tab Aplikasi',
-  AppLocale.showAppsTabSubtitle:
-      'Tampilkan tab Aplikasi di bilah navigasi',
+  AppLocale.showAppsTabSubtitle: 'Tampilkan tab Aplikasi di bilah navigasi',
 
   AppLocale.configureDirectories: 'Konfigurasi Direktori',
   AppLocale.configureRomsFolder: 'Konfigurasi Folder ROM',

@@ -190,8 +190,7 @@ const Map<String, dynamic> appLocalePt = {
   AppLocale.showSearchTabSubtitle:
       'Exibe a aba de pesquisa na barra de navegação',
   AppLocale.showAppsTab: 'Mostrar aba de Apps',
-  AppLocale.showAppsTabSubtitle:
-      'Exibir a aba de Apps na barra de navegação',
+  AppLocale.showAppsTabSubtitle: 'Exibir a aba de Apps na barra de navegação',
 
   AppLocale.configureDirectories: 'Configurar Diretórios',
   AppLocale.configureRomsFolder: 'Configurar Pasta de ROMs',

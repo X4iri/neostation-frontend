@@ -39,13 +39,15 @@ class InstalledAppsProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       _favorites = await SqliteService.getAppFavorites();
-      final List<Map<String, dynamic>> rawApps = await AndroidService.getInstalledApps(
-        includeIcons: true,
-      );
+      final List<Map<String, dynamic>> rawApps =
+          await AndroidService.getInstalledApps(includeIcons: true);
 
       _apps = rawApps.map((map) {
         final pkg = map['package']?.toString() ?? '';
-        return InstalledAppModel.fromMap(map, isFavorite: _favorites.contains(pkg));
+        return InstalledAppModel.fromMap(
+          map,
+          isFavorite: _favorites.contains(pkg),
+        );
       }).toList();
 
       _sortApps();
@@ -69,7 +71,7 @@ class InstalledAppsProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> toggleFavorite(String packageName) async {
     final isFav = _favorites.contains(packageName);
     await SqliteService.setAppFavorite(packageName, !isFav);
-    
+
     if (isFav) {
       _favorites.remove(packageName);
     } else {
