@@ -840,6 +840,16 @@ class RommService {
     return urls;
   }
 
+  /// Builds an absolute, authenticated-fetchable custom cover URL for
+  /// [collection], or null if it has no custom artwork.
+  String? collectionCover(RommCollection collection) {
+    final cover = collection.urlCover;
+    if (cover == null || cover.isEmpty) return null;
+    return (cover.startsWith('http://') || cover.startsWith('https://'))
+        ? cover
+        : '$_baseUrl${cover.startsWith('/') ? '' : '/'}$cover';
+  }
+
   /// Absolute, authenticated-fetchable cover URLs making up [collection]'s
   /// mosaic thumbnail (up to [limit], RomM's web UI uses 4). Empty when the
   /// server reported no covers.

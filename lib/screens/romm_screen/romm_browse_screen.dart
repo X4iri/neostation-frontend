@@ -1293,11 +1293,20 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
     final service = provider.service;
     final urls = <String>{};
     for (final collection in provider.collections) {
-      urls.addAll(service.collectionCovers(collection, limit: 1));
+      if (collection.hasCustomCover) {
+        final custom = service.collectionCover(collection);
+        if (custom != null) urls.add(custom);
+      } else {
+        urls.addAll(service.collectionCovers(collection, limit: 1));
+      }
       if (urls.length == 4) return urls.toList();
     }
     for (final collection in provider.collections) {
-      urls.addAll(service.collectionCovers(collection));
+      // If we don't have enough, top up with more mosaic components from
+      // collections that don't have their own custom artwork.
+      if (!collection.hasCustomCover) {
+        urls.addAll(service.collectionCovers(collection));
+      }
       if (urls.length >= 4) break;
     }
     return urls.take(4).toList();
@@ -1417,6 +1426,7 @@ class _RommBrowseScreenState extends State<RommBrowseScreen> {
               final collection = provider.collections[index];
               return _CollectionCard(
                 collection: collection,
+                customCover: provider.service.collectionCover(collection),
                 covers: provider.service.collectionCovers(collection),
                 headersFor: provider.service.imageHeadersFor,
                 isFocused: _collectionIndex == index,
@@ -1929,6 +1939,7 @@ class _SourceMenuCard extends StatelessWidget {
 /// back to a bookmark icon when the server reports no covers.
 class _CollectionCard extends StatelessWidget {
   final RommCollection collection;
+  final String? customCover;
   final List<String> covers;
   final Map<String, String> Function(String url) headersFor;
   final bool isFocused;
@@ -1937,6 +1948,7 @@ class _CollectionCard extends StatelessWidget {
 
   const _CollectionCard({
     required this.collection,
+    this.customCover,
     required this.covers,
     required this.headersFor,
     required this.isFocused,
@@ -1986,6 +1998,9 @@ class _CollectionCard extends StatelessWidget {
   }
 
   Widget _buildMontage() {
+    if (collection.hasCustomCover && customCover != null) {
+      return _coverTile(customCover!, scheme, headersFor);
+    }
     if (covers.isEmpty) {
       return _montagePlaceholder(
         scheme,

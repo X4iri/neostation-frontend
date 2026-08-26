@@ -28,11 +28,11 @@ void main() {
 
       expect(built.rows, hasLength(3));
       expect(built.rows.every((r) => r is LocalRow), isTrue);
-      expect(built.focusable, [
-        0,
-        1,
-        2,
-      ], reason: 'with no RomM section the two index spaces coincide');
+      expect(
+        built.focusable,
+        [0, 1, 2],
+        reason: 'with no RomM section the two index spaces coincide',
+      );
     });
 
     test('an empty library produces no rows and nothing focusable', () {
@@ -58,12 +58,11 @@ void main() {
       final built = withRemote();
 
       expect(built.rows[2], isA<RemoteHeaderRow>());
-      expect(built.focusable, [
-        0,
-        1,
-        3,
-        4,
-      ], reason: 'row 2 is the header and has to be skipped by Up/Down');
+      expect(
+        built.focusable,
+        [0, 1, 3, 4],
+        reason: 'row 2 is the header and has to be skipped by Up/Down',
+      );
     });
 
     test('selection indices resolve past the header to the right row', () {
@@ -150,9 +149,11 @@ void main() {
         (built.rows[2] as RemoteStatusRow).status,
         RemoteStatus.unsupported,
       );
-      expect(built.focusable, [
-        0,
-      ], reason: 'the note is not selectable, and it suppresses load-more');
+      expect(
+        built.focusable,
+        [0],
+        reason: 'the note is not selectable, and it suppresses load-more',
+      );
     });
 
     test('a filter RomM has no vocabulary for replaces the remote rows', () {

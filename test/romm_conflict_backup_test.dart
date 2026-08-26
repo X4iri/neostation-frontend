@@ -422,9 +422,11 @@ void main() {
 
       final listed = await provider.listSaves(gameId: '1');
 
-      expect(listed.map((f) => f.fileName), [
-        'Game.state.auto',
-      ], reason: 'the listing reports what may sync, not a server inventory');
+      expect(
+        listed.map((f) => f.fileName),
+        ['Game.state.auto'],
+        reason: 'the listing reports what may sync, not a server inventory',
+      );
     });
 
     test(

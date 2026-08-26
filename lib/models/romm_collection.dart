@@ -32,6 +32,10 @@ class RommCollection {
   /// montage in the browse grid.
   final List<String> coverUrls;
 
+  /// Whether this collection has a custom cover artwork (as opposed to
+  /// generating a mosaic from its ROMs).
+  final bool hasCustomCover;
+
   const RommCollection({
     required this.id,
     required this.name,
@@ -39,27 +43,51 @@ class RommCollection {
     this.isVirtual = false,
     this.urlCover,
     this.coverUrls = const [],
+    this.hasCustomCover = false,
   });
 
   factory RommCollection.fromJson(
     Map<String, dynamic> json, {
     required bool isVirtual,
   }) {
-    // path_covers_small/large are mosaics (lists of per-ROM cover paths); fall
-    // back to the first entry when there's no single url_cover.
-    final covers = _stringList(json['path_covers_small']);
-    if (covers.isEmpty) covers.addAll(_stringList(json['path_covers_large']));
-    String? cover = json['url_cover']?.toString();
+    // Priority 1: Custom Artwork.
+    String? cover = json['path_cover_l']?.toString();
     if (cover == null || cover.isEmpty) {
-      cover = covers.isNotEmpty ? covers.first : null;
+      cover = json['path_cover_s']?.toString();
     }
+    if (cover == null || cover.isEmpty) {
+      cover = json['url_cover']?.toString();
+    }
+
+    final bool trulyCustom = cover != null && cover.isNotEmpty;
+
+    // Priority 2: Mosaic components (per-ROM cover paths).
+    List<String> covers = _stringList(json['path_covers_l']);
+    if (covers.isEmpty) {
+      covers = _stringList(json['path_covers_s']);
+    }
+    if (covers.isEmpty) {
+      covers = _stringList(json['path_covers_large']);
+    }
+    if (covers.isEmpty) {
+      covers = _stringList(json['path_covers_small']);
+    }
+
+    // Fallback for urlCover to satisfy existing tests and single-image
+    // consumers: when no custom artwork is assigned, the "primary" image is
+    // the first mosaic tile.
+    if (!trulyCustom && covers.isNotEmpty) {
+      cover = covers.first;
+    }
+
     return RommCollection(
       id: json['id'].toString(),
       name: json['name']?.toString() ?? 'Unknown',
       romCount: (json['rom_count'] as num?)?.toInt() ?? 0,
       isVirtual: isVirtual,
-      urlCover: cover,
+      urlCover: (cover != null && cover.isNotEmpty) ? cover : null,
       coverUrls: covers,
+      hasCustomCover: trulyCustom,
     );
   }
 

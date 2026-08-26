@@ -127,11 +127,11 @@ void main() {
         file: MemoryBackend(),
       );
       final db = await SqliteService.getDatabase();
-      await db.insert('user_screenscraper_credentials', {
-        'id': 1,
-        'username': 'neil',
-        'password': null,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'user_screenscraper_credentials',
+        {'id': 1, 'username': 'neil', 'password': null},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
       final saved = await ScraperRepository.getSavedCredentials();
 
