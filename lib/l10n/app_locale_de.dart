@@ -61,6 +61,7 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.launcher: 'Launcher',
   AppLocale.emulators: 'Emulatoren',
   AppLocale.appearance: 'Aussehen',
+  AppLocale.display: 'Anzeige',
   AppLocale.systemsSettings: 'Systeme',
   AppLocale.systemsSettingsSubtitle:
       'Systeme in deiner Bibliothek anzeigen oder ausblenden',
@@ -1255,4 +1256,16 @@ const Map<String, dynamic> appLocaleDe = {
   AppLocale.noHiddenGames: 'Keine ausgeblendeten Spiele',
   AppLocale.noHiddenGamesSubtitle:
       'Blende ein Spiel in seinen Einstellungen aus, dann erscheint es hier.',
+
+  AppLocale.tacoMode: 'Taco-Modus',
+  AppLocale.tacoModeSubtitle:
+      'Begrenzt die Benutzeroberfläche auf einen Teil des Bildschirms',
+  AppLocale.tacoCalibration: 'Taco-Controller-Setup',
+  AppLocale.tacoRatio: 'Aktives Seitenverhältnis',
+  AppLocale.tacoAlignment: 'Ausrichtung',
+  AppLocale.tacoTop: 'Oben',
+  AppLocale.tacoBottom: 'Unten',
+  AppLocale.tacoSaveApply: 'Speichern & Anwenden',
+  AppLocale.tacoCurrentAspectRatio:
+      'Aktuelles Seitenverhältnis: {ratio} ({width} x {height})',
 };

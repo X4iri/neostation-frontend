@@ -14,6 +14,8 @@ import '../providers/sqlite_config_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:flutter/services.dart';
+
 /// Widget that detects when the app returns to the foreground and reactivates the gamepad
 class AppLifecycleHandler extends StatefulWidget {
   final Widget child;
@@ -141,6 +143,16 @@ class _AppLifecycleHandlerState extends State<AppLifecycleHandler>
         // the launcher's warning badge.
         // ignore: unawaited_futures
         configProvider.refreshSecondaryScreenshotAccess();
+
+        // Re-apply orientation if Taco Mode is enabled.
+        if (configProvider.config.tacoEnabled) {
+          SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+        } else {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
+        }
       }
 
       final notificationService = Provider.of<NotificationService>(

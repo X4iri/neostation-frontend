@@ -135,26 +135,30 @@ void main() {
       expect(await StorageSpaceService.volumeFor(''), isNull);
     });
 
-    test('identifies and measures the volume in one pass', () async {
-      final temp = await Directory.systemTemp.createTemp('romm_volume_test');
-      addTearDown(() async {
-        if (temp.existsSync()) await temp.delete(recursive: true);
-      });
+    test(
+      'identifies and measures the volume in one pass',
+      () async {
+        final temp = await Directory.systemTemp.createTemp('romm_volume_test');
+        addTearDown(() async {
+          if (temp.existsSync()) await temp.delete(recursive: true);
+        });
 
-      final volume = await StorageSpaceService.volumeFor(temp.path);
-      final child = await StorageSpaceService.volumeFor(
-        p.join(temp.path, 'psx', 'not', 'created', 'yet'),
-      );
+        final volume = await StorageSpaceService.volumeFor(temp.path);
+        final child = await StorageSpaceService.volumeFor(
+          p.join(temp.path, 'psx', 'not', 'created', 'yet'),
+        );
 
-      expect(volume, isNotNull);
-      expect(volume!.id, isNotEmpty);
-      expect(volume.freeBytes, isNotNull);
-      expect(
-        child!.id,
-        volume.id,
-        reason: 'a folder and its unborn subfolder are one volume',
-      );
-    }, skip: !(Platform.isLinux || Platform.isMacOS));
+        expect(volume, isNotNull);
+        expect(volume!.id, isNotEmpty);
+        expect(volume.freeBytes, isNotNull);
+        expect(
+          child!.id,
+          volume.id,
+          reason: 'a folder and its unborn subfolder are one volume',
+        );
+      },
+      skip: !(Platform.isLinux || Platform.isMacOS),
+    );
   });
 
   group('freeSpaceBytes', () {

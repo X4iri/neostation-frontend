@@ -167,6 +167,21 @@ class ConfigProvider extends ChangeNotifier {
     await scanSystemsAndEmulators();
   }
 
+  /// Updates Taco Mode settings.
+  Future<void> updateTacoSettings({
+    bool? enabled,
+    double? ratio,
+    String? alignment,
+  }) async {
+    _config = _config.copyWith(
+      tacoEnabled: enabled,
+      tacoRatio: ratio,
+      tacoAlignment: alignment,
+    );
+    await ConfigService.saveConfig(_config);
+    notifyListeners();
+  }
+
   /// Resets the application configuration to its factory state.
   Future<void> clearConfiguration() async {
     try {

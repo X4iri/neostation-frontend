@@ -58,6 +58,7 @@ const Map<String, dynamic> appLocaleKo = {
   AppLocale.launcher: '런처',
   AppLocale.emulators: '에뮬레이터',
   AppLocale.appearance: '화면 꾸미기',
+  AppLocale.display: '디스플레이',
   AppLocale.systemsSettings: '시스템',
   AppLocale.systemsSettingsSubtitle: '라이브러리에 표시할 시스템을 선택합니다',
   AppLocale.hideRecentCard: '최근 게임 카드',
@@ -1115,4 +1116,14 @@ const Map<String, dynamic> appLocaleKo = {
   AppLocale.hiddenGames: '숨김',
   AppLocale.noHiddenGames: '숨긴 게임 없음',
   AppLocale.noHiddenGamesSubtitle: '게임 설정에서 게임을 숨기면 여기에 표시됩니다.',
+
+  AppLocale.tacoMode: '타코 모드',
+  AppLocale.tacoModeSubtitle: 'UI를 화면의 일부로 제한',
+  AppLocale.tacoCalibration: '타코 컨트롤러 설정',
+  AppLocale.tacoRatio: '활성 비율',
+  AppLocale.tacoAlignment: '정렬',
+  AppLocale.tacoTop: '상단',
+  AppLocale.tacoBottom: '하단',
+  AppLocale.tacoSaveApply: '저장 및 적용',
+  AppLocale.tacoCurrentAspectRatio: '현재 화면 비율: {ratio} ({width} x {height})',
 };

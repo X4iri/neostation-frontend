@@ -61,6 +61,7 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.launcher: 'Launcher',
   AppLocale.emulators: 'Emulator',
   AppLocale.appearance: 'Tampilan',
+  AppLocale.display: 'Tampilan',
   AppLocale.systemsSettings: 'Sistem',
   AppLocale.systemsSettingsSubtitle:
       'Tampilkan atau sembunyikan sistem dari perpustakaan',
@@ -1219,4 +1220,15 @@ const Map<String, dynamic> appLocaleId = {
   AppLocale.noHiddenGames: 'Tidak ada game tersembunyi',
   AppLocale.noHiddenGamesSubtitle:
       'Sembunyikan game dari pengaturannya dan game itu akan muncul di sini.',
+
+  AppLocale.tacoMode: 'Mode Taco',
+  AppLocale.tacoModeSubtitle: 'Batasi UI ke sebagian layar',
+  AppLocale.tacoCalibration: 'Pengaturan Kontroler Taco',
+  AppLocale.tacoRatio: 'Rasio Aktif',
+  AppLocale.tacoAlignment: 'Penyelarasan',
+  AppLocale.tacoTop: 'Atas',
+  AppLocale.tacoBottom: 'Bawah',
+  AppLocale.tacoSaveApply: 'Simpan & Terapkan',
+  AppLocale.tacoCurrentAspectRatio:
+      'Rasio Aspek Saat Ini: {ratio} ({width} x {height})',
 };

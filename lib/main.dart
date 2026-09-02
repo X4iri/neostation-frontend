@@ -275,18 +275,12 @@ void main() async {
     }
   };
 
-  // Configure fullscreen for mobile platforms
+  // Configure immersive mode for mobile platforms
   if (Platform.isAndroid || Platform.isIOS) {
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
       overlays: [],
     );
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-      //DeviceOrientation.portraitUp,
-      //DeviceOrientation.portraitDown,
-    ]);
   }
 
   // Inicializar FileProvider
@@ -337,6 +331,18 @@ void main() async {
   try {
     // 1. Inicializar ConfigProvider primero (sincroniza sistemas)
     await sqliteConfigProvider.initialize();
+
+    // Configure orientation based on Taco Mode state after initialization
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (sqliteConfigProvider.config.tacoEnabled) {
+        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      } else {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+    }
 
     // Seed the game legend visibility from persisted config and wire its
     // persistence sink so the Select + B toggle survives restarts/upgrades.
@@ -1049,15 +1055,49 @@ class _MyAppState extends State<MyApp> {
                       checkerboardOffscreenLayers: false,
                       showSemanticsDebugger: false,
                       builder: (context, child) {
-                        return MediaQuery(
-                          data: MediaQuery.of(context).copyWith(
-                            textScaler: MediaQuery.of(context).textScaler.clamp(
-                              minScaleFactor: 0.6,
-                              maxScaleFactor: 1.4,
-                            ),
+                        final provider = context.watch<SqliteConfigProvider>();
+                        final config = provider.config;
+
+                        final mediaQuery = MediaQuery.of(context);
+                        var data = mediaQuery.copyWith(
+                          textScaler: mediaQuery.textScaler.clamp(
+                            minScaleFactor: 0.6,
+                            maxScaleFactor: 1.4,
                           ),
-                          child: child!,
                         );
+
+                        if (config.tacoEnabled) {
+                          final screenHeight = mediaQuery.size.height;
+                          final screenWidth = mediaQuery.size.width;
+                          final activeHeight = screenHeight * config.tacoRatio;
+                          final isTop = config.tacoAlignment == 'top';
+
+                          data = data.copyWith(
+                            size: Size(screenWidth, activeHeight),
+                            padding: data.padding.copyWith(
+                              top: isTop ? data.padding.top : 0,
+                              bottom: isTop ? 0 : data.padding.bottom,
+                            ),
+                          );
+
+                          return Container(
+                            color: Colors.black,
+                            child: Align(
+                              alignment: isTop
+                                  ? Alignment.topCenter
+                                  : Alignment.bottomCenter,
+                              child: SizedBox(
+                                width: screenWidth,
+                                height: activeHeight,
+                                child: ClipRect(
+                                  child: MediaQuery(data: data, child: child!),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return MediaQuery(data: data, child: child!);
                       },
                       theme: themeProvider.currentTheme.copyWith(
                         textTheme: GoogleFonts.antaTextTheme(

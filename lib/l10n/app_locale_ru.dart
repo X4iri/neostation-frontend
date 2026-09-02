@@ -61,6 +61,7 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.launcher: 'Лаунчер',
   AppLocale.emulators: 'Эмуляторы',
   AppLocale.appearance: 'Внешний вид',
+  AppLocale.display: 'Экран',
   AppLocale.systemsSettings: 'Системы',
   AppLocale.systemsSettingsSubtitle:
       'Показать или скрыть системы из библиотеки',
@@ -1218,4 +1219,15 @@ const Map<String, dynamic> appLocaleRu = {
   AppLocale.noHiddenGames: 'Нет скрытых игр',
   AppLocale.noHiddenGamesSubtitle:
       'Скройте игру в её настройках, и она появится здесь.',
+
+  AppLocale.tacoMode: 'Режим Taco',
+  AppLocale.tacoModeSubtitle: 'Ограничить интерфейс частью экрана',
+  AppLocale.tacoCalibration: 'Настройка контроллера Taco',
+  AppLocale.tacoRatio: 'Активное соотношение',
+  AppLocale.tacoAlignment: 'Выравнивание',
+  AppLocale.tacoTop: 'Сверху',
+  AppLocale.tacoBottom: 'Снизу',
+  AppLocale.tacoSaveApply: 'Сохранить и применить',
+  AppLocale.tacoCurrentAspectRatio:
+      'Текущее соотношение сторон: {ratio} ({width} x {height})',
 };

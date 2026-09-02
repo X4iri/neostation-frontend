@@ -59,6 +59,7 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.launcher: 'ランチャー',
   AppLocale.emulators: 'エミュレータ',
   AppLocale.appearance: '外観',
+  AppLocale.display: 'ディスプレイ',
   AppLocale.systemsSettings: 'システム',
   AppLocale.systemsSettingsSubtitle: 'ライブラリのシステムを表示または非表示にする',
   AppLocale.hideRecentCard: '最近のゲームカード',
@@ -1106,4 +1107,14 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.hiddenGames: '非表示',
   AppLocale.noHiddenGames: '非表示のゲームはありません',
   AppLocale.noHiddenGamesSubtitle: 'ゲーム設定から非表示にすると、ここに表示されます。',
+
+  AppLocale.tacoMode: 'タコモード',
+  AppLocale.tacoModeSubtitle: 'UIを画面の一部に制限する',
+  AppLocale.tacoCalibration: 'タココントローラーの設定',
+  AppLocale.tacoRatio: 'アクティブ比率',
+  AppLocale.tacoAlignment: '配置',
+  AppLocale.tacoTop: '上',
+  AppLocale.tacoBottom: '下',
+  AppLocale.tacoSaveApply: '保存して適用',
+  AppLocale.tacoCurrentAspectRatio: '現在のアスペクト比: {ratio} ({width} x {height})',
 };

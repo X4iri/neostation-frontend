@@ -128,12 +128,11 @@ void main() {
 
       await provider.loadPlatforms();
 
-      expect(provider.platforms.map((p) => p.id), [
-        2,
-        4,
-        1,
-        3,
-      ], reason: 'supported first, each group in the order the server gave');
+      expect(
+        provider.platforms.map((p) => p.id),
+        [2, 4, 1, 3],
+        reason: 'supported first, each group in the order the server gave',
+      );
     });
 
     test('unsupported platforms are never dropped from the list', () async {

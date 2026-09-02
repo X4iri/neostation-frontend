@@ -299,9 +299,11 @@ void main() {
 
       await provider.retryPendingUploads();
 
-      expect(svc.updates, [
-        assetId,
-      ], reason: 'an existing asset is updated, never posted a second time');
+      expect(
+        svc.updates,
+        [assetId],
+        reason: 'an existing asset is updated, never posted a second time',
+      );
       expect(svc.savesByRom[2], hasLength(1));
     });
 
@@ -493,9 +495,11 @@ void main() {
         final result = await provider.fullSync();
 
         expect(result.success, isTrue);
-        expect(svc.creates, [
-          '40/Kirby.srm',
-        ], reason: 'fullSync used to return ok having done nothing at all');
+        expect(
+          svc.creates,
+          ['40/Kirby.srm'],
+          reason: 'fullSync used to return ok having done nothing at all',
+        );
       },
     );
 

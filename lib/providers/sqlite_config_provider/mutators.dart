@@ -156,6 +156,35 @@ extension SqliteConfigMutators on SqliteConfigProvider {
     _notify();
   }
 
+  /// Updates Taco Mode settings.
+  Future<void> updateTacoSettings({
+    bool? enabled,
+    double? ratio,
+    String? alignment,
+  }) async {
+    final bool wasEnabled = _config.tacoEnabled;
+    _config = _config.copyWith(
+      tacoEnabled: enabled,
+      tacoRatio: ratio,
+      tacoAlignment: alignment,
+    );
+    await SqliteConfigService.saveConfig(_config);
+
+    // Update orientation if enabled state changed
+    if (enabled != null && enabled != wasEnabled) {
+      if (enabled) {
+        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      } else {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+    }
+
+    _notify();
+  }
+
   /// Persists whether the startup scan is followed by a RetroAchievements
   /// match pass over the ROMs it added.
   Future<void> updateRaMatchOnStartup(bool value) async {
