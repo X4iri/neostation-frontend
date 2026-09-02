@@ -61,7 +61,6 @@ const Map<String, dynamic> appLocaleIt = {
   AppLocale.launcher: 'Launcher',
   AppLocale.emulators: 'Emulatori',
   AppLocale.appearance: 'Aspetto',
-  AppLocale.display: 'Display',
   AppLocale.systemsSettings: 'Sistemi',
   AppLocale.systemsSettingsSubtitle:
       'Mostra o nascondi sistemi dalla tua libreria',
@@ -1252,12 +1251,8 @@ const Map<String, dynamic> appLocaleIt = {
   AppLocale.tacoMode: 'Modalità Taco',
   AppLocale.tacoModeSubtitle:
       'Limita l\'interfaccia a una porzione dello schermo',
-  AppLocale.tacoCalibration: 'Configurazione controller Taco',
-  AppLocale.tacoRatio: 'Rapporto attivo',
-  AppLocale.tacoAlignment: 'Allineamento',
-  AppLocale.tacoTop: 'Sopra',
-  AppLocale.tacoBottom: 'Sotto',
+  AppLocale.tacoCalibration: 'Configurazione del rapporto dello schermo Taco',
+  AppLocale.tacoRatio: 'Regola il rapporto',
   AppLocale.tacoSaveApply: 'Salva e applica',
-  AppLocale.tacoCurrentAspectRatio:
-      'Rapporto d\'aspetto attuale: {ratio} ({width} x {height})',
+  AppLocale.tacoCurrentAspectRatio: 'Rapporto d\'aspetto attuale: {ratio}',
 };

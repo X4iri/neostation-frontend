@@ -57,7 +57,6 @@ const Map<String, dynamic> appLocaleZhHant = {
   AppLocale.launcher: '啟動器',
   AppLocale.emulators: '模擬器',
   AppLocale.appearance: '外觀',
-  AppLocale.display: '顯示',
   AppLocale.systemsSettings: '系統',
   AppLocale.systemsSettingsSubtitle: '顯示或隱藏收藏庫中的系統',
   AppLocale.hideRecentCard: '最近遊戲卡片',
@@ -1082,11 +1081,8 @@ const Map<String, dynamic> appLocaleZhHant = {
 
   AppLocale.tacoMode: 'Taco 模式',
   AppLocale.tacoModeSubtitle: '將 UI 限制在螢幕的一部分',
-  AppLocale.tacoCalibration: 'Taco 控制器設置',
-  AppLocale.tacoRatio: '當前比例',
-  AppLocale.tacoAlignment: '對齊方式',
-  AppLocale.tacoTop: '頂部',
-  AppLocale.tacoBottom: '底部',
-  AppLocale.tacoSaveApply: '保存並應用',
-  AppLocale.tacoCurrentAspectRatio: '當前縱橫比：{ratio} ({width} x {height})',
+  AppLocale.tacoCalibration: 'Taco 螢幕比例設置',
+  AppLocale.tacoRatio: '調整比例',
+  AppLocale.tacoSaveApply: '儲存並套用',
+  AppLocale.tacoCurrentAspectRatio: '目前螢幕比例: {ratio}',
 };

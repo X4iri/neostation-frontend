@@ -1070,22 +1070,18 @@ class _MyAppState extends State<MyApp> {
                           final screenHeight = mediaQuery.size.height;
                           final screenWidth = mediaQuery.size.width;
                           final activeHeight = screenHeight * config.tacoRatio;
-                          final isTop = config.tacoAlignment == 'top';
 
                           data = data.copyWith(
                             size: Size(screenWidth, activeHeight),
                             padding: data.padding.copyWith(
-                              top: isTop ? data.padding.top : 0,
-                              bottom: isTop ? 0 : data.padding.bottom,
+                              bottom: 0,
                             ),
                           );
 
                           return Container(
                             color: Colors.black,
                             child: Align(
-                              alignment: isTop
-                                  ? Alignment.topCenter
-                                  : Alignment.bottomCenter,
+                              alignment: Alignment.topCenter,
                               child: SizedBox(
                                 width: screenWidth,
                                 height: activeHeight,

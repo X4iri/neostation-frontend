@@ -61,7 +61,6 @@ const Map<String, dynamic> appLocalePt = {
   AppLocale.launcher: 'Launcher',
   AppLocale.emulators: 'Emuladores',
   AppLocale.appearance: 'Aparência',
-  AppLocale.display: 'Ecrã',
   AppLocale.systemsSettings: 'Sistemas',
   AppLocale.systemsSettingsSubtitle:
       'Mostrar ou ocultar sistemas da sua biblioteca',
@@ -1234,12 +1233,8 @@ const Map<String, dynamic> appLocalePt = {
 
   AppLocale.tacoMode: 'Modo Taco',
   AppLocale.tacoModeSubtitle: 'Restringir a interface a uma parte do ecrã',
-  AppLocale.tacoCalibration: 'Configuração do Comando Taco',
-  AppLocale.tacoRatio: 'Rácio Ativo',
-  AppLocale.tacoAlignment: 'Alinhamento',
-  AppLocale.tacoTop: 'Topo',
-  AppLocale.tacoBottom: 'Fundo',
-  AppLocale.tacoSaveApply: 'Guardar e Aplicar',
-  AppLocale.tacoCurrentAspectRatio:
-      'Rácio de Aspeto Atual: {ratio} ({width} x {height})',
+  AppLocale.tacoCalibration: 'Configuração da proporção de tela do Taco',
+  AppLocale.tacoRatio: 'Ajustar proporção',
+  AppLocale.tacoSaveApply: 'Salvar e aplicar',
+  AppLocale.tacoCurrentAspectRatio: 'Proporção de tela atual: {ratio}',
 };

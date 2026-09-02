@@ -274,6 +274,13 @@ class SqliteConfigService {
                 ) ??
                 0) ==
             1,
+        tacoEnabled:
+            (int.tryParse(userConfig?['taco_enabled']?.toString() ?? '0') ??
+                0) ==
+            1,
+        tacoRatio:
+            double.tryParse(userConfig?['taco_ratio']?.toString() ?? '1.0') ??
+            1.0,
       );
     } catch (e) {
       _log.e('Error applying configuration in loadConfig: $e');
@@ -338,6 +345,8 @@ class SqliteConfigService {
         showAchievementsBadge: config.showAchievementsBadge ? 1 : 0,
         raMatchOnStartup: config.raMatchOnStartup ? 1 : 0,
         subfolderViewAll: config.subfolderViewAll ? 1 : 0,
+        tacoEnabled: config.tacoEnabled ? 1 : 0,
+        tacoRatio: config.tacoRatio,
       );
 
       await SqliteService.saveUserRomFolders(config.romFolders);

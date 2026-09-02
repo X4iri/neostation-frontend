@@ -214,9 +214,6 @@ class ConfigModel {
   /// The active viewport ratio for Taco Mode (0.3 to 0.8).
   final double tacoRatio;
 
-  /// The vertical alignment for Taco Mode ('top' or 'bottom').
-  final String tacoAlignment;
-
   const ConfigModel({
     this.romFolders = const [],
     this.detectedSystems = const [],
@@ -264,8 +261,7 @@ class ConfigModel {
     this.raMatchOnStartup = false,
     this.subfolderViewAll = false,
     this.tacoEnabled = false,
-    this.tacoRatio = 0.55,
-    this.tacoAlignment = 'top',
+    this.tacoRatio = 1.0,
   });
 
   /// Convenience getter that returns the primary ROM folder, if any are configured.
@@ -482,9 +478,8 @@ class ConfigModel {
       tacoEnabled:
           (json['tacoEnabled'] ?? false).toString().toLowerCase() == 'true',
       tacoRatio:
-          (double.tryParse((json['tacoRatio'] ?? 0.55).toString()) ?? 0.55)
-              .clamp(0.3, 0.8),
-      tacoAlignment: (json['tacoAlignment'] ?? 'top').toString(),
+          (double.tryParse((json['tacoRatio'] ?? 1.0).toString()) ?? 1.0)
+              .clamp(0.1, 1.0),
     );
   }
 
@@ -543,7 +538,6 @@ class ConfigModel {
       'subfolderViewAll': subfolderViewAll,
       'tacoEnabled': tacoEnabled,
       'tacoRatio': tacoRatio,
-      'tacoAlignment': tacoAlignment,
     };
   }
 
@@ -596,7 +590,6 @@ class ConfigModel {
     bool? subfolderViewAll,
     bool? tacoEnabled,
     double? tacoRatio,
-    String? tacoAlignment,
   }) {
     return ConfigModel(
       romFolders: romFolders ?? this.romFolders,
@@ -648,7 +641,6 @@ class ConfigModel {
       subfolderViewAll: subfolderViewAll ?? this.subfolderViewAll,
       tacoEnabled: tacoEnabled ?? this.tacoEnabled,
       tacoRatio: tacoRatio ?? this.tacoRatio,
-      tacoAlignment: tacoAlignment ?? this.tacoAlignment,
     );
   }
 

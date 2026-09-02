@@ -160,13 +160,21 @@ extension SqliteConfigMutators on SqliteConfigProvider {
   Future<void> updateTacoSettings({
     bool? enabled,
     double? ratio,
-    String? alignment,
+    Size? screenSize,
   }) async {
     final bool wasEnabled = _config.tacoEnabled;
+    double? newRatio = ratio;
+
+    // If enabling for the first time or ratio is placeholder, default to 1:1 aspect ratio
+    if (enabled == true && !wasEnabled && screenSize != null) {
+      if (_config.tacoRatio == 0.55 || _config.tacoRatio >= 1.0) {
+        newRatio ??= (screenSize.width / screenSize.height).clamp(0.1, 1.0);
+      }
+    }
+
     _config = _config.copyWith(
       tacoEnabled: enabled,
-      tacoRatio: ratio,
-      tacoAlignment: alignment,
+      tacoRatio: newRatio,
     );
     await SqliteConfigService.saveConfig(_config);
 

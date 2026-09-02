@@ -59,7 +59,6 @@ const Map<String, dynamic> appLocaleJa = {
   AppLocale.launcher: 'ランチャー',
   AppLocale.emulators: 'エミュレータ',
   AppLocale.appearance: '外観',
-  AppLocale.display: 'ディスプレイ',
   AppLocale.systemsSettings: 'システム',
   AppLocale.systemsSettingsSubtitle: 'ライブラリのシステムを表示または非表示にする',
   AppLocale.hideRecentCard: '最近のゲームカード',
@@ -1110,11 +1109,8 @@ const Map<String, dynamic> appLocaleJa = {
 
   AppLocale.tacoMode: 'タコモード',
   AppLocale.tacoModeSubtitle: 'UIを画面の一部に制限する',
-  AppLocale.tacoCalibration: 'タココントローラーの設定',
-  AppLocale.tacoRatio: 'アクティブ比率',
-  AppLocale.tacoAlignment: '配置',
-  AppLocale.tacoTop: '上',
-  AppLocale.tacoBottom: '下',
+  AppLocale.tacoCalibration: 'Taco画面比率の設定',
+  AppLocale.tacoRatio: '比率の調整',
   AppLocale.tacoSaveApply: '保存して適用',
-  AppLocale.tacoCurrentAspectRatio: '現在のアスペクト比: {ratio} ({width} x {height})',
+  AppLocale.tacoCurrentAspectRatio: '現在の画面比率: {ratio}',
 };

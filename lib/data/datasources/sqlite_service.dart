@@ -459,7 +459,7 @@ class SqliteService {
   SqliteService._internal();
 
   // Database configuration
-  static const int _databaseVersion = 154;
+  static const int _databaseVersion = 155;
   static const String _databaseName = 'data.sqlite';
 
   DatabaseAdapter? _database;
@@ -1952,7 +1952,9 @@ class SqliteService {
         esde_folder_path TEXT DEFAULT '',
         show_achievements_badge INTEGER DEFAULT 0,
         ra_match_on_startup INTEGER DEFAULT 0,
-        subfolder_view_all INTEGER DEFAULT 0
+        subfolder_view_all INTEGER DEFAULT 0,
+        taco_enabled INTEGER DEFAULT 0,
+        taco_ratio REAL DEFAULT 1.0
       );
       ''',
       '''
@@ -2771,6 +2773,8 @@ class SqliteService {
     int? showAchievementsBadge,
     int? raMatchOnStartup,
     int? subfolderViewAll,
+    int? tacoEnabled,
+    double? tacoRatio,
   }) async {
     final db = await instance.database;
 
@@ -2911,6 +2915,12 @@ class SqliteService {
     if (subfolderViewAll != null) {
       updates['subfolder_view_all'] = subfolderViewAll;
     }
+    if (tacoEnabled != null) {
+      updates['taco_enabled'] = tacoEnabled;
+    }
+    if (tacoRatio != null) {
+      updates['taco_ratio'] = tacoRatio;
+    }
 
     if (showAchievementsBadge != null) {
       updates['show_achievements_badge'] = showAchievementsBadge;
@@ -2939,7 +2949,7 @@ class SqliteService {
       // ([getUserConfig] just takes the first row). If a stray row ever did
       // exist, every row converges instead of the reader and writer disagreeing
       // about which one is live.
-      await txn.update('user_config', updates);
+      await txn.update('user_config', updates, where: 'id = 1');
     });
   }
 

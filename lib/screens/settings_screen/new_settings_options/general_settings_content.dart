@@ -24,6 +24,7 @@ import 'widgets/setting_value_chip.dart';
 import 'widgets/language_picker_overlay.dart';
 import '../../../services/permission_service.dart';
 import '../../../services/sfx_service.dart';
+import '../taco_calibration_view.dart';
 
 /// A specialized content panel for system-wide configuration, including platform-specific orchestration (Windows/Android/Linux).
 ///
@@ -218,6 +219,8 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
       count++; // All Files Access
       count++; // Launcher
       count++; // Secondary Display Suppression (always visible on Android)
+      count++; // Taco Mode Toggle
+      count++; // Taco Calibration
     }
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
       count++; // BarTOP Power Management
@@ -438,6 +441,26 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
         configProvider.updateHideBottomScreen(
           !hideBottomScreen,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor.toARGB32(),
+        );
+        return;
+      }
+      currentItemIndex++;
+
+      // Protocol: Taco Mode Toggle.
+      if (index == currentItemIndex) {
+        final enabled = configProvider.config.tacoEnabled;
+        configProvider.updateTacoSettings(
+          enabled: !enabled,
+          screenSize: MediaQuery.of(context).size,
+        );
+        return;
+      }
+      currentItemIndex++;
+
+      // Protocol: Taco Calibration.
+      if (index == currentItemIndex) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const TacoCalibrationView()),
         );
         return;
       }
@@ -967,6 +990,53 @@ class GeneralSettingsContentState extends State<GeneralSettingsContent>
                           );
                         },
                         activeColor: theme.colorScheme.primary,
+                      ),
+                    );
+                  }(),
+                  SizedBox(height: 12.r),
+
+                  // Taco Mode Toggle
+                  () {
+                    final index = currentItemIdx++;
+                    return SettingRow(
+                      key: _itemKeys[index],
+                      onTap: () => selectItem(index),
+                      focused:
+                          widget.isContentFocused &&
+                          widget.selectedContentIndex == index,
+                      title: AppLocale.tacoMode.getString(context),
+                      subtitle: AppLocale.tacoModeSubtitle.getString(context),
+                      trailing: CustomToggleSwitch(
+                        value: config.tacoEnabled,
+                        onChanged: (value) {
+                          provider.updateTacoSettings(
+                            enabled: value,
+                            screenSize: MediaQuery.of(context).size,
+                          );
+                        },
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                    );
+                  }(),
+                  SizedBox(height: 12.r),
+
+                  // Taco Calibration
+                  () {
+                    final index = currentItemIdx++;
+                    return SettingRow(
+                      key: _itemKeys[index],
+                      onTap: () => selectItem(index),
+                      focused:
+                          widget.isContentFocused &&
+                          widget.selectedContentIndex == index,
+                      title: AppLocale.tacoCalibration.getString(context),
+                      subtitle: '',
+                      trailing: Icon(
+                        Symbols.tune,
+                        size: 20.r,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     );
                   }(),

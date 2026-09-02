@@ -88,7 +88,6 @@ mixin AppLocale {
   static const String deleteThemeConfirm = 'delete_theme_confirm';
   static const String emulators = 'emulators';
   static const String appearance = 'appearance';
-  static const String display = 'display';
   static const String systemsSettings = 'systems_settings';
   static const String systemsSettingsSubtitle = 'systems_settings_subtitle';
   static const String hideRecentCard = 'hide_recent_card';
@@ -229,9 +228,6 @@ mixin AppLocale {
   static const String tacoModeSubtitle = 'taco_mode_subtitle';
   static const String tacoCalibration = 'taco_calibration';
   static const String tacoRatio = 'taco_ratio';
-  static const String tacoAlignment = 'taco_alignment';
-  static const String tacoTop = 'taco_top';
-  static const String tacoBottom = 'taco_bottom';
   static const String tacoSaveApply = 'taco_save_apply';
   static const String tacoCurrentAspectRatio = 'taco_current_aspect_ratio';
 

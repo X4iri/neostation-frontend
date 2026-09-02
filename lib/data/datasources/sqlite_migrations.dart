@@ -535,6 +535,9 @@ class SqliteMigrations {
       case 154:
         await _migrateToVersion154(db);
         break;
+      case 155:
+        await _migrateToVersion155(db);
+        break;
       default:
         _log.w('No migration defined for version $version');
     }
@@ -6724,6 +6727,30 @@ class SqliteMigrations {
       _log.i('Migration v154 completed');
     } catch (e, stackTrace) {
       _log.e('Error in migration v154: $e');
+      _log.e('   StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Migration v155: Adds Taco Mode settings to user_config.
+  static Future<void> _migrateToVersion155(Database db) async {
+    _log.i('Migration v155: Adding Taco Mode columns to user_config');
+    try {
+      final tableInfo = db.select('PRAGMA table_info(user_config)');
+      final columns = tableInfo.map((c) => c['name'].toString()).toSet();
+
+      if (!columns.contains('taco_enabled')) {
+        db.execute('ALTER TABLE user_config ADD COLUMN taco_enabled INTEGER DEFAULT 0');
+        _log.i('Column taco_enabled added');
+      }
+      if (!columns.contains('taco_ratio')) {
+        db.execute('ALTER TABLE user_config ADD COLUMN taco_ratio REAL DEFAULT 1.0');
+        _log.i('Column taco_ratio added');
+      }
+
+      _log.i('Migration v155 completed');
+    } catch (e, stackTrace) {
+      _log.e('Error in migration v155: $e');
       _log.e('   StackTrace: $stackTrace');
       rethrow;
     }

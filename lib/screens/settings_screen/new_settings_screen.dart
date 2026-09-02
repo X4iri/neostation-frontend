@@ -16,7 +16,6 @@ import 'new_settings_options/about_settings_content.dart';
 import 'new_settings_options/exit_settings_content.dart';
 import 'new_settings_options/themes_settings_content.dart';
 import 'new_settings_options/system_art_settings_content.dart';
-import 'new_settings_options/display_settings_content.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:neostation/services/logger_service.dart';
@@ -92,8 +91,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       GlobalKey<AboutSettingsContentState>();
   final GlobalKey<ExitSettingsContentState> _exitSettingsKey =
       GlobalKey<ExitSettingsContentState>();
-  final GlobalKey<DisplaySettingsContentState> _displaySettingsKey =
-      GlobalKey<DisplaySettingsContentState>();
 
   @override
   void initState() {
@@ -148,15 +145,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
         title: '',
         localeKey: AppLocale.tools,
         icon: Symbols.build_rounded,
-        isVisible: true,
-      ),
-    );
-
-    _menuItems.add(
-      SettingsMenuItem(
-        title: '',
-        localeKey: AppLocale.display,
-        icon: Symbols.aspect_ratio_rounded,
         isVisible: true,
       ),
     );
@@ -285,8 +273,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
       _toolsSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
     } else if (selectedKey == AppLocale.systemsSettings) {
       _systemsSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
-    } else if (selectedKey == AppLocale.display) {
-      _displaySettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
     } else if (selectedKey == AppLocale.about) {
       _aboutSettingsKey.currentState?.scrollToIndex(_selectedContentIndex);
     } else if (selectedKey == AppLocale.themes) {
@@ -433,8 +419,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
     } else if (selectedKey == AppLocale.systemsSettings) {
       final provider = context.read<SqliteConfigProvider>();
       return _systemsSettingsKey.currentState?.getItemCount(provider) ?? 0;
-    } else if (selectedKey == AppLocale.display) {
-      return _displaySettingsKey.currentState?.getItemCount() ?? 0;
     } else if (selectedKey == AppLocale.about) {
       return _aboutSettingsKey.currentState?.getItemCount() ?? 0;
     } else if (selectedKey == AppLocale.exit) {
@@ -465,8 +449,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
         _selectedContentIndex,
         provider,
       );
-    } else if (selectedKey == AppLocale.display) {
-      _displaySettingsKey.currentState?.selectItem(_selectedContentIndex);
     } else if (selectedKey == AppLocale.about) {
       _aboutSettingsKey.currentState?.selectItem(_selectedContentIndex);
     } else if (selectedKey == AppLocale.exit) {
@@ -655,12 +637,6 @@ class _NewSettingsScreenState extends State<NewSettingsScreen> {
     } else if (selectedKey == AppLocale.systemsSettings) {
       return SystemsSettingsContent(
         key: _systemsSettingsKey,
-        isContentFocused: !_focusOnMenu,
-        selectedContentIndex: _selectedContentIndex,
-      );
-    } else if (selectedKey == AppLocale.display) {
-      return DisplaySettingsContent(
-        key: _displaySettingsKey,
         isContentFocused: !_focusOnMenu,
         selectedContentIndex: _selectedContentIndex,
       );

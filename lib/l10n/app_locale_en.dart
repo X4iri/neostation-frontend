@@ -61,7 +61,6 @@ const Map<String, dynamic> appLocaleEn = {
   AppLocale.launcher: 'Launcher',
   AppLocale.emulators: 'Emulators',
   AppLocale.appearance: 'Appearance',
-  AppLocale.display: 'Display',
   AppLocale.systemsSettings: 'Systems',
   AppLocale.systemsSettingsSubtitle: 'Show or hide systems from your library',
   AppLocale.hideRecentCard: 'Recent Games Card',
@@ -1209,12 +1208,8 @@ const Map<String, dynamic> appLocaleEn = {
 
   AppLocale.tacoMode: 'Taco Mode',
   AppLocale.tacoModeSubtitle: 'Constraint the UI to a portion of the screen',
-  AppLocale.tacoCalibration: 'Taco Controller Setup',
-  AppLocale.tacoRatio: 'Active Ratio',
-  AppLocale.tacoAlignment: 'Alignment',
-  AppLocale.tacoTop: 'Top',
-  AppLocale.tacoBottom: 'Bottom',
+  AppLocale.tacoCalibration: 'Taco screen ratio setup',
+  AppLocale.tacoRatio: 'Adjust Ratio',
   AppLocale.tacoSaveApply: 'Save & Apply',
-  AppLocale.tacoCurrentAspectRatio:
-      'Current Aspect Ratio: {ratio} ({width} x {height})',
+  AppLocale.tacoCurrentAspectRatio: 'Current Aspect Ratio: {ratio}',
 };
